@@ -1,0 +1,33 @@
+{
+  "key": "40ca46be15d62e3815deb541c8e6ad7e",
+  "recordedAt": "2026-09-15T11:09:14.580Z",
+  "model": "deepseek-flash",
+  "promptVersion": "dedup.v1",
+  "purpose": "dedup",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你在帮用户整理人物档案。对每个人，给你一组\"已有信息\"（candidates，带 id）和一组\"新信息\"（new，带 index）。找出与某条已有信息**说的是同一件事**的新信息，只输出一个 json 对象。\n\n判断规则：\n- 同一件事 = 同一个人、同一个事实，措辞可以不同（\"在成都当护士\"与\"成都某医院护士\"是同一件事）。\n- 新信息比已有信息多了实质的新内容（新的时间、地点、变化），或者说的是另一件事，就**不是**重复。\n- 相互冲突的信息（\"住在杭州\"与\"搬到了苏州\"）不是重复。\n- 每条新信息最多对应一条已有信息；不确定时不要标为重复。\n- 只能使用输入里出现过的 index 和 id。\n\n输出格式（json 示例）：\n\n{ \"duplicates\": [ { \"newIndex\": 0, \"existingClaimId\": 42 } ] }"
+      },
+      {
+        "role": "user",
+        "content": "{\"persons\":[{\"personId\":1,\"label\":\"林建国\",\"candidates\":[{\"id\":12,\"statement\":\"提供过身份证号\"}],\"new\":[{\"index\":0,\"statement\":\"下个月搬到林大海所在小区住，老房子出租\"}]},{\"personId\":3,\"label\":\"林大海\",\"candidates\":[{\"id\":5,\"statement\":\"从顺达物流辞职\"},{\"id\":6,\"statement\":\"跟朋友合伙开火锅店，下个月开业\"},{\"id\":7,\"statement\":\"在顺达物流做了十年调度\"},{\"id\":8,\"statement\":\"火锅店店面在老城区\"}],\"new\":[{\"index\":2,\"statement\":\"帮父母看好了自家对面楼的房子\"}]}]}\n\n请输出 json。"
+      }
+    ],
+    "maxTokens": 1024,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"duplicates\": []}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 384,
+      "outputTokens": 6,
+      "cacheHitTokens": 0
+    },
+    "latencyMs": 666
+  },
+  "error": null
+}

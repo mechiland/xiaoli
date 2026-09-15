@@ -1,0 +1,58 @@
+{
+  "inputHash": "b58e9594f15169b953b666e14c39c437a84647e4e7ed82dccdb3644af32ee0b6",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:16:03.754Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#4",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c8重复"
+      },
+      {
+        "fpId": "claims#7",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c11重复"
+      },
+      {
+        "fpId": "claims#10",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c13、c15重复"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日被误记为公历8月21日"
+      },
+      {
+        "fpId": "events#1",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c10重复"
+      },
+      {
+        "fpId": "events#3",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c13、c14重复"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "inputHash": "799358b4fc628ee9597527cbc3147f64d56137eb139a9a315253a7ec5d7a154e",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:14:35.946Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#12",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n16",
+        "reason": "初六回杭州属于返程行程，不应作为常住地记录"
+      },
+      {
+        "fpId": "claims#13",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c15",
+        "negativeId": null,
+        "reason": "原文只说四月跑半马，未说报名的是杭州马拉松"
+      },
+      {
+        "fpId": "claims#15",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n18",
+        "reason": "3月12日只是在谈岗位，属于面试流程日程"
+      },
+      {
+        "fpId": "claims#18",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c21",
+        "negativeId": null,
+        "reason": "原文说下周五最后一天，未说具体日期2026-04-17"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "inputHash": "e16c9858fc3b0cced9ac9c3df9e931f735d020de0732cdd6bd8a500f53c6c3a5",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:16:43.786Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "入职日期属于事务性日程信息"
+      },
+      {
+        "fpId": "claims#1",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "搬家时间属于事务安排"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "最后工作日属于事务安排"
+      },
+      {
+        "fpId": "claims#4",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "公司位置属于事务性地点信息"
+      }
+    ]
+  }
+}

@@ -1,10 +1,14 @@
 import { Hono } from 'hono'
-import { IdParamSchema } from '@/contracts'
-import type { AppEnv } from '@/server/context'
+import { IdParamSchema, type ImportReviewResponse } from '@/contracts'
+import { requireUser, type AppEnv } from '@/server/context'
 import { validator } from '@/server/middleware/validate'
-import { notImplemented } from './_stub'
+import { getImportReview } from '@/server/review'
 
-// owner: review (core bootstrap stub)
-const route = new Hono<AppEnv>().get('/imports/:id/review', validator('param', IdParamSchema), (c) => notImplemented(c))
+// owner: review
+const route = new Hono<AppEnv>().get('/imports/:id/review', validator('param', IdParamSchema), async (c) => {
+  const user = requireUser(c)
+  const { id } = c.req.valid('param')
+  return c.json((await getImportReview(c.var.db, user.id, id)) satisfies ImportReviewResponse)
+})
 
 export default route

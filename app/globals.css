@@ -41,6 +41,7 @@
   --color-ink: var(--loam-ink);
   --color-ink-2: var(--loam-ink-2);
   --color-ink-3: var(--loam-ink-3);
+  --color-ink-inverse: var(--loam-ink-inverse);
   --color-proposed: var(--loam-proposed);
   --color-superseded: var(--loam-superseded);
   --color-danger: var(--loam-danger);

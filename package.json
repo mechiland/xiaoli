@@ -28,6 +28,8 @@
     "eval:freeze-gold": "tsx scripts/run-owned.ts eval/src/cli.ts eval-synthetic -- freeze-gold",
     "synthetic:generate": "tsx scripts/run-owned.ts scripts/synthetic/generate.ts eval-synthetic --",
     "extract:offline": "tsx scripts/run-owned.ts scripts/extract-offline.ts extract --",
+    "extract:gen-prompts": "tsx scripts/run-owned.ts server/extract/scripts/gen-prompts.ts extract --",
+    "extract:cassettes": "tsx scripts/run-owned.ts server/extract/__fixtures__/build-cassettes.ts extract --",
     "llm:usage": "tsx scripts/run-owned.ts scripts/llm-usage.ts llm --",
     "llm:smoke": "tsx scripts/run-owned.ts server/llm/smoke.ts llm --",
     "preview:prod": "opennextjs-cloudflare build && opennextjs-cloudflare preview"

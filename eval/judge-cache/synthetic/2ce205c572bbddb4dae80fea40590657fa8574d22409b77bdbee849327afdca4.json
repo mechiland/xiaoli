@@ -1,0 +1,82 @@
+{
+  "inputHash": "2ce205c572bbddb4dae80fea40590657fa8574d22409b77bdbee849327afdca4",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:08:25.070Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#1",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c7",
+        "negativeId": null,
+        "reason": "转学的是小宇本人，不是Amy的儿子这一归属"
+      },
+      {
+        "fpId": "claims#5",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c16",
+        "negativeId": null,
+        "reason": "喜欢恐龙的是乐乐本人，不是乐乐爸爸"
+      },
+      {
+        "fpId": "claims#6",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c9",
+        "negativeId": null,
+        "reason": "喜欢看漫画的是小宇，不是Amy"
+      },
+      {
+        "fpId": "claims#12",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说非要穿恐龙衣服去学校，未说喜欢穿"
+      },
+      {
+        "fpId": "claims#15",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c3",
+        "negativeId": null,
+        "reason": "调到上海分公司的是Amy丈夫，不是Amy"
+      },
+      {
+        "fpId": "claims#16",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "家长志愿者报名属于即时协调事务"
+      },
+      {
+        "fpId": "claims#17",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "转发聊天记录内容不可见，无法得知孩子就读经历"
+      },
+      {
+        "fpId": "claims#18",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n27",
+        "reason": "擦伤属一次性事件，不应写成长期健康状况"
+      },
+      {
+        "fpId": "handles#5",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "刘老师是称呼，并非真实姓名字段"
+      }
+    ]
+  }
+}

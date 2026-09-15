@@ -1,0 +1,18 @@
+{
+  "inputHash": "a58b3d010d741c2dfa23c86bff5e5a9ed2029ef2693bf596dd0b702f0813bb0e",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:15:11.372Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#11",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说小宇紧张，未说换了新学校"
+      }
+    ]
+  }
+}

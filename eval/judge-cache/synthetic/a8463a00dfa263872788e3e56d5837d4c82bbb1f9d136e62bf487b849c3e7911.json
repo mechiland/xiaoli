@@ -1,0 +1,26 @@
+{
+  "inputHash": "a8463a00dfa263872788e3e56d5837d4c82bbb1f9d136e62bf487b849c3e7911",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T12:27:38.387Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c2",
+        "negativeId": null,
+        "reason": "证据说已入职，不是拿到offer"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "到深圳和住址属于事务性信息"
+      }
+    ]
+  }
+}

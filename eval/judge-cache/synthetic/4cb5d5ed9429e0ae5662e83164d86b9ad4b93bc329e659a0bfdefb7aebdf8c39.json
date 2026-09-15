@@ -1,0 +1,66 @@
+{
+  "inputHash": "4cb5d5ed9429e0ae5662e83164d86b9ad4b93bc329e659a0bfdefb7aebdf8c39",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:51:14.363Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "证据只提到生活费转账，未说明子航是学生"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文说在南京实习，未说公司做机器人"
+      },
+      {
+        "fpId": "claims#8",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c9",
+        "negativeId": null,
+        "reason": "老城区是火锅店位置，不是大海住址"
+      },
+      {
+        "fpId": "claims#10",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "证据只说朵朵三年级，未说她是学生"
+      },
+      {
+        "fpId": "claims#15",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文是大海帮父母看房，非父母帮看房"
+      },
+      {
+        "fpId": "handles#1",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "「儿子」是林建国对子航的称呼，非大海"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日推成公历8月21日，属推断陷阱"
+      }
+    ]
+  }
+}

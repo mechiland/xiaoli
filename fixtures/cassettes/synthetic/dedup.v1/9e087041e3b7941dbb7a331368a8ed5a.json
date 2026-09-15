@@ -1,0 +1,33 @@
+{
+  "key": "9e087041e3b7941dbb7a331368a8ed5a",
+  "recordedAt": "2026-09-15T11:07:31.774Z",
+  "model": "deepseek-flash",
+  "promptVersion": "dedup.v1",
+  "purpose": "dedup",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你在帮用户整理人物档案。对每个人，给你一组\"已有信息\"（candidates，带 id）和一组\"新信息\"（new，带 index）。找出与某条已有信息**说的是同一件事**的新信息，只输出一个 json 对象。\n\n判断规则：\n- 同一件事 = 同一个人、同一个事实，措辞可以不同（\"在成都当护士\"与\"成都某医院护士\"是同一件事）。\n- 新信息比已有信息多了实质的新内容（新的时间、地点、变化），或者说的是另一件事，就**不是**重复。\n- 相互冲突的信息（\"住在杭州\"与\"搬到了苏州\"）不是重复。\n- 每条新信息最多对应一条已有信息；不确定时不要标为重复。\n- 只能使用输入里出现过的 index 和 id。\n\n输出格式（json 示例）：\n\n{ \"duplicates\": [ { \"newIndex\": 0, \"existingClaimId\": 42 } ] }"
+      },
+      {
+        "role": "user",
+        "content": "{\"persons\":[{\"personId\":1,\"label\":\"一舟\",\"candidates\":[{\"id\":1,\"statement\":\"在星禾互娱做前端开发\"},{\"id\":2,\"statement\":\"住在杭州滨江，通勤半小时\"},{\"id\":3,\"statement\":\"下周去云杉出差，周三到周五\"},{\"id\":4,\"statement\":\"1995年出生，2025年满30岁\"},{\"id\":5,\"statement\":\"不吃香菜\"},{\"id\":6,\"statement\":\"和用户是大学同学\"},{\"id\":7,\"statement\":\"毕业于武汉大学计算机系\"},{\"id\":9,\"statement\":\"酒量一般，容易喝多\"},{\"id\":11,\"statement\":\"和苏苏在一起了\"},{\"id\":12,\"statement\":\"懒得做饭，常点外卖\"},{\"id\":14,\"statement\":\"给朋友寄龙井茶\"},{\"id\":17,\"statement\":\"老家在九江\"},{\"id\":18,\"statement\":\"带苏苏回九江老家过年\"},{\"id\":20,\"statement\":\"报名了杭州马拉松，四月跑半马\"},{\"id\":21,\"statement\":\"最近每天早上跑五公里，瘦了八斤\"}],\"new\":[{\"index\":0,\"statement\":\"在星禾工作，公司项目砍了一半、组里走了很多人\"},{\"index\":1,\"statement\":\"正在看机会，和深圳一家做出行的公司蓝鲸出行在聊技术负责人岗位\"}]},{\"personId\":3,\"label\":\"苏苏\",\"candidates\":[{\"id\":10,\"statement\":\"做插画\"},{\"id\":15,\"statement\":\"手巧，会做圣诞树\"}],\"new\":[{\"index\":2,\"statement\":\"是自由插画师，在哪都能接活\"}]}]}\n\n请输出 json。"
+      }
+    ],
+    "maxTokens": 1024,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"duplicates\":[{\"newIndex\":0,\"existingClaimId\":1},{\"newIndex\":2,\"existingClaimId\":10}]}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 589,
+      "outputTokens": 28,
+      "cacheHitTokens": 256
+    },
+    "latencyMs": 607
+  },
+  "error": null
+}

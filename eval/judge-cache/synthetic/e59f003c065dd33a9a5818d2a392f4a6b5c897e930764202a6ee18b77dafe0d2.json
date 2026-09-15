@@ -1,0 +1,42 @@
+{
+  "inputHash": "e59f003c065dd33a9a5818d2a392f4a6b5c897e930764202a6ee18b77dafe0d2",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:44:38.523Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "入职日期属于事务性日程信息"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "搬家时间安排属于事务信息"
+      },
+      {
+        "fpId": "claims#3",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "到深圳及住址属于事务性安排"
+      },
+      {
+        "fpId": "claims#7",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说闺女朵朵，未提及性别"
+      }
+    ]
+  }
+}

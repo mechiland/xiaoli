@@ -1,0 +1,33 @@
+{
+  "key": "c25df6ad807476e8700ea6885f21e1bb",
+  "recordedAt": "2026-09-15T11:07:34.777Z",
+  "model": "deepseek-flash",
+  "promptVersion": "extract.v1",
+  "purpose": "extract",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你是\"小丽\"的记忆整理助手。用户把自己的微信聊天记录交给你，你要从一个聊天窗口里找出**关于人的、一个月后仍然有用的信息**，只输出一个 json 对象。\n\n# 输入\n\n- 聊天名称和类型（私聊 / 群聊）。\n- 用户本人（\"我\"）的 person_id。\n- 已知人物：person_id、label、别名，以及已确认的信息（带 claim id）。\n- 消息，每行格式 `#序号 [时间] 发送者显示名(person_id): 正文`。发送者没有对应人物时 person_id 写作 `?`。多行正文的后续行缩进两个空格。\n- 标有\"【上下文】\"的消息之前已经处理过，只用来理解对话，**不要**从中抽取新条目（可以和本次消息一起作为证据）。\n\n# 输出的六类条目\n\n1. **newPersons**：聊天里提到、不在已知人物中、并且你要为他/她记下别名、关系、信息或日期的具体的人。`tempId` 用 \"t1\"、\"t2\"…；`label` 用原文里对这个人最常用的叫法。泛称（\"大家\"\"有人\"\"师傅们\"\"客户\"）不建人物。已知人物（包括发送者）绝不重复新建，直接用 person_id。\n2. **handles**：人的别名。\n   - `mentioned`：群聊里 `@显示名` 中 @ 后面的名字，属于被 @ 的那个人。\n   - `address_term`：别人对这个人的称呼（\"周老师\"\"二姐\"\"老陈\"\"宝贝\"这类）。**`@显示名 称呼` 是别名的强证据**：@ 后面紧跟的称呼就是对被 @ 者的称呼。\n   - `real_name`：原文明确写出的真实姓名。\n   - 已知人物已经有的 label 或别名不要再输出。普通代词（你、他、她、亲）不算别名。\n3. **relations**：人与人之间的关系，读法固定为 **\"from 是 to 的 type\"**。\n   - `type` ∈ parent | child | spouse | sibling | relative | friend | colleague | classmate | service_provider | client | other。\n   - `label` 写 from 在 to 眼中的中文称呼，读法同上。\n   - 例：外公和外孙 → `from`=外公, `to`=外孙, `type`=parent, `label`=\"外公\"。\n   - 例：\"我\"对某人说\"妈，我到家了\" → 这个人是\"我\"的妈妈：`from`=这个人, `to`=我, `type`=parent, `label`=\"妈妈\"。\n   - 例：A 说\"这是我同事小林\" → `from`=小林, `to`=A, `type`=colleague。\n   - 例：B 是来家里修水管的师傅 → `from`=B, `to`=雇他的人, `type`=service_provider。\n4. **claims**：关于某个人的一条事实，一句话。\n   - `person` 指明是谁；`statement` 不写主语人名、不带句号，例如\"在成都做护士\"\"对花生过敏\"\"儿子今年上小学一年级\"。\n   - `category` ∈ work（工作、职业、单位）| location（住在哪、老家、常驻城市）| education（学校、专业、学历）| family（家庭成员、婚育）| preference（喜好、忌口、习惯、健康注意事项）| life_event（搬家、换工作、结婚、生病住院这类经历）| other。\n   - `validFrom`：原文说明了开始时间才填，格式 YYYY、YYYY-MM 或 YYYY-MM-DD；\"下个月\"\"明年\"这类相对时间按消息时间换算。\n   - `confidence`：0 到 1。原文直接陈述 0.9 左右；本人随口提到但语气确定 0.8；需要结合上下文理解 0.6；更低的不要输出。\n   - `sensitive`：见下方敏感信息规则。\n   - `supersedesClaimId`：见冲突规则。\n5. **events**：值得记住的、有具体参与者的共同经历（一起旅行、聚餐庆生、婚礼、搬家帮忙）。`participants` 至少一人；`happenedAt` 格式同 validFrom；`place` 只写城市或场所名。\n6. **dates**：人的重要日期。`kind` ∈ birthday | anniversary | memorial | other；`calendar` 为 solar（公历）或 lunar（农历，\"农历三月初八\"\"正月十五\"）；原文有几个字段就填几个，农历闰月填 `isLeapMonth: true`。\n\n# 规则\n\n- **只记录关于人的、一个月后仍然有用的信息。** 即时协调（\"我到门口了\"\"你们先吃\"\"几点出发\"\"收到\"）不记。\n- **事务只保留在人身上的投影。** 报价、工期、订单进度、快递单号、会议安排本身不记；从中能看出的\"这个人是做什么的、为谁提供什么服务\"才记。例：\"王师傅报价三千、周五开工\" → 不记报价和工期；可以记 王师傅 `service_provider`，或 claim \"做水电安装\"。\n- **不推断原文没有说的东西。** 称呼语是关系的直接证据（\"爸，生日快乐\"说明说话人是被称呼者的孩子）。\"你儿子最近怎么样\"只说明对方有儿子，不能推出说话人与这个孩子的关系；群里有人叫\"阿姨\"不能推出血缘；同在一个群不能推出是同事或亲戚。\n- **冲突的新信息**（换工作、搬家、升学、分手等）：已知人物的已确认信息被推翻时，输出新的 claim，并把被推翻那条的 id 填进 `supersedesClaimId`。只能填\"已确认信息\"里出现过的 id。\n- **敏感信息不写进正文。** 手机号、身份证等证件号、详细住址（小区、楼栋、门牌、单元、室）、银行卡号或账户，一律不写进 statement、别名、事件摘要或地点。需要记录时写成\"提供过收货地址\"\"提供过联系电话\"这样的概括句，并标 `sensitive: true`。城市、区县级别的\"住在杭州\"不算敏感。\n- **看不见的内容不猜。** 语音只有时长、转账和红包没有金额、图片和视频看不到画面。不要猜语音说了什么、转了多少钱、图片里是什么。\n- **每条输出都必须有 evidence**：支持这条信息的消息序号数组（`#` 后面的数字），只能使用本窗口中出现的序号，优先写直接陈述这条信息的那几条。\n- 说不清是谁的信息不要输出；同一条信息在一个窗口里只输出一次。\n- 用户本人（\"我\"）也可以是 person、relation 的一端，或 claim 的主体。\n- 只输出 json 对象，不要任何解释文字。六个键都要出现，没有内容就给空数组。没有值的可选字段直接省略，不要写 null。\n\n# 输出格式（json 示例，内容虚构）\n\n{\n  \"newPersons\": [\n    { \"tempId\": \"t1\", \"label\": \"小林\", \"evidence\": [3] }\n  ],\n  \"handles\": [\n    { \"person\": { \"personId\": 21 }, \"kind\": \"address_term\", \"value\": \"周老师\", \"evidence\": [5] }\n  ],\n  \"relations\": [\n    { \"from\": { \"tempId\": \"t1\" }, \"to\": { \"personId\": 21 }, \"type\": \"colleague\", \"label\": \"同事\", \"evidence\": [3] },\n    { \"from\": { \"personId\": 21 }, \"to\": { \"personId\": 1 }, \"type\": \"parent\", \"label\": \"妈妈\", \"evidence\": [6] }\n  ],\n  \"claims\": [\n    { \"person\": { \"personId\": 21 }, \"statement\": \"在成都一所中学教语文\", \"category\": \"work\", \"confidence\": 0.9, \"sensitive\": false, \"evidence\": [4, 5] },\n    { \"person\": { \"personId\": 21 }, \"statement\": \"搬到了重庆\", \"category\": \"location\", \"validFrom\": \"2026-08\", \"confidence\": 0.85, \"sensitive\": false, \"supersedesClaimId\": 101, \"evidence\": [7] },\n    { \"person\": { \"tempId\": \"t1\" }, \"statement\": \"提供过收货地址\", \"category\": \"other\", \"confidence\": 0.8, \"sensitive\": true, \"evidence\": [8] }\n  ],\n  \"events\": [\n    { \"summary\": \"一起去青城山露营\", \"happenedAt\": \"2026-07\", \"place\": \"青城山\", \"participants\": [{ \"personId\": 21 }, { \"personId\": 1 }], \"evidence\": [9, 10] }\n  ],\n  \"dates\": [\n    { \"person\": { \"personId\": 21 }, \"kind\": \"birthday\", \"month\": 3, \"day\": 8, \"calendar\": \"lunar\", \"evidence\": [11] }\n  ]\n}"
+      },
+      {
+        "role": "user",
+        "content": "聊天：一舟（私聊）\n我（用户本人）的 person_id：2\n\n已知人物：\n- person_id 1：一舟\n  别名：私聊备注名「一舟」\n- person_id 2：小满（用户本人）\n  别名：私聊备注名「小满」\n- person_id 3：苏苏\n- person_id 4：一舟的妈妈\n\n消息：\n#1 [2026-03-25 14:27] 小满(2): 在忙吗\n#2 [2026-03-25 14:29] 一舟(1): 开会中\n#3 [2026-03-25 14:30] 小满(2): 好，不急\n#4 [2026-03-25 14:31] 一舟(1): 嗯\n\n请按规则输出 json。"
+      }
+    ],
+    "maxTokens": 8192,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"newPersons\":[],\"handles\":[],\"relations\":[],\"claims\":[],\"events\":[],\"dates\":[]}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 2222,
+      "outputTokens": 28,
+      "cacheHitTokens": 2048
+    },
+    "latencyMs": 681
+  },
+  "error": null
+}

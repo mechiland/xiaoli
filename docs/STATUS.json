@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-15T18:34:34+08:00",
+  "updatedAt": "2026-09-15T20:45:48+08:00",
   "modules": {
     "architecture": {
       "round": 3,
@@ -34,7 +34,7 @@
       "score": null,
       "passed": true,
       "openIssues": [],
-      "lastArtifacts": "artifacts/_smoke__home-loads/20260915-183420/"
+      "lastArtifacts": "artifacts/_smoke__home-loads/20260915-204153/"
     },
     "eval-synthetic": {
       "round": 2,
@@ -44,34 +44,32 @@
       "lastArtifacts": "artifacts/critic/"
     },
     "import": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 2,
+      "score": 8.7,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/import__showcase/20260915-204202/, artifacts/import__flow/20260915-204337/, artifacts/critic/import/"
     },
     "extract": {
-      "round": 0,
+      "round": 3,
       "score": null,
-      "passed": false,
-      "openIssues": [
-        "Prompt must use relation reading `from` 是 `to` 的 `type`, label names `from` (ARCHITECTURE §2.5, DECISIONS I2)"
-      ],
-      "lastArtifacts": ""
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "eval/reports/20260915-123434.json, eval/reports/synthetic/20260915-123434.json, artifacts/critic/extract/"
     },
     "review": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 2,
+      "score": 8.8,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/review__evidence-showcase/20260915-204349/, artifacts/critic/review/"
     },
     "search": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 1,
+      "score": 8.6,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/search__showcase/20260915-204408/, artifacts/search__person-picker/20260915-204436/, artifacts/critic/search/"
     },
     "person": {
       "round": 0,
@@ -117,15 +115,14 @@
     }
   },
   "eval": {
-    "latestReport": "",
-    "passed": false
+    "latestReport": "eval/reports/20260915-123434.json",
+    "passed": true
   },
   "llmUsage": {
-    "inputTokens": 149,
-    "outputTokens": 19
+    "inputTokens": 2304938,
+    "outputTokens": 85917
   },
   "blockers": [
-    "Gold not frozen: eval:validate-gold passes synthetic 4/4 but real only 1/3 (2 real gold files have schema errors, 1 has a parser-version warning); annotator must fix and freeze before extract's gated eval (DECISIONS I3)",
     "verify _smoke/perf-budgets reports home and person budgets as missing until wave-3 pages land (expected, DECISIONS V2)"
   ]
 }

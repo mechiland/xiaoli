@@ -1,0 +1,50 @@
+{
+  "inputHash": "dc8ec944699ff68516767c82e307d96d8c29bc65265fc3bddc68c160aa95a2e7",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:21:13.170Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "辞职与开店属事务性信息，非人物属性"
+      },
+      {
+        "fpId": "claims#8",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说下个月搬，未指明2026年10月"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日对应公历8月21日属推断陷阱"
+      },
+      {
+        "fpId": "events#1",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "开业属事务性事件，非人物信息"
+      },
+      {
+        "fpId": "events#3",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "搬家属事务性事件，非人物信息"
+      }
+    ]
+  }
+}

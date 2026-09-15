@@ -2,8 +2,8 @@
   "goldVersion": 1,
   "zip": "聊天记录_20260914_211545.zip",
   "annotator": "annotator",
-  "annotatedAt": "2026-09-15T10:24:18.000Z",
-  "notes": "Private chat. Self = 小满 (sender present in every synthetic export). Partner = 一舟. Wedding hotel address treated as detailed address (sensitive). No friend relation recorded between the two senders: no address term.",
+  "annotatedAt": "2026-09-15T10:43:43.624Z",
+  "notes": "Self = 小满: the chat is mostly about the other sender (job, move, marriage), consistent with the user importing a friend chat; chat title = other sender display name. Supersedes used for the job change only. Hometown (回九江) and Hangzhou past are optional because 回 is weak evidence.",
   "parserVersion": "wechat-export@1",
   "messageCount": 204,
   "messagesSha256": "398e281f55bdfae181e9649fe6031c739e3cf257dbb39a9628dc97df9a0e3a16",
@@ -99,32 +99,47 @@
   "relations": [
     {
       "id": "r1",
-      "from": "yizhou",
-      "to": "susu",
+      "from": "susu",
+      "to": "yizhou",
       "type": "spouse",
+      "label": "妻子",
       "evidence": [
-        63
+        63,
+        69
       ]
     },
     {
       "id": "r2",
-      "from": "xiaoman",
-      "to": "duoduo",
-      "type": "parent",
+      "from": "duoduo",
+      "to": "xiaoman",
+      "type": "child",
       "label": "女儿",
-      "acceptTypes": [
-        "relative"
-      ],
       "evidence": [
         111
       ]
+    },
+    {
+      "id": "r3",
+      "from": "yizhou",
+      "to": "xiaoman",
+      "type": "friend",
+      "acceptTypes": [
+        "other"
+      ],
+      "evidence": [
+        39,
+        40,
+        181,
+        182
+      ],
+      "optional": true
     }
   ],
   "claims": [
     {
       "id": "c1",
       "person": "yizhou",
-      "statement": "曾在星禾工作近五年，2026年4月离职",
+      "statement": "曾在星禾工作近五年",
       "category": "work",
       "sensitive": false,
       "evidence": [
@@ -136,7 +151,7 @@
     {
       "id": "c2",
       "person": "yizhou",
-      "statement": "2026年5月1日入职蓝鲸出行，任技术负责人",
+      "statement": "在蓝鲸出行担任技术负责人",
       "category": "work",
       "sensitive": false,
       "evidence": [
@@ -148,7 +163,7 @@
     {
       "id": "c3",
       "person": "yizhou",
-      "statement": "2026年4月底搬到深圳，住南山科技园附近",
+      "statement": "住在深圳南山科技园附近",
       "category": "location",
       "sensitive": false,
       "evidence": [
@@ -160,7 +175,7 @@
     {
       "id": "c4",
       "person": "yizhou",
-      "statement": "之前在杭州工作（老东家在杭州）",
+      "statement": "以前在杭州工作",
       "category": "work",
       "acceptCategories": [
         "location"
@@ -175,9 +190,9 @@
       "id": "c5",
       "person": "yizhou",
       "statement": "2026年5月20日与苏苏领证结婚",
-      "category": "family",
+      "category": "life_event",
       "acceptCategories": [
-        "life_event"
+        "family"
       ],
       "sensitive": false,
       "evidence": [
@@ -187,7 +202,7 @@
     {
       "id": "c6",
       "person": "yizhou",
-      "statement": "婚礼定于2026年10月3日中午在九江举办",
+      "statement": "婚礼定于2026年10月3日在九江举办",
       "category": "life_event",
       "acceptCategories": [
         "family"
@@ -201,6 +216,17 @@
     {
       "id": "c7",
       "person": "yizhou",
+      "statement": "老家在九江",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        66
+      ],
+      "optional": true
+    },
+    {
+      "id": "c8",
+      "person": "yizhou",
       "statement": "提供过婚礼酒店地址",
       "category": "other",
       "acceptCategories": [
@@ -213,9 +239,9 @@
       "optional": true
     },
     {
-      "id": "c8",
+      "id": "c9",
       "person": "susu",
-      "statement": "在南山开了插画工作室",
+      "statement": "在南山开了一家插画工作室",
       "category": "work",
       "sensitive": false,
       "evidence": [
@@ -223,9 +249,9 @@
       ]
     },
     {
-      "id": "c9",
+      "id": "c10",
       "person": "xiaoman",
-      "statement": "有个女儿叫朵朵",
+      "statement": "有一个女儿叫朵朵",
       "category": "family",
       "sensitive": false,
       "evidence": [
@@ -234,9 +260,9 @@
       "optional": true
     },
     {
-      "id": "c10",
+      "id": "c11",
       "person": "xiaoman",
-      "statement": "经常很晚下班",
+      "statement": "经常很晚才下班",
       "category": "work",
       "sensitive": false,
       "evidence": [
@@ -247,16 +273,15 @@
       "optional": true
     },
     {
-      "id": "c11",
+      "id": "c12",
       "person": "xiaoman",
-      "statement": "想换房子",
-      "category": "location",
-      "acceptCategories": [
-        "other"
-      ],
+      "statement": "不爱做饭，常点外卖",
+      "category": "preference",
       "sensitive": false,
       "evidence": [
-        92
+        132,
+        134,
+        135
       ],
       "optional": true
     }
@@ -290,7 +315,7 @@
     {
       "id": "d3",
       "person": "yizhou",
-      "kind": "other",
+      "kind": "anniversary",
       "month": 10,
       "day": 3,
       "year": 2026,
@@ -304,7 +329,39 @@
   "events": [
     {
       "id": "e1",
-      "summary": "一舟与苏苏领证",
+      "summary": "一舟拿到蓝鲸出行技术负责人offer",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        18,
+        19
+      ]
+    },
+    {
+      "id": "e2",
+      "summary": "一舟从星禾离职",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        29
+      ]
+    },
+    {
+      "id": "e3",
+      "summary": "一舟搬到深圳",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        36,
+        37
+      ]
+    },
+    {
+      "id": "e4",
+      "summary": "一舟和苏苏领证",
       "participants": [
         "yizhou",
         "susu"
@@ -314,8 +371,8 @@
       ]
     },
     {
-      "id": "e2",
-      "summary": "一舟和苏苏2026年10月3日在九江办婚礼",
+      "id": "e5",
+      "summary": "一舟和苏苏在九江办婚礼",
       "participants": [
         "yizhou",
         "susu"
@@ -326,26 +383,23 @@
       ]
     },
     {
-      "id": "e3",
+      "id": "e6",
       "summary": "苏苏的插画工作室开业",
       "participants": [
         "susu"
       ],
       "evidence": [
         165
-      ],
-      "optional": true
+      ]
     },
     {
-      "id": "e4",
-      "summary": "一舟从星禾离职，入职蓝鲸出行并搬到深圳",
+      "id": "e7",
+      "summary": "一舟回杭州出差交接",
       "participants": [
         "yizhou"
       ],
       "evidence": [
-        19,
-        29,
-        36
+        199
       ],
       "optional": true
     }
@@ -355,209 +409,169 @@
       "id": "n1",
       "kind": "transactional",
       "evidence": [
-        0,
         1
       ],
-      "description": "面试流程与各轮面试日期、出结果时间",
-      "forbidden": "面试日期进入 dates 或 claim"
+      "description": "面试各轮日期和出结果时间",
+      "forbidden": "面试日程作为 claim 或 date"
     },
     {
       "id": "n2",
-      "kind": "transactional",
+      "kind": "coordination",
       "evidence": [
-        19,
-        29
+        14,
+        16,
+        17
       ],
-      "description": "入职日、离职最后一天等日程",
-      "forbidden": "入职/离职日期作为重要日期"
+      "description": "二面感受与等待结果的寒暄",
+      "forbidden": "面试进度作为 claim"
     },
     {
       "id": "n3",
-      "kind": "coordination",
-      "evidence": [
-        10,
-        11,
-        12,
-        13
-      ],
-      "description": "在忙吗/开会中/不急"
-    },
-    {
-      "id": "n4",
-      "kind": "coordination",
-      "evidence": [
-        49,
-        50,
-        51,
-        52
-      ],
-      "description": "在忙吗/开会中/不急"
-    },
-    {
-      "id": "n5",
-      "kind": "coordination",
-      "evidence": [
-        178
-      ],
-      "description": "请好假参加婚礼"
-    },
-    {
-      "id": "n6",
-      "kind": "coordination",
-      "evidence": [
-        199,
-        200
-      ],
-      "description": "下周回杭州出差交接",
-      "forbidden": "出差日程写成 claim"
-    },
-    {
-      "id": "n7",
-      "kind": "transactional",
-      "evidence": [
-        94,
-        95
-      ],
-      "description": "婚礼流程文件，请对方挑毛病"
-    },
-    {
-      "id": "n8",
-      "kind": "sensitive",
-      "evidence": [
-        176
-      ],
-      "description": "婚礼酒店详细地址",
-      "forbidden": "详细地址进入任何文本"
-    },
-    {
-      "id": "n9",
       "kind": "invisible_content",
       "evidence": [
         21
       ],
-      "description": "恭喜红包",
-      "forbidden": "金额"
+      "description": "恭喜红包，金额不可见",
+      "forbidden": "猜测红包金额"
     },
     {
-      "id": "n10",
-      "kind": "invisible_content",
+      "id": "n4",
+      "kind": "inference_trap",
       "evidence": [
-        179,
-        181
+        22
       ],
-      "description": "份子钱转账",
-      "forbidden": "金额"
+      "description": "玩笑称呼老板",
+      "forbidden": "推断小满是一舟的老板或上级"
     },
     {
-      "id": "n11",
+      "id": "n5",
       "kind": "invisible_content",
       "evidence": [
         26,
         27
       ],
-      "description": "语音内容不可见",
+      "description": "两条语音，内容不可见",
       "forbidden": "猜测语音内容"
     },
     {
-      "id": "n12",
-      "kind": "inference_trap",
+      "id": "n6",
+      "kind": "invisible_content",
       "evidence": [
-        22
+        15
       ],
-      "description": "谢谢老板是玩笑",
-      "forbidden": "小满是一舟的老板/上级关系"
+      "description": "撤回的消息",
+      "forbidden": "猜测撤回内容"
     },
     {
-      "id": "n13",
-      "kind": "inference_trap",
+      "id": "n7",
+      "kind": "transactional",
       "evidence": [
-        66
+        25,
+        29
       ],
-      "description": "回九江办婚礼未说明是谁的老家",
-      "forbidden": "一舟或苏苏老家在九江"
+      "description": "搬家时间、找房、最后工作日安排",
+      "forbidden": "这些时间安排作为 claim"
     },
     {
-      "id": "n14",
+      "id": "n8",
       "kind": "inference_trap",
       "evidence": [
-        112
-      ],
-      "description": "泛泛的育儿建议",
-      "forbidden": "一舟有孩子"
-    },
-    {
-      "id": "n15",
-      "kind": "inference_trap",
-      "evidence": [
-        69
-      ],
-      "description": "苏苏想问婚纱照在哪拍",
-      "forbidden": "小满已婚/小满配偶"
-    },
-    {
-      "id": "n16",
-      "kind": "inference_trap",
-      "evidence": [
-        32,
         33,
-        124,
         125
       ],
       "description": "楼下的猫",
-      "forbidden": "养猫"
+      "forbidden": "推断某人养猫"
     },
     {
-      "id": "n17",
-      "kind": "inference_trap",
+      "id": "n9",
+      "kind": "transactional",
       "evidence": [
-        74,
-        76,
-        104,
-        106,
-        102,
-        163
+        91,
+        94,
+        95
       ],
-      "description": "装修、高温等闲聊，双方都说过同样的话",
-      "forbidden": "住址/所在城市气温等 claim"
+      "description": "租房文章链接和婚礼流程文件",
+      "forbidden": "文件或链接内容作为 claim"
     },
     {
-      "id": "n18",
+      "id": "n10",
       "kind": "inference_trap",
       "evidence": [
         97
       ],
       "description": "分享的视频号标题",
-      "forbidden": "一舟去大鹏徒步"
+      "forbidden": "推断一舟去大鹏徒步或爱好徒步"
     },
     {
-      "id": "n19",
+      "id": "n11",
       "kind": "inference_trap",
       "evidence": [
         99,
         100
       ],
-      "description": "分享的歌和歌单玩笑",
-      "forbidden": "大学经历或音乐偏好"
+      "description": "分享歌曲和歌单玩笑",
+      "forbidden": "推断学历或音乐偏好"
     },
     {
-      "id": "n20",
-      "kind": "inference_trap",
-      "evidence": [
-        37,
-        38
-      ],
-      "description": "位置分享未说明是住处还是公司",
-      "forbidden": "公司或住处在该园区"
-    },
-    {
-      "id": "n21",
+      "id": "n12",
       "kind": "inference_trap",
       "evidence": [
         111,
+        112,
         113
       ],
-      "description": "孩子发烧已退烧，临时状态",
-      "forbidden": "朵朵健康问题 claim"
+      "description": "孩子一时发烧已退烧",
+      "forbidden": "记为长期健康状况"
+    },
+    {
+      "id": "n13",
+      "kind": "coordination",
+      "evidence": [
+        67,
+        175,
+        178
+      ],
+      "description": "婚礼时段安排与请假赴宴",
+      "forbidden": "中午时段或请假作为 claim"
+    },
+    {
+      "id": "n14",
+      "kind": "sensitive",
+      "evidence": [
+        176
+      ],
+      "description": "婚礼酒店详细地址",
+      "forbidden": "地址出现在任何输出文本中"
+    },
+    {
+      "id": "n15",
+      "kind": "invisible_content",
+      "evidence": [
+        179,
+        180,
+        181,
+        182
+      ],
+      "description": "份子钱转账，金额不可见",
+      "forbidden": "猜测转账金额"
+    },
+    {
+      "id": "n16",
+      "kind": "coordination",
+      "evidence": [
+        199
+      ],
+      "description": "下周出差交接安排",
+      "forbidden": "出差安排作为长期 claim"
+    },
+    {
+      "id": "n17",
+      "kind": "inference_trap",
+      "evidence": [
+        69
+      ],
+      "description": "苏苏想问婚纱照在哪拍",
+      "forbidden": "推断小满的婚姻状况"
     }
   ],
   "sensitiveValues": [

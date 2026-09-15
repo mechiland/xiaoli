@@ -9,6 +9,7 @@
 - why: judge cache for real data contains real claim text; eval run logs contain raw model output of real chats (ARCHITECTURE §7.1)
 - workaround: none needed before eval-synthetic writes these dirs; eval-synthetic must not write real-source files until this is done (check `git check-ignore`)
 - blocking: yes for eval on real data only
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1: .gitignore has `eval/judge-cache/real/`, `eval/runs/`, `playwright-report/`, `test-results/` and the `.dev/` coverage comment (checked by the wave 2 integrator).
 
 ## #2 Create `.dev.vars` from `.env.local` for wrangler contexts
 - status: done
@@ -19,6 +20,7 @@
 - why: getPlatformProxy/wrangler read `.dev.vars`, Next reads `.env.local` (DECISIONS A2/A3)
 - workaround: n/a
 - blocking: no
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1: `scripts/dev-ensure.ts` makes sure `.dev.vars` exists; `.dev.vars.example` is committed.
 
 ## #3 Allow committing synthetic ZIPs; ignore annotation views
 - status: done
@@ -29,6 +31,7 @@
 - why: the global `*.zip` rule would silently exclude the committed synthetic ZIPs (ARCHITECTURE §1.15, §7.1)
 - workaround: eval-synthetic checks `git check-ignore fixtures/synthetic/<zip>` and reports until done
 - blocking: yes for committing eval-synthetic output (integrator)
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1: `!fixtures/synthetic/*.zip` comes after `*.zip`; `eval/gold/real/` stays ignored; `.dev/annotate/` is covered by `.dev/` (comment added).
 
 ## #4 package.json scripts named by ARCHITECTURE
 - status: done
@@ -39,6 +42,7 @@
 - why: modules must not edit package.json, but their CLIs are part of the contract (§5, §7.5, §7.6, §8, §9)
 - workaround: run `pnpm tsx <file>` directly until added
 - blocking: no
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1: all the named scripts are in package.json (checked by the wave 2 integrator).
 
 ## #5 Core scope added in architecture round 2
 - status: done
@@ -49,6 +53,7 @@
 - why: architecture round 2 moved these into core to satisfy the wave rule (DECISIONS A5 #20, #21, #31)
 - workaround: none; core wave 1 builds from the current ARCHITECTURE.md
 - blocking: no (core has not started)
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1 from ARCHITECTURE §1.1, §2, §3 and §4.1.
 
 ## #6 Core scope added in architecture round 3
 - status: done
@@ -64,3 +69,4 @@
 - why: architecture round 3 fixes (parsed payload storage, env-based model default, owner_id on link tables, auth client owner)
 - workaround: none; core wave 1 builds from the current ARCHITECTURE.md
 - blocking: no (core has not started)
+- Resolution (integrator, wave 2, 2026-09-15): Implemented by core in wave 1: nullable `extractModel` in settings, `server/env.ts`, owner_id on link tables plus `server/db/owned.ts`, and `lib/auth-client.ts`.
