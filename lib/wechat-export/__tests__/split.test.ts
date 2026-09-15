@@ -134,11 +134,11 @@ describe('message splitting (SPEC §6 rule)', () => {
   })
 
   it('exportedAt from file name is Asia/Shanghai local → UTC', () => {
-    expect(exportedAtFromFileName('聊天记录_20260915_142841.zip')).toBe('2026-09-15T06:28:41.000Z')
+    expect(exportedAtFromFileName('聊天记录_20260101_120000.zip')).toBe('2026-01-01T04:00:00.000Z')
     expect(exportedAtFromFileName('dir/聊天记录_20260101_070000.zip')).toBe('2025-12-31T23:00:00.000Z')
     expect(exportedAtFromFileName('chat.zip')).toBeNull()
     expect(exportedAtFromFileName('聊天记录_20260231_120000.zip')).toBeNull()
     expect(exportedAtFromFileName(undefined)).toBeNull()
-    expect(parseExportText(`·a\n${T}\nb`, { fileName: '聊天记录_20260915_142841.zip' }).exportedAt).toBe('2026-09-15T06:28:41.000Z')
+    expect(parseExportText(`·a\n${T}\nb`, { fileName: '聊天记录_20260101_120000.zip' }).exportedAt).toBe('2026-01-01T04:00:00.000Z')
   })
 })

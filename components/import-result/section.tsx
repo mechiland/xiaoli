@@ -4,19 +4,22 @@
 import Link from 'next/link'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { PersonRefDTO, ReviewItem } from '@/contracts'
-import { PersonPicker } from '@/components/person-picker'
+import { PersonPicker, usePersonSearch, type PersonPickerCandidate } from '@/components/person-picker'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { personHref } from '@/lib/links'
-import { useBulkAccept, useMergePerson, useRenamePerson } from './data'
-import { byCategory, CATEGORY_LABEL, dateKindLabel, formatPartialDate, GROUP_TITLE, GROUPS, proposedItems, reviewItemKey, type GroupName, type ReviewSection } from './format'
+import { useBulkAccept, useMergePerson, usePersonContexts, useRenamePerson } from './data'
+import { byCategory, CATEGORY_LABEL, dateKindLabel, formatPartialDate, GROUP_TITLE, GROUPS, isLabelEcho, isWrappablePiece, personLabel, proposedItems, reviewItemKey, sectionItems, type GroupName, type ReviewSection } from './format'
 import { ItemRow } from './rows'
+import { useAppTz } from './tz'
 
 export interface SectionProps {
   importId: number
   section: ReviewSection
   marks: Map<string, number>
   isFresh: (key: string) => boolean
+  /** the user's own person: its section heading and mentions read 我 */
+  selfId: number | null
 }
 
 type Chunk = { label: string; items: ReviewItem[] }
@@ -37,7 +40,7 @@ function chunksOf(g: GroupName, items: ReviewItem[]): Chunk[] {
   return items.map((it) => ({ label: it.type === 'event' ? formatPartialDate(it.item.happenedAt) || '时间不详' : '', items: [it] }))
 }
 
-export function PersonSection({ importId, section, marks, isFresh }: SectionProps) {
+export function PersonSection({ importId, section, marks, isFresh, selfId }: SectionProps) {
   const { person } = section
   const bulk = useBulkAccept(importId)
   const proposed = proposedItems(section)
@@ -52,7 +55,7 @@ export function PersonSection({ importId, section, marks, isFresh }: SectionProp
       <header className="flex items-baseline justify-between gap-4 border-b border-line pb-2.5">
         <h2 id={titleId} className="loam-section-title min-w-0 [overflow-wrap:anywhere]">
           <Link href={personHref(person.id)} className="decoration-line-strong decoration-1 underline-offset-[5px] hover:underline">
-            {person.label}
+            {personLabel(person, selfId)}
           </Link>
           {person.isNew && (
             <span className="ml-2.5 inline-block -translate-y-[2px] rounded-[2px] border border-line-strong px-[5px] align-middle font-sans text-[12px] font-normal leading-[18px] tracking-normal text-ink-2">
@@ -78,7 +81,7 @@ export function PersonSection({ importId, section, marks, isFresh }: SectionProp
         </p>
       )}
 
-      {person.isNew && <NewPersonGroup importId={importId} person={person} />}
+      {person.isNew && <NewPersonGroup importId={importId} person={person} itemCount={sectionItems(section).length} />}
 
       {GROUPS.filter((g) => section[g].length > 0).map((g) => (
         <Group key={g} name={g} title={GROUP_TITLE[g]}>
@@ -93,6 +96,8 @@ export function PersonSection({ importId, section, marks, isFresh }: SectionProp
                       key={key}
                       importId={importId}
                       sectionPersonId={person.id}
+                      sectionPersonLabel={person.label}
+                      selfId={selfId}
                       it={it}
                       index={marks.get(`${person.id}:${key}`) ?? 0}
                       oldIndex={it.type === 'claim' && it.replaces ? marks.get(`old:${person.id}:${it.replaces.id}`) : undefined}
@@ -120,7 +125,7 @@ function Group({ name, title, children }: { name: string; title: string; childre
 
 // ---- 新人物 -----------------------------------------------------------------------------------------------------
 
-function NewPersonGroup({ importId, person }: { importId: number; person: PersonRefDTO }) {
+function NewPersonGroup({ importId, person, itemCount }: { importId: number; person: PersonRefDTO; itemCount: number }) {
   const rename = useRenamePerson(importId)
   const [value, setValue] = useState(person.label)
   const [saved, setSaved] = useState(false)
@@ -180,14 +185,40 @@ function NewPersonGroup({ importId, person }: { importId: number; person: Person
           </button>
         </div>
       </div>
-      <MergeDialog importId={importId} person={person} open={mergeOpen} onOpenChange={setMergeOpen} />
+      <MergeDialog importId={importId} person={person} itemCount={itemCount} open={mergeOpen} onOpenChange={setMergeOpen} />
     </Group>
   )
 }
 
-function MergeDialog({ importId, person, open, onOpenChange }: { importId: number; person: PersonRefDTO; open: boolean; onOpenChange: (o: boolean) => void }) {
+/** " · 这次导入新建 · 12 条新信息": the line may break at a separator or inside chat names, never inside a count or date. */
+function ContextPieces({ parts }: { parts: string[] }) {
+  return parts.map((t, i) => (
+    <span key={i}>
+      {' · '}
+      <span data-context-piece className={isWrappablePiece(t) ? undefined : 'whitespace-nowrap'}>
+        {t}
+      </span>
+    </span>
+  ))
+}
+
+/** Same-label people shown first in the picker, each with a context line, so "王小明" and "王小明" can be told apart. */
+const SAME_LABEL_MAX = 5
+
+function MergeDialog({ importId, person, itemCount, open, onOpenChange }: { importId: number; person: PersonRefDTO; itemCount: number; open: boolean; onOpenChange: (o: boolean) => void }) {
   const merge = useMergePerson(importId)
   const [target, setTarget] = useState<PersonRefDTO | null>(null)
+  const sameLabel = usePersonSearch(person.label, { enabled: open })
+  const sameIds = (sameLabel.data ?? [])
+    .filter((h) => h.person.id !== person.id && isLabelEcho(h.person.label, person.label))
+    .slice(0, SAME_LABEL_MAX)
+    .map((h) => h.person.id)
+  const contextIds = target && !sameIds.includes(target.id) ? [...sameIds, target.id] : sameIds
+  const contexts = usePersonContexts(contextIds, open, useAppTz())
+  const candidates: PersonPickerCandidate[] = (sameLabel.data ?? [])
+    .filter((h) => sameIds.includes(h.person.id))
+    .map((h) => ({ personId: h.person.id, label: h.person.label, reason: contexts.get(h.person.id)?.short ?? null }))
+  const targetContext = target ? (contexts.get(target.id)?.full ?? null) : null
 
   const close = (o: boolean) => {
     if (merge.isPending) return
@@ -202,16 +233,30 @@ function MergeDialog({ importId, person, open, onOpenChange }: { importId: numbe
     <Dialog open={open} onOpenChange={close}>
       <DialogContent data-merge-dialog showCloseButton={false} className="gap-0 rounded-[2px] border-line bg-paper p-0 sm:max-w-[440px]">
         <div className="px-5 pb-3 pt-5">
-          <DialogTitle className="font-serif text-[19px] font-semibold leading-8 text-ink">{person.label}其实是……</DialogTitle>
+          <DialogTitle className="font-serif text-[19px] font-semibold leading-8 text-ink [overflow-wrap:anywhere]">{person.label}其实是……</DialogTitle>
           <DialogDescription className="mt-1 text-[14px] leading-6 text-ink-2">
-            {target ? '合并后，这一节的条目都会归到对方名下。' : '选一个已有的人物，把这个新人物合并过去。'}
+            {target ? '合并后，这一节的条目都会归到对方名下。' : candidates.length > 0 ? '选一个已有的人物，把这个新人物合并过去。同名的人物列在最前面。' : '选一个已有的人物，把这个新人物合并过去。'}
           </DialogDescription>
         </div>
         {target ? (
           <div className="border-t border-line px-5 pb-5 pt-4">
-            <p className="text-[15px] leading-7 text-ink">
-              把「{person.label}」合并到「{target.label}」？
+            <p className="text-[15px] leading-7 text-ink [overflow-wrap:anywhere]" data-merge-question>
+              把这次导入新出现的「{person.label}」合并到已有的「{target.label}」？
             </p>
+            <dl className="mt-3 space-y-1 border-l border-line pl-3 text-[13px] leading-6 [overflow-wrap:anywhere]" data-merge-context>
+              <div>
+                <dt className="inline text-ink-2">新出现的「{person.label}」</dt>
+                <dd className="inline text-ink-3">
+                  <ContextPieces parts={['这次导入新建', `${itemCount} 条新信息`]} />
+                </dd>
+              </div>
+              <div>
+                <dt className="inline text-ink-2">已有的「{target.label}」</dt>
+                <dd className="inline text-ink-3" data-merge-target-context>
+                  {targetContext && <ContextPieces parts={targetContext} />}
+                </dd>
+              </div>
+            </dl>
             {merge.isError && (
               <p role="alert" className="mt-2 border-l border-line-strong pl-3 text-[13px] leading-6 text-ink-2">
                 没有合并成功{merge.error.message && merge.error.message !== '服务器出错了' ? `：${merge.error.message}` : ''}
@@ -238,6 +283,7 @@ function MergeDialog({ importId, person, open, onOpenChange }: { importId: numbe
               variant="inline"
               value={null}
               autoFocus
+              candidates={candidates}
               excludeIds={[person.id]}
               placeholder="搜索人物"
               onPick={(p) => p.kind === 'existing' && setTarget(p.person)}

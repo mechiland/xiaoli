@@ -8,13 +8,17 @@ import type { ClaimDTO, ImportantDateDTO, PersonRefDTO, ReviewItem, ReviewReques
 import { cn } from '@/lib/cn'
 import { personHref } from '@/lib/links'
 import { useReviewAction } from './data'
-import { editableText, formatImportantDate, formatPartialDate, HANDLE_KIND_LABEL, nextOccurrenceNote, relationWord, STATUS_LABEL } from './format'
+import { editableText, formatImportantDate, isLabelEcho, formatPartialDate, HANDLE_KIND_LABEL, nextOccurrenceNote, personLabel, relationWord, STATUS_LABEL } from './format'
 
 type ClaimItem = Extract<ReviewItem, { type: 'claim' }>
 
 export interface RowProps {
   importId: number
   sectionPersonId: number
+  /** label of the section's person: a handle repeating it is shown muted */
+  sectionPersonLabel: string
+  /** the user's own person: named 我 in relation phrases and event participants */
+  selfId: number | null
   it: ReviewItem
   /** footnote number of the item */
   index: number
@@ -32,11 +36,12 @@ function Mark({ it, index }: { it: { type: ReviewItem['type']; item: ReviewItem[
   return <EvidenceMark target={{ type: it.type, id: it.item.id }} index={index} sourceKind={it.item.sourceKind} evidenceCount={it.item.evidenceCount} />
 }
 
-function PersonName({ p, self }: { p: PersonRefDTO; self: number }) {
-  if (p.id === self) return <span>{p.label}</span>
+function PersonName({ p, section, selfId }: { p: PersonRefDTO; section: number; selfId: number | null }) {
+  const label = personLabel(p, selfId)
+  if (p.id === section) return <span data-person-name={p.id}>{label}</span>
   return (
-    <Link href={personHref(p.id)} className="loam-link">
-      {p.label}
+    <Link href={personHref(p.id)} className="loam-link" data-person-name={p.id}>
+      {label}
     </Link>
   )
 }
@@ -53,7 +58,7 @@ export function ItemRow(props: RowProps) {
 
 // ---- plain row --------------------------------------------------------------------------------------------------
 
-function PlainRow({ importId, sectionPersonId, it, index, fresh }: RowProps) {
+function PlainRow({ importId, sectionPersonId, sectionPersonLabel, selfId, it, index, fresh }: RowProps) {
   const review = useReviewAction(importId)
   const [editing, setEditing] = useState(false)
   const status = it.item.status
@@ -69,24 +74,29 @@ function PlainRow({ importId, sectionPersonId, it, index, fresh }: RowProps) {
             {it.item.validFrom && <Meta>自{formatPartialDate(it.item.validFrom)}</Meta>}
           </>
         )
-      case 'handle':
+      case 'handle': {
+        // e.g. the real name 王小明 in 王小明's own section (after a merge or a rename): still reviewable, but muted
+        const echo = isLabelEcho(it.item.value, sectionPersonLabel)
         return (
           <>
-            <span className={struck}>
+            <span className={echo && struck === 'text-ink' ? 'text-ink-3' : struck} data-label-echo={echo || undefined}>
               {it.item.kind === 'address_term' ? '被称为' : '又名'}「{it.item.value}」
             </span>
             <Mark it={it} index={index} />
             <Meta>
+              {echo ? '和名字相同 · ' : ''}
               {HANDLE_KIND_LABEL[it.item.kind]}
               {it.item.chatTitle ? ` · ${it.item.chatTitle}` : ''}
             </Meta>
           </>
         )
+      }
       case 'relation':
         return (
           <>
             <span className={struck}>
-              <PersonName p={it.item.from} self={sectionPersonId} /> 是 <PersonName p={it.item.to} self={sectionPersonId} /> 的{relationWord(it.item)}
+              {/* Chinese text: no spaces around 是/的; the link underline marks the names */}
+              <PersonName p={it.item.from} section={sectionPersonId} selfId={selfId} />是<PersonName p={it.item.to} section={sectionPersonId} selfId={selfId} />的{relationWord(it.item)}
             </span>
             <Mark it={it} index={index} />
           </>
@@ -107,7 +117,7 @@ function PlainRow({ importId, sectionPersonId, it, index, fresh }: RowProps) {
             <Mark it={it} index={index} />
             {(it.item.place || others.length > 0) && (
               <Meta>
-                {[it.item.place, others.length ? `和${others.map((p) => p.label).join('、')}` : null].filter(Boolean).join(' · ')}
+                {[it.item.place, others.length ? `和${others.map((p) => personLabel(p, selfId)).join('、')}` : null].filter(Boolean).join(' · ')}
               </Meta>
             )}
           </>
@@ -122,8 +132,8 @@ function PlainRow({ importId, sectionPersonId, it, index, fresh }: RowProps) {
       className={cn('py-[3px] sm:py-[5px]', fresh && 'animate-in fade-in-0 duration-700')}
       // data hooks for scenarios
     >
-      <div data-review-item={`${it.type}:${it.item.id}`} data-status={status} className="flex flex-wrap items-start gap-x-4 sm:flex-nowrap sm:gap-6">
-        <div className={cn('min-w-0 max-w-full border-l pl-3 text-[15px] leading-7 [overflow-wrap:anywhere] sm:flex-1', editing && 'flex-1', ruleByStatus(status))}>
+      <div data-review-item={`${it.type}:${it.item.id}`} data-status={status} className="flex flex-col sm:flex-row sm:items-start sm:gap-6">
+        <div className={cn('min-w-0 border-l pl-3 text-[15px] leading-7 [overflow-wrap:anywhere] sm:flex-1', ruleByStatus(status))}>
           {editing ? (
             it.type === 'date' ? (
               <DateEditor
@@ -148,7 +158,7 @@ function PlainRow({ importId, sectionPersonId, it, index, fresh }: RowProps) {
             content
           )}
         </div>
-        {!editing && <Actions inline status={status} pending={review.isPending} onAccept={() => review.mutate({ it, action: 'accept' })} onReject={() => review.mutate({ it, action: 'reject' })} onEdit={() => setEditing(true)} />}
+        {!editing && <Actions status={status} pending={review.isPending} onAccept={() => review.mutate({ it, action: 'accept' })} onReject={() => review.mutate({ it, action: 'reject' })} onEdit={() => setEditing(true)} />}
       </div>
       {review.isError && <RowError message={review.error.message} onRetry={() => review.variables && review.mutate(review.variables)} />}
     </EvidenceRow>
@@ -228,9 +238,10 @@ function ChangeRow({ importId, it, index, oldIndex, fresh }: RowProps & { it: Cl
 
 // ---- actions ----------------------------------------------------------------------------------------------------
 
-function Actions({ status, pending, onAccept, onReject, onEdit, inline }: { status: Status; pending: boolean; onAccept: () => void; onReject: () => void; onEdit: () => void; inline?: boolean }) {
-  // inline (plain rows): on a phone the actions share the statement's line when it fits, else wrap right-aligned below
-  const box = cn('flex shrink-0 items-center gap-5 text-[13px] leading-7 sm:w-[128px] sm:justify-end sm:gap-4 sm:pl-0', inline ? 'ml-auto sm:ml-0' : 'pl-3 leading-6 sm:leading-7')
+function Actions({ status, pending, onAccept, onReject, onEdit }: { status: Status; pending: boolean; onAccept: () => void; onReject: () => void; onEdit: () => void }) {
+  // One rule for every row type. Desktop: a fixed 128 px right column. Under 640 px: always its own line under the
+  // row text, right-aligned — never inline after a short statement, so a group's actions share one position.
+  const box = 'flex shrink-0 items-center justify-end gap-5 text-[13px] leading-7 sm:w-[128px] sm:gap-4'
   if (status !== 'proposed') {
     return (
       <div className={box} data-row-state={status}>

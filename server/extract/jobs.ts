@@ -150,6 +150,11 @@ export async function processNextJob(
       if (outcome.dedup === 'skipped_deadline') {
         console.log(JSON.stringify({ level: 'info', msg: 'dedup skipped (deadline)', importId, jobId: job.id }))
       }
+      // Schema-invalid items: paths and failing field names only, never values or message text (DECISIONS ## extract X31).
+      const invalid = (outcome.dropped ?? []).filter((d) => d.reason === 'invalid_item' && d.fields?.length)
+      if (invalid.length) {
+        console.log(JSON.stringify({ level: 'warn', msg: 'extract items dropped (invalid_item)', importId, jobId: job.id, items: invalid.map((d) => ({ path: d.path, fields: d.fields })) }))
+      }
     } else {
       code = code ?? outcome.code
       error = `${code}: ${outcome.message}`.slice(0, 500)

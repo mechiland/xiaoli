@@ -12,7 +12,7 @@ import { ApiClientError } from '@/lib/api-client'
 import { cn } from '@/lib/cn'
 import { importHref } from '@/lib/links'
 import { isParseError, parseExportZip, summarize } from '@/lib/wechat-export'
-import { formatRange } from './format'
+import { EXAMPLE_EXPORT_FILE_NAME, formatRange } from './format'
 import { importUrl, requestJson } from './http'
 import { AttachmentPicker, defaultSelection, PreviewStats } from './StepPreview'
 import { buildMappingRequest, initialDraft, StepMapping, type MappingDraft } from './StepMapping'
@@ -434,7 +434,7 @@ function ParseErrorBody({ fileName }: { fileName: string }) {
       <p>
         <FileName name={fileName} />
       </p>
-      <p className="mt-2">支持微信「转发到其他应用」导出的 ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">聊天记录_20260915_142841.zip</span>。</p>
+      <p className="mt-2">支持微信「转发到其他应用」导出的 ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">{EXAMPLE_EXPORT_FILE_NAME}</span>。</p>
     </Notice>
   )
 }

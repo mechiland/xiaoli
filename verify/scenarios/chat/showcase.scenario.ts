@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { Page, Route } from 'playwright'
+import type { MessageDTO } from '@/contracts'
+import { groupTranscript } from '@/components/chat/grouping'
 import { defineScenario } from '@/verify/lib'
 
 // Chat page (SPEC §9.10) on seed data + fixtures:
@@ -170,6 +172,7 @@ export default defineScenario({
     // ---- API ---------------------------------------------------------------------------------------------------
     let midId = 0
     let imageMsgId = 0
+    let imageAttId = 0
     let pendingMsgId = 0
     await step('api: contract and isolation', async () => {
       const d = await api.get<{ participants: unknown[]; imports: unknown[]; chat: { messageCount: number } }>(`/api/chats/${group.id}`)
@@ -191,6 +194,7 @@ export default defineScenario({
       })
       midId = all[Math.floor(all.length / 2)].id
       imageMsgId = all.find((m) => m.attachments.some((a) => a.kind === 'image' && a.uploaded))?.id ?? 0
+      imageAttId = all.find((m) => m.id === imageMsgId)?.attachments.find((a) => a.kind === 'image' && a.uploaded)?.id ?? 0
       check('group has an uploaded image', imageMsgId > 0)
       const around = await api.get<Page_>(`/api/chats/${group.id}/messages?around=${midId}&before=50&after=50`)
       check('around: 101 messages, anchor in the middle', around.json?.messages.length === 101 && around.json?.messages[50].id === midId && around.json?.anchorId === midId)
@@ -300,6 +304,133 @@ export default defineScenario({
       await page.locator('[data-chat-image-viewer]').waitFor({ state: 'detached' })
     })
 
+    // A tall phone screenshot (1280×2800) whose content is only in the top 20%: a centre crop is an empty white box.
+    // The seed's images are small squares, so the attachment stream of the same message is route-replaced with a
+    // canvas-generated PNG (Playwright routes bypass the HTTP cache).
+    const darkShare = async (pngBase64: string) => {
+      const probe = await page.context().newPage()
+      try {
+        return (await probe.evaluate(`(async () => {
+          const img = new Image(); img.src = 'data:image/png;base64,${pngBase64}'; await img.decode()
+          const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight
+          const x = c.getContext('2d'); x.drawImage(img, 0, 0)
+          const d = x.getImageData(4, 4, c.width - 8, c.height - 8).data
+          let dark = 0, n = 0
+          for (let i = 0; i < d.length; i += 4) { n++; if ((d[i] * 3 + d[i + 1] * 6 + d[i + 2]) / 10 < 160) dark++ }
+          return dark / n
+        })()`)) as number
+      } finally {
+        await probe.close()
+      }
+    }
+    await step('tall screenshot thumbnail shows its top', async () => {
+      const b64 = (await page.evaluate(`(() => {
+        const c = document.createElement('canvas'); c.width = 1280; c.height = 2800
+        const x = c.getContext('2d')
+        x.fillStyle = '#ffffff'; x.fillRect(0, 0, 1280, 2800)
+        x.fillStyle = '#2b2b2b'; x.fillRect(0, 0, 1280, 180)
+        x.fillStyle = '#5a5a5a'
+        for (let r = 0; r < 6; r++) x.fillRect(60, 220 + r * 55, r % 2 ? 760 : 1100, 34)
+        return c.toDataURL('image/png').slice('data:image/png;base64,'.length)
+      })()`)) as string
+      const body = Buffer.from(b64, 'base64')
+      await page.route(`**/api/attachments/${imageAttId}`, (route: Route) => route.fulfill({ status: 200, contentType: 'image/png', body }))
+      await helpers.goto(`/chats/${group.id}?at=${imageMsgId}`, { waitFor: '[data-highlight-message] [data-chat-image]' })
+      await page.waitForFunction(`(() => { const i = document.querySelector('[data-highlight-message] [data-chat-image] img'); return !!i && i.complete && i.naturalHeight === 2800 })()`, undefined, { timeout: 15_000 })
+      await helpers.settle({ quietMs: 300 })
+      const thumb = page.locator('[data-highlight-message] [data-chat-image]')
+      const box = (await thumb.boundingBox())!
+      check('tall thumbnail keeps the fixed 180×135 box', Math.round(box.width) === 180 && Math.round(box.height) === 135, box)
+      const pos = await thumb.locator('img').evaluate((i) => getComputedStyle(i).objectPosition)
+      check('tall image is anchored to the top', /^50% 0(%|px)$/.test(pos) || pos === 'center top', { pos })
+      const probeFile = path.join(outDir, `probe-tall-thumb-${width}.png`)
+      await thumb.screenshot({ path: probeFile })
+      const share = await darkShare(readFileSync(probeFile, 'base64'))
+      check('tall thumbnail shows content (not an empty white box)', share > 0.15, { share })
+    })
+    await elementShot('image-tall-thumbnail', '[data-highlight-message]')
+    await step('tall screenshot enlarged shows the whole image', async () => {
+      const thumb = await page.locator('[data-highlight-message] [data-chat-image]').boundingBox()
+      await page.locator('[data-highlight-message] [data-chat-image]').click()
+      await page.locator('[data-chat-image-viewer] img').waitFor()
+      await page.waitForFunction(`(() => { const i = document.querySelector('[data-chat-image-viewer] img'); return !!i && i.complete && i.naturalHeight === 2800 })()`)
+      await page.waitForTimeout(300)
+      const fit = await page.locator('[data-chat-image-viewer] img').evaluate((i) => getComputedStyle(i).objectFit)
+      check('viewer does not crop (object-contain)', fit === 'contain', { fit, thumb })
+    })
+    await shot('image-tall-enlarged', { fullPage: false })
+    await step('close tall viewer', async () => {
+      await page.keyboard.press('Escape')
+      await page.locator('[data-chat-image-viewer]').waitFor({ state: 'detached' })
+      await page.unroute(`**/api/attachments/${imageAttId}`)
+    })
+
+    // A WeChat HEIC photo under a .jpg name (C14): the stream answers 200 but Chrome cannot decode the bytes. The seed has
+    // no such file, so the same message's stream is route-replaced with a synthetic HEIF header ('ftypheic', no image
+    // data). First as the critic saw it (served as image/jpeg), then as the server now serves it (sniffed image/heic).
+    const HEIF = Buffer.from([0, 0, 0, 24, ...Buffer.from('ftypheic'), 0, 0, 0, 0, ...Buffer.from('mif1heic'), ...new Array(4000).fill(9)])
+    const heicAttUrl = `**/api/attachments/${imageAttId}`
+    const checkThumbPlaceholder = async (wantLabel: boolean) => {
+      const row = page.locator('[data-highlight-message]')
+      const ph = row.locator('[data-chat-image-unavailable]')
+      await ph.waitFor({ timeout: 15_000 })
+      if (wantLabel) await page.waitForSelector('[data-highlight-message] [data-chat-image-unavailable][data-format="HEIC"]', { timeout: 10_000 })
+      const box = (await ph.boundingBox())!
+      check('undecodable image: placeholder keeps the 180×135 box', Math.round(box.width) === 180 && Math.round(box.height) === 135, box)
+      check('undecodable image: no <img> left (no broken-image glyph)', (await row.locator('img').count()) === 0)
+      const text = await ph.innerText()
+      check('undecodable image: says it cannot be previewed', text.includes('这张图片无法预览'), { text })
+      if (wantLabel) check('undecodable image: names the format (HEIC)', text.includes('（HEIC）'), { text })
+      const href = await ph.locator('[data-chat-image-download]').getAttribute('href')
+      check('undecodable image: quiet 下载原图 link to the download stream', href === `/api/attachments/${imageAttId}?download=1`, { href })
+    }
+    await step('HEIC named .jpg served as image/jpeg: thumbnail placeholder', async () => {
+      await page.route(heicAttUrl, (route: Route) => route.fulfill({ status: 200, contentType: 'image/jpeg', body: HEIF }))
+      await helpers.goto(`/chats/${group.id}?at=${imageMsgId}`, { waitFor: '[data-highlight-message] [data-chat-image-unavailable]' })
+      await checkThumbPlaceholder(false)
+      await page.unroute(heicAttUrl)
+    })
+    await step('HEIC served as image/heic: thumbnail placeholder names the format', async () => {
+      await page.route(heicAttUrl, (route: Route) => route.fulfill({ status: 200, contentType: 'image/heic', body: HEIF }))
+      await helpers.goto(`/chats/${group.id}?at=${imageMsgId}`, { waitFor: '[data-highlight-message] [data-chat-image-unavailable]' })
+      await helpers.settle({ quietMs: 300 })
+      await checkThumbPlaceholder(true)
+      await page.unroute(heicAttUrl)
+    })
+    await elementShot('image-heic-thumbnail', '[data-highlight-message]')
+    await step('HEIC enlarged: the viewer shows the same placeholder', async () => {
+      // hold the stream until the thumbnail is clicked, so the viewer opens on a still-loading image that then fails
+      let release!: () => void
+      const gate = new Promise<void>((r) => (release = r))
+      await page.route(heicAttUrl, async (route: Route) => {
+        await gate
+        await route.fulfill({ status: 200, contentType: 'image/heic', body: HEIF }).catch(() => undefined)
+      })
+      await page.goto(`/chats/${group.id}?at=${imageMsgId}`, { waitUntil: 'domcontentloaded' })
+      await page.locator('[data-highlight-message] [data-chat-image]').waitFor({ timeout: 30_000 })
+      await page.waitForTimeout(500)
+      await page.locator('[data-highlight-message] [data-chat-image]').click()
+      await page.locator('[data-chat-image-viewer]').waitFor()
+      release()
+      const ph = page.locator('[data-chat-image-viewer] [data-chat-image-unavailable]')
+      await ph.waitFor({ timeout: 15_000 })
+      await page.waitForSelector('[data-chat-image-viewer] [data-chat-image-unavailable][data-format="HEIC"]', { timeout: 10_000 })
+      await page.waitForTimeout(300) // dialog zoom-in animation
+      check('viewer: no <img> left (no broken-image glyph)', (await page.locator('[data-chat-image-viewer] img').count()) === 0)
+      const text = await ph.innerText()
+      check('viewer: placeholder names the format and offers 下载原图', text.includes('这张图片无法预览（HEIC）') && text.includes('下载原图'), { text })
+      const box = (await ph.boundingBox())!
+      const vw = page.viewportSize()!.width
+      check('viewer placeholder is large and fits the viewport', box.height >= 200 && box.x >= 0 && box.x + box.width <= vw, { box, vw })
+      check('viewer still shows the file name', (await page.locator('[data-chat-image-viewer]').innerText()).includes('.jpg'))
+    })
+    await shot('image-heic-enlarged', { fullPage: false })
+    await step('close HEIC viewer', async () => {
+      await page.keyboard.press('Escape')
+      await page.locator('[data-chat-image-viewer]').waitFor({ state: 'detached' })
+      await page.unroute(heicAttUrl)
+    })
+
     await step('image not imported placeholder', async () => {
       await helpers.goto(`/chats/${badminton.id}?at=${pendingMsgId}`, { waitFor: '[data-highlight-message]' })
       check('placeholder "图片未导入" on the target', (await page.locator('[data-highlight-message] [data-chat-image-missing]').innerText()).includes('图片未导入'))
@@ -314,7 +445,11 @@ export default defineScenario({
       const rows = await rowCount()
       const runs = await page.locator('[data-run-start]').count()
       check('first page is 100 messages', rows === 100, { rows })
-      check('consecutive messages merge (fewer runs than rows)', runs < rows, { runs, rows })
+      // The seed's private chat may have no two consecutive messages from one sender within 30 min, so the run count
+      // is compared with the grouping rule on the same first page; merging itself is asserted on the fixture page.
+      const first = await api.get<{ messages: MessageDTO[] }>(`/api/chats/${priv.id}/messages?dir=newer&limit=100`)
+      const expectedRuns = groupTranscript(first.json?.messages ?? []).reduce((n, d) => n + d.runs.length, 0)
+      check('runs follow the grouping rule (same sender, same day, ≤ 30 min)', runs === expectedRuns && runs <= rows, { runs, expectedRuns, rows })
       check('senders link to person pages', /^\/p\/\d+$/.test((await page.locator('[data-sender-link]').first().getAttribute('href')) ?? ''))
       check('private header has one participant', (await page.locator('[data-chat-participants] a').count()) === 1)
     })
@@ -372,7 +507,8 @@ export default defineScenario({
       await page.getByRole('button', { name: '下一步' }).click({ timeout: 20_000 })
       await page.locator('[data-import-overlay][data-step="mapping"]').waitFor({ timeout: 15_000 })
       await helpers.settle({ quietMs: 400 })
-      const checked = page.locator('[data-import-overlay] [role=radiogroup][aria-label="聊天"] [role=radio][aria-checked=true]')
+      // by accessible name: the overlay labels the group with aria-label or aria-labelledby (import I18)
+      const checked = page.locator('[data-import-overlay]').getByRole('radiogroup', { name: '聊天', exact: true }).getByRole('radio', { checked: true })
       check('step 2 has exactly one chat selected', (await checked.count()) === 1)
       const text = await checked.first().innerText()
       check('the selected chat is this chat', text.includes(title), { selected: text, title })
@@ -499,6 +635,10 @@ export default defineScenario({
       for (const t of ['语音 14 秒', '转账', '红包', '视频通话', '动画表情', '链接', '位置', '小程序', '视频号', '名片', '聊天记录', '文件', '视频', '图片未导入']) {
         check(`chip/placeholder ${t}`, (await g.getByText(t, { exact: true }).count()) > 0)
       }
+      const heic = g.locator('[data-chat-image-unavailable]')
+      await heic.first().waitFor({ timeout: 10_000 })
+      await page.waitForSelector('#group [data-chat-image-unavailable][data-format="HEIC"]', { timeout: 10_000 })
+      check('fixture HEIC image shows the placeholder, not a broken image', (await heic.count()) === 1 && (await heic.innerText()).includes('这张图片无法预览（HEIC）'))
       check('unlinked sender shows the raw name without a link', (await g.locator('[data-sender-unlinked]').first().innerText()).includes('装修王师傅'))
       check('linked senders are links', (await g.locator('[data-sender-link]').count()) > 0)
       check('highlighted row', (await g.locator('[data-highlight-message]').count()) === 1)

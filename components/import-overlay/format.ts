@@ -1,6 +1,12 @@
 import type { MessageKind } from '@/contracts'
 import { formatMsgTime } from '@/lib/time'
 
+/**
+ * Example export file name shown in the parse-error notice. Synthetic stamp on purpose: never a real sample's
+ * basename (overall critic r2 #1); same stamp as the empty-home drop zone.
+ */
+export const EXAMPLE_EXPORT_FILE_NAME = '聊天记录_20260101_120000.zip'
+
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KB`

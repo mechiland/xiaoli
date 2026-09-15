@@ -8,6 +8,14 @@ const svg = (fill: string, accent: string) =>
 
 export const FIXTURE_IMAGE = svg('#d9cfb8', '#8f897b')
 
+/** a HEIF header ('ftypheic') with no image data: Chrome cannot decode it, like a WeChat HEIC photo named .jpg (C14) */
+const heif = () => {
+  const b = [0, 0, 0, 24, ...'ftypheic'].map((c) => (typeof c === 'string' ? c.charCodeAt(0) : c))
+  const bytes = [...b, 0, 0, 0, 0, ...[...'mif1heic'].map((c) => c.charCodeAt(0)), ...new Array(40).fill(0)]
+  return `data:image/heic;base64,${btoa(String.fromCharCode(...bytes))}`
+}
+export const FIXTURE_HEIC = heif()
+
 let nextId = 880000
 let seq = 1024
 const PEOPLE = { lin: { id: 870001, label: '林知夏' }, me: { id: 870000, label: '我' }, xu: { id: 870002, label: '许嘉禾' } }
@@ -62,6 +70,11 @@ export const GROUP_MESSAGES: MessageDTO[] = [
     kind: 'image',
     meta: { fileName: '微信图片_20260912_1.jpg' },
     attachments: [{ kind: 'image', fileName: '微信图片_20260912_1.jpg', selected: true, uploaded: true, byteSize: 182_000, mime: 'image/jpeg', url: FIXTURE_IMAGE }],
+  }),
+  msg('2026-09-12 19:20', xu, '[图片] 微信图片_20260912_3.jpg', {
+    kind: 'image',
+    meta: { fileName: '微信图片_20260912_3.jpg' },
+    attachments: [{ kind: 'image', fileName: '微信图片_20260912_3.jpg', selected: true, uploaded: true, byteSize: 64, mime: 'image/jpeg', url: FIXTURE_HEIC }],
   }),
   msg('2026-09-12 19:20', xu, '[图片] 微信图片_20260912_2.jpg', {
     kind: 'image',

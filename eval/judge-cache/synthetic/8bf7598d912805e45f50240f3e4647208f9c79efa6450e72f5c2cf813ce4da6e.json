@@ -1,0 +1,26 @@
+{
+  "inputHash": "8bf7598d912805e45f50240f3e4647208f9c79efa6450e72f5c2cf813ce4da6e",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T18:06:33.719Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "offer入职时间属于事务信息"
+      },
+      {
+        "fpId": "claims#4",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说闺女朵朵，未提性别"
+      }
+    ]
+  }
+}

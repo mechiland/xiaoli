@@ -90,9 +90,12 @@ export function checkGold(gold: GoldFile, parsed: ParsedExport, digest: string, 
   if (gold.zip !== path.basename(zipFile)) errors.push(`zip field "${gold.zip}" does not match file name`)
   if (gold.messageCount !== n) errors.push(`messageCount ${gold.messageCount} != parsed ${n}`)
   if (gold.messagesSha256 !== digest) errors.push('messagesSha256 does not match the current parser output')
+  // §7.2/§7.6: anchors only locate drift. Compare them as errors only when messageCount or messagesSha256 differ; a
+  // fingerprint-only parser change (e.g. wechat-export@2 media names) leaves a stale anchor as a warning.
+  const drift = gold.messageCount !== n || gold.messagesSha256 !== digest
   for (const a of gold.anchors) {
-    if (a.idx >= n) errors.push(`anchor idx ${a.idx} out of range`)
-    else if (parsed.messages[a.idx].fingerprint !== a.fingerprint) errors.push(`anchor idx ${a.idx} fingerprint differs`)
+    if (a.idx >= n) (drift ? errors : warnings).push(`anchor idx ${a.idx} out of range`)
+    else if (parsed.messages[a.idx].fingerprint !== a.fingerprint) (drift ? errors : warnings).push(`anchor idx ${a.idx} fingerprint differs`)
   }
   const ids = new Map<string, number>()
   const persons = new Set<string>()

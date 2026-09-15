@@ -1,5 +1,7 @@
 // Synthetic export builders for tests, benches and the browser perf script. Invented names only — never real data.
-import { zipSync, strToU8, type Zippable } from 'fflate'
+import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate'
+import { buildParsedExport } from '../text'
+import { decodeEntryName } from '../zip'
 
 export interface SynthMessage {
   sender: string
@@ -39,6 +41,42 @@ export function buildExportZip(opts: {
   const zip = zipSync(files, { level: opts.level ?? 6 })
   if (opts.clearUtf8Flag !== false) clearUtf8Flags(zip)
   return zip
+}
+
+/**
+ * Simulates a LATER WeChat export of the same chat: keeps messages [from, to), and renames every generated media file
+ * `微信(图片|视频)_<minute>_<n>.<ext>` to the new export minute with `n` counting from 1 through this export (as WeChat
+ * does), in both the ZIP entries and the message bodies. Only media referenced by kept messages are included.
+ */
+export function reexportZip(zip: Uint8Array, opts: { exportMinute: string; from?: number; to?: number }): Uint8Array {
+  const entries = unzipSync(zip)
+  const byName = new Map<string, Uint8Array>()
+  let txt = ''
+  for (const [raw, bytes] of Object.entries(entries)) {
+    const name = decodeEntryName(raw)
+    if (name.endsWith('.txt')) txt = strFromU8(bytes)
+    else if (!name.endsWith('/')) byName.set(name.slice(name.lastIndexOf('/') + 1), bytes)
+  }
+  const parsed = buildParsedExport(txt)
+  const kept = parsed.messages.slice(opts.from ?? 0, opts.to ?? parsed.messages.length)
+  const renamed = new Map<string, string>()
+  const media: { name: string; bytes: Uint8Array }[] = []
+  let n = 0
+  const msgs = kept.map((m) => ({
+    sender: m.senderName,
+    at: m.sentAt,
+    body: m.body.replace(/微信(图片|视频)_\d{12}_\d+(\.\w+)/g, (old, what: string, ext: string) => {
+      let next = renamed.get(old)
+      if (!next) {
+        next = `微信${what}_${opts.exportMinute}_${++n}${ext}`
+        renamed.set(old, next)
+        const bytes = byName.get(old)
+        if (bytes) media.push({ name: next, bytes })
+      }
+      return next
+    }),
+  }))
+  return buildExportZip({ text: buildExportText(msgs), media })
 }
 
 /** Clear general-purpose bit 11 in every local and central header (walks the central directory). */

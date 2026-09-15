@@ -1,7 +1,7 @@
 'use client'
 // Queries and mutations for the import result page. Shared keys only through `queryKeys` (ARCHITECTURE §2.7).
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type {
   BulkReviewResponse,
   ClaimDTO,
@@ -11,6 +11,8 @@ import type {
   JobsNextResponse,
   JobsRetryResponse,
   MergePersonResponse,
+  ProfileRedirectResponse,
+  ProfileResponse,
   ReviewItem,
   ReviewRequest,
   ReviewResponse,
@@ -19,7 +21,7 @@ import type {
 } from '@/contracts'
 import { ApiClientError } from '@/lib/api-client'
 import { queryKeys } from '@/lib/query'
-import { applyItemUpdate, applyStatus, itemKey, renamePerson } from './format'
+import { applyItemUpdate, applyStatus, itemKey, personContextParts, personContextShort, renamePerson } from './format'
 
 // A tiny typed fetch (same envelope handling as `unwrap`): the RPC client's inferred types for these nested routes
 // are not needed here and keep the page's type-check cheap. DECISIONS import-result IR3.
@@ -200,6 +202,29 @@ export function useMergePerson(importId: number) {
       void qc.invalidateQueries({ queryKey: ['search'] })
     },
   })
+}
+
+/**
+ * "其实是……": one context line per person id ("『装修群』 · 3 个别名 · 2026年9月3日建立"), so two people with the same
+ * label can be told apart. Reads `GET /api/people/:id` (person) under the person page's own key and value shape.
+ * A merged person (redirect) or a failed read gives null: the dialog then shows the label alone.
+ */
+export function usePersonContexts(ids: number[], enabled = true, tz?: string): Map<number, { full: string[]; short: string } | null> {
+  const results = useQueries({
+    queries: ids.map((id) => ({
+      queryKey: queryKeys.person(id),
+      queryFn: () => request<ProfileResponse | ProfileRedirectResponse>('GET', `/api/people/${id}`),
+      enabled,
+      staleTime: 30_000,
+      retry: noRetry4xx,
+    })),
+  })
+  const out = new Map<number, { full: string[]; short: string } | null>()
+  ids.forEach((id, i) => {
+    const d = results[i]?.data
+    out.set(id, d && 'person' in d ? { full: personContextParts(d, tz), short: personContextShort(d, tz) } : null)
+  })
+  return out
 }
 
 export function useRetryFailed(importId: number) {

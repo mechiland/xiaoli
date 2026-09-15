@@ -99,6 +99,12 @@ describe('chat routes', () => {
     // row says uploaded, but the object is gone from R2 (e.g. removed out of band)
     const [gone] = await db.insert(attachments).values(att(msgIds[13], { r2Key: `u/${alice.id}/att/1/gone-img_13.jpg`, byteSize: 4, mime: 'image/jpeg' })).returning()
     ids.attGone = gone.id
+    // a HEIC photo under a .jpg name (WeChat export): stored mime from the extension, bytes are ISO-BMFF 'ftypheic'
+    const heicKey = `u/${alice.id}/att/1/heic-img_14.jpg`
+    const heic = new Uint8Array([0, 0, 0, 24, ...[...'ftypheic'].map((c) => c.charCodeAt(0)), 0, 0, 0, 0, ...[...'mif1heic'].map((c) => c.charCodeAt(0)), ...new Array(3000).fill(9)])
+    await r2.put(heicKey, heic, { httpMetadata: { contentType: 'image/jpeg' } })
+    const [heicRow] = await db.insert(attachments).values(att(msgIds[14], { r2Key: heicKey, fileName: '微信图片_202601011200_1.jpg', byteSize: heic.length, mime: 'image/jpeg' })).returning()
+    ids.attHeic = heicRow.id
 
     const imp = (over: Partial<typeof imports.$inferInsert>) =>
       withOwner<typeof imports>(alice.id, {
@@ -216,6 +222,28 @@ describe('chat routes', () => {
     const missing = await asUserA.request(`/api/attachments/${ids.attPending}`)
     expect(missing.status).toBe(404)
     expect((await json(missing)).error.code).toBe('attachment_missing')
+  })
+
+  it('HEIC bytes named .jpg are served as image/heic, whole; ?download=1 names the file .heic', async () => {
+    const r = await asUserA.request(`/api/attachments/${ids.attHeic}`)
+    expect(r.status).toBe(200)
+    expect(r.headers.get('content-type')).toBe('image/heic')
+    expect(r.headers.get('content-disposition')).toBe('inline')
+    const body = new Uint8Array(await r.arrayBuffer())
+    expect(body.length).toBe(3024)
+    expect(Number(r.headers.get('content-length'))).toBe(3024)
+    expect(String.fromCharCode(...body.subarray(4, 12))).toBe('ftypheic')
+
+    const d = await asUserA.request(`/api/attachments/${ids.attHeic}?download=1`)
+    expect(d.headers.get('content-type')).toBe('image/heic')
+    expect(d.headers.get('content-disposition')).toBe(`attachment; filename="_____202601011200_1.heic"; filename*=UTF-8''${encodeURIComponent('微信图片_202601011200_1.heic')}`)
+    expect((await d.arrayBuffer()).byteLength).toBe(3024)
+
+    // a real PNG keeps its type; a stored non-image type is never upgraded by sniffing
+    const png = await asUserA.request(`/api/attachments/${ids.attUp}?download=1`)
+    expect(png.headers.get('content-type')).toBe('image/png')
+    expect(png.headers.get('content-disposition')).toBe('attachment; filename="x.jpg"; filename*=UTF-8\'\'x.jpg')
+    await png.arrayBuffer()
   })
 
   it('attachment whose R2 object is missing → 404 attachment_missing', async () => {

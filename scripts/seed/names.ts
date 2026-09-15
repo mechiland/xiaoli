@@ -78,3 +78,30 @@ export function generateChineseLabels(rng: Rng, count: number, reserved: readonl
   while (out.length < count) add(rng.pick(weighted))
   return out
 }
+
+/** Birth-cohort feel of a given name: 'old' (born 1950s–60s), 'mid70' (1970s–early 80s), 'mid' (mid 80s–2000), 'young' (2000s–). */
+export type NameEra = 'old' | 'mid70' | 'mid' | 'young'
+const FEMALE_GIVEN = new Set(['雨桐', '佳怡', '梓涵', '文静', '秀英', '雅琴', '欣悦', '若溪', '嘉懿', '诗涵', '靖雯', '书瑶', '语嫣', '清妍', '晨曦', '乐怡', '可欣', '梦洁', '晓燕', '丽华', '秋月', '冬梅', '玉兰', '红霞', '慧敏', '婉清', '雪', '敏', '静'])
+const MALE_GIVEN = new Set(['子墨', '思远', '浩然', '晓峰', '志强', '建国', '俊杰', '明轩', '天佑', '宇航', '皓轩', '景行', '泽宇', '睿哲', '海涛', '春生', '德明', '国栋', '卫东', '小川', '大伟', '立新', '振华', '峰', '磊', '亦凡', '沐阳'])
+const OLD_GIVEN = new Set(['秀英', '建国', '志强', '海涛', '丽华', '春生', '秋月', '冬梅', '德明', '玉兰', '国栋', '卫东', '红霞', '立新', '振华'])
+const MID70_GIVEN = new Set(['晓燕', '大伟', '慧敏', '雅琴', '晓峰', '文静'])
+const YOUNG_GIVEN = new Set(['梓涵', '子墨', '浩然', '一诺', '天佑', '皓轩', '语嫣', '沐阳', '泽宇'])
+const ALL_SURNAMES = Object.values(SURNAMES_BY_LETTER).flat().sort((a, b) => b.length - a.length)
+
+/** Given-name part of a generated Chinese label ('' when the label is not surname + given name). */
+export function givenName(label: string): string {
+  const s = ALL_SURNAMES.find((x) => label.startsWith(x) && label.length > x.length)
+  return s ? label.slice(s.length) : ''
+}
+export function surnameOf(label: string): string {
+  return ALL_SURNAMES.find((x) => label.startsWith(x) && label.length > x.length) ?? label.slice(0, 1)
+}
+/** 'f' | 'm' for gendered given names, null for neutral ones (一诺, 安然, 思齐, 星辰). */
+export function nameGender(label: string): 'f' | 'm' | null {
+  const g = givenName(label)
+  return FEMALE_GIVEN.has(g) ? 'f' : MALE_GIVEN.has(g) ? 'm' : null
+}
+export function nameEra(label: string): NameEra {
+  const g = givenName(label)
+  return OLD_GIVEN.has(g) ? 'old' : MID70_GIVEN.has(g) ? 'mid70' : YOUNG_GIVEN.has(g) ? 'young' : 'mid'
+}

@@ -235,3 +235,66 @@ describe('perfect predictions pass every gate', async () => {
     expect(gatesPassed(sourceGates({ ...base, p95WindowMs: 40000, p95Enforced: true }))).toBe(false)
   })
 })
+
+describe('a new person whose name is a sender alias is a duplicate person, not the sender (overall critic r2)', async () => {
+  const dupGold = baseGold({
+    persons: [
+      { key: 'me', label: '小满', inChat: true },
+      { key: 'a', label: '阿青', inChat: true },
+      { key: 'b', label: '老周', aliases: ['王小明'], inChat: true },
+      { key: 'kid', label: '豆豆', inChat: false },
+    ],
+    claims: [{ id: 'c1', person: 'b', statement: '在银行上班', category: 'work', sensitive: false, evidence: [1] }],
+    handles: [
+      { id: 'h1', person: 'b', kind: 'real_name', value: '王小明', evidence: [2] },
+      { id: 'h2', person: 'kid', kind: 'mentioned', value: '豆豆', evidence: [3] },
+    ],
+    relations: [{ id: 'r1', from: 'b', to: 'kid', type: 'parent', evidence: [4] }],
+    dates: [{ id: 'd1', person: 'b', kind: 'birthday', month: 5, day: 1, calendar: 'solar', evidence: [5] }],
+    events: [{ id: 'e1', summary: '周末去钓鱼', participants: ['b'], evidence: [6] }],
+  })
+  const dupPred = basePred({
+    persons: [
+      { key: 'me', label: '小满', isSelf: true },
+      { key: 'a', label: '阿青', isSelf: false },
+      { key: 'b', label: '老周', isSelf: false },
+      { key: 'new:王小明', label: '王 小明', isSelf: false },
+      { key: 'new:豆豆', label: '豆豆', isSelf: false },
+    ],
+    claims: [claim('new:王小明', '在银行上班', 'work', [1])],
+    handles: [
+      { person: 'new:王小明', kind: 'real_name', value: '王小明', evidence: [2], windowIndex: 0 }, // duplicate person → wrong_person
+      { person: 'new:豆豆', kind: 'mentioned', value: '豆豆', evidence: [3], windowIndex: 0 }, // non-sender new person still maps (TP)
+    ],
+    relations: [{ from: 'new:王小明', to: 'new:豆豆', type: 'parent', evidence: [4], windowIndex: 0 }],
+    dates: [{ person: 'new:王小明', kind: 'birthday', month: 5, day: 1, calendar: 'solar', evidence: [5], windowIndex: 0 }],
+    events: [{ summary: '周末去钓鱼', participants: ['new:王小明'], evidence: [6], windowIndex: 0 }],
+  })
+  const judge = fakeJudge({ matches: { 在银行上班: { gold: 'c1', verdict: 'same' as const }, 周末去钓鱼: { gold: 'e1', verdict: 'same' as const } } })
+  const { counts, details } = await scoreZip({ zipLabel: 'mini.zip', messages, gold: dupGold, pred: dupPred, judge })
+  const m = metricsFromCounts(counts)
+
+  it('the real_name handle of the duplicate is an FP labelled wrong_person, not a TP of the sender', () => {
+    expect(m.handles).toMatchObject({ predicted: 2, tpLenient: 1, fp: 1, goldRequired: 2, goldMatchedStrict: 1 })
+    expect(m.errors.handles).toMatchObject({ wrong_person: 1, other: 0 })
+    expect(details.fp.find((f) => f.type === 'handles')).toMatchObject({ person: 'duplicate:b', label: 'wrong_person', reason: expect.stringContaining('duplicate person') })
+    expect(details.fn.map((f) => f.goldId)).toContain('h1')
+  })
+
+  it("every item of the duplicate is a deterministic wrong_person FP (claims, relations, dates, events)", () => {
+    expect(m.claims).toMatchObject({ predicted: 1, tpLenient: 0, fp: 1 })
+    expect(m.relations).toMatchObject({ predicted: 1, tpLenient: 0, fp: 1 })
+    expect(m.dates).toMatchObject({ predicted: 1, tpLenient: 0, fp: 1 })
+    expect(m.events).toMatchObject({ predicted: 1, tpLenient: 0, fp: 1 })
+    for (const t of ['claims', 'relations', 'dates', 'events'] as const) expect(m.errors[t].wrong_person).toBe(1)
+    expect(judge.inputs.fp).toHaveLength(0)
+    expect(judge.inputs.match.map((i) => i.person.key)).not.toContain('b')
+  })
+
+  it('reports the duplicate person separately from unmatched new persons', () => {
+    expect(m.duplicateSenderPersons).toBe(1)
+    expect(details.duplicatePersons).toEqual([{ key: 'new:王小明', person: 'b' }])
+    expect(m.unmatchedNewPersons).toBe(0)
+    expect(details.unmatchedNewPersons).toEqual([])
+  })
+})

@@ -40,13 +40,13 @@ describe('home (D1 integration)', () => {
     id[key] = row.id
     return row.id
   }
-  async function claim(owner: string, key: string, personId: number, importId: number | null, minute: number, status: 'confirmed' | 'proposed' = 'confirmed') {
+  async function claim(owner: string, key: string, personId: number, importId: number | null, minute: number, status: 'confirmed' | 'proposed' = 'confirmed', sensitive = false) {
     const [row] = await db
       .insert(claims)
       .values(
         withOwner<typeof claims>(
           owner,
-          { personId, statement: `statement ${key}`, statementNorm: `statement ${key}`, category: 'work', learnedAt: at(minute), statusChangedAt: at(minute), confidence: 0.9, sensitive: false, status, importId, sourceKind: 'ai' },
+          { personId, statement: `statement ${key}`, statementNorm: `statement ${key}`, category: 'work', learnedAt: at(minute), statusChangedAt: at(minute), confidence: 0.9, sensitive, status, importId, sourceKind: 'ai' },
           at(minute),
         ),
       )
@@ -90,6 +90,9 @@ describe('home (D1 integration)', () => {
     await claim(a, 'dengProposed', id.deng, id.recent, 30, 'proposed')
     await claim(a, 'selfClaim', id.self, id.recent, 40)
     await claim(a, 'mergedClaim', id.merged, id.recent, 50)
+    // sensitive placeholders confirmed after the meaningful claim: never `latest`, never list a person on their own
+    await claim(a, 'linSensitive', id.lin, id.recent, 60, 'confirmed', true)
+    await claim(a, 'xuSensitive', id.xu, id.recent, 61, 'confirmed', true)
 
     id.linBirthday = await date(a, id.lin, 9, 18)
     await date(a, id.deng, 9, 20, { status: 'proposed' })
@@ -122,6 +125,14 @@ describe('home (D1 integration)', () => {
     expect(home.recentImports.map((r) => r.id)).toEqual([id.recent, id.old5, id.old4, id.old3, id.old2])
     expect(home.recentImports[0]).toMatchObject({ chatTitle: '装修群', dateFrom: '2026-03-02 10:00', status: 'reviewing' })
     expect(() => HomeResponseSchema.parse(home)).not.toThrow()
+  })
+
+  it('recently updated skips sensitive claims, even when confirmed last', async () => {
+    const home = await getHome(db, a, { today: TODAY })
+    const latestIds = home.recentlyUpdated.map((r) => r.latest.id)
+    expect(latestIds).not.toContain(id.linSensitive)
+    expect(home.recentlyUpdated.find((r) => r.person.id === id.lin)?.latest.id).toBe(id.linNew)
+    expect(home.recentlyUpdated.map((r) => r.person.id)).not.toContain(id.xu)
   })
 
   it('isolates owners', async () => {

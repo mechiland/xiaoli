@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { strFromU8, unzipSync } from 'fflate'
 import { describe, expect, it } from 'vitest'
-import { checkCommitted, generateAll, generateEvalExports, OUT_DIR } from '../../scripts/synthetic/generate'
+import { checkCommitted, generateAll, generateEvalExports, generateReexportExports, OUT_DIR } from '../../scripts/synthetic/generate'
 import { declaredKind, MEDIA_DIR, TXT_NAME } from '../../scripts/synthetic/lib'
 import { PERF_FILE } from '../../scripts/synthetic/perf'
 import { HEADER_TIME, splitExportText } from '../../scripts/synthetic/split'
@@ -48,7 +48,8 @@ describe('synthetic generator', () => {
   })
 })
 
-describe.each(exportsList.map((e) => e.file))('%s', (file) => {
+// per-ZIP format checks cover the re-export dedup pair too (not annotated, same §6 layout)
+describe.each([...exportsList, ...generateReexportExports()].map((e) => e.file))('%s', (file) => {
   const zip = readZip(file)
   const intent = intentOf(file)
   const raw = zip[TXT_NAME]

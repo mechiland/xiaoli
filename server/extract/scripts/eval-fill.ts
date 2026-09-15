@@ -3,10 +3,12 @@
 // deterministic pipeline change (validation, guard, dedup inputs) leaves the extract requests byte-identical, so the
 // critic's plain `pnpm eval` replay afterwards hits every cassette and judge cache entry.
 //
-//   node --import tsx server/extract/scripts/eval-fill.ts [--source all|synthetic|real] [--run-id id] [--max-live-tokens 60000] [--no-write]
+//   node --import tsx server/extract/scripts/eval-fill.ts [--source all|synthetic|real] [--run-id id] [--max-live-tokens 60000] [--no-write] [--allow-extract-misses]
 //
-// Live extract calls are refused (the run would no longer measure the recorded prompt version), and live calls stop
-// with budget_exceeded once --max-live-tokens is used up.
+// Live extract calls are refused by default (the run would no longer measure the recorded prompt version), and live
+// calls stop with budget_exceeded once --max-live-tokens is used up. --allow-extract-misses records an extract call
+// only on a cassette miss of the current prompt version: a validation rule that changes which new persons exist changes
+// the known-person list of later windows, so only those windows are recorded (DECISIONS ## extract X30).
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { LlmClient, LlmError, LlmJsonRequest } from '@/server/llm'
@@ -37,6 +39,7 @@ async function main(): Promise<number> {
   const root = paths.root
   const env = loadEnv(root)
   const maxLive = Number(flag('max-live-tokens') ?? 60_000)
+  const allowExtractMisses = process.argv.includes('--allow-extract-misses')
   const source = (flag('source') ?? 'all') as Source | 'all'
   let liveTokens = 0
   const liveByPurpose: Record<string, number> = {}
@@ -77,7 +80,7 @@ async function main(): Promise<number> {
           async completeJson(req) {
             const r = await replay.completeJson(req)
             if (r.ok || r.code !== 'cassette_miss') return r
-            if (req.purpose === 'extract') return r // never re-record extraction here
+            if (req.purpose === 'extract' && !allowExtractMisses) return r // never re-record extraction unless asked
             return record.completeJson(req)
           },
         }

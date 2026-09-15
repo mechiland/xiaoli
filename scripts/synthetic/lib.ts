@@ -182,9 +182,18 @@ export interface ExportDef {
   purpose: string
   /** SPEC §6 text-file edge cases (BOM, CRLF, missing final newline) */
   text?: TextFormat
+  /**
+   * How generated image/video files are named. 'message-time' (default; the round-1 eval ZIPs, whose gold is frozen):
+   * `微信图片_<message minute>_<n>`, identical in every export. 'export-time' (what WeChat does, seen in every real
+   * export): `微信图片_<export minute YYYYMMDDHHMM>_<n>` with n counting from 1 through this export per file type, so
+   * the same photo gets a different name in each export while its bytes stay identical (DECISIONS eval-synthetic E19).
+   */
+  mediaNames?: 'message-time' | 'export-time'
 }
 export interface ChatScript {
   id: string
+  /** 'eval' (default): annotated eval ZIPs. 'reexport': import dedup fixtures only, never annotated or scored. */
+  use?: 'eval' | 'reexport'
   title: string
   kind: 'private' | 'group'
   /** speaker code → display name */
@@ -217,6 +226,8 @@ export interface MediaRef {
   name: string
   kind: 'image' | 'video' | 'file'
   included: boolean
+  /** content identity (the message-time name) when `name` was rewritten for an export: equal key → equal bytes */
+  key?: string
 }
 export interface LaidMessage {
   sender: string
@@ -381,13 +392,13 @@ export function buildZip(messages: LaidMessage[], file: string, extraMedia: { na
   const [y, mo, d, h, mi, s] = exportStamp(file)
   const mtime = new Date(y, mo - 1, d, h, mi, s) // local components → DOS time identical in every TZ
   const entries: Zippable = { [TXT_NAME]: [strToU8(exportTxt(messages, fmt)), { mtime }] }
-  const add = (name: string, kind: 'image' | 'video' | 'file') => {
+  const add = (name: string, kind: 'image' | 'video' | 'file', key = name) => {
     const path = `${MEDIA_DIR}/${name}`
     if (entries[path]) return
-    const bytes = kind === 'image' ? jpegBytes(name) : kind === 'video' ? mp4Bytes(name) : strToU8(`synthetic attachment: ${name}\n`)
+    const bytes = kind === 'image' ? jpegBytes(key) : kind === 'video' ? mp4Bytes(key) : strToU8(`synthetic attachment: ${key}\n`)
     entries[path] = [bytes, { mtime }]
   }
-  for (const m of messages) if (m.media?.included && m.media.name) add(m.media.name, m.media.kind)
+  for (const m of messages) if (m.media?.included && m.media.name) add(m.media.name, m.media.kind, m.media.key)
   for (const e of extraMedia) add(e.name, e.kind)
   return zipSync(entries, { level: 6, mtime })
 }
@@ -400,6 +411,32 @@ export function selfCheck(messages: LaidMessage[], label: string, fmt: TextForma
     const m = messages[i]
     if (s.senderName !== m.sender || s.sentAt !== m.sentAt || s.body !== m.body) throw new Error(`${label}: message ${i} differs after split`)
     if (i > 0 && s.sentAt < split[i - 1].sentAt) throw new Error(`${label}: time goes backwards at ${i}`)
+  })
+}
+
+/** Export minute `YYYYMMDDHHMM` of `聊天记录_YYYYMMDD_HHMMSS.zip`. */
+export function exportMinute(file: string): string {
+  const [y, mo, d, h, mi] = exportStamp(file)
+  const p = (x: number) => String(x).padStart(2, '0')
+  return `${y}${p(mo)}${p(d)}${p(h)}${p(mi)}`
+}
+
+const GENERATED_MEDIA = /^微信(图片|视频)_\d{12}_\d+\.(jpg|mp4)$/
+
+/**
+ * WeChat names exported images/videos by EXPORT time: `微信图片_<export minute>_<n>.jpg`, n = 1, 2, … per file type in
+ * message order. Returns copies of `messages` with body and media renamed; `media.key` keeps the content identity.
+ */
+export function renameMediaForExport(messages: LaidMessage[], file: string): LaidMessage[] {
+  const stamp = exportMinute(file)
+  const counter = new MediaCounter()
+  return messages.map((m) => {
+    if (!m.media || !GENERATED_MEDIA.test(m.media.name)) return m
+    const ext = m.media.kind === 'video' ? 'mp4' : 'jpg'
+    const name = `${m.media.kind === 'video' ? '微信视频' : '微信图片'}_${stamp}_${counter.next(stamp, ext)}.${ext}`
+    const body = m.body.replace(m.media.name, name)
+    if (body === m.body) throw new Error(`${file}: media name ${m.media.name} not found in its body`)
+    return { ...m, body, media: { ...m.media, name, key: m.media.key ?? m.media.name } }
   })
 }
 
@@ -442,6 +479,7 @@ export interface GeneratedExport {
   dateTo: string
   purpose: string
   kind: 'private' | 'group'
+  use: 'eval' | 'reexport'
 }
 
 export function buildExports(script: ChatScript): GeneratedExport[] {
@@ -454,7 +492,10 @@ export function buildExports(script: ChatScript): GeneratedExport[] {
     return { ex, indices }
   })
   return slices.map(({ ex, indices }, si) => {
-    const msgs = indices.map((i) => all[i])
+    const mediaNames = ex.mediaNames ?? 'message-time'
+    const msgs = mediaNames === 'export-time' ? renameMediaForExport(indices.map((i) => all[i]), ex.file) : indices.map((i) => all[i])
+    // round-1 eval windows end at 23:59 of the export day; export-time ZIPs must not contain messages sent after the export
+    if (mediaNames === 'export-time') for (const m of msgs) if (m.sentAt.replace(/[- :]/g, '') > exportMinute(ex.file)) throw new Error(`${ex.file}: message at ${m.sentAt} is after the export time`)
     const fmt = ex.text ?? {}
     selfCheck(msgs, ex.file, fmt)
     const txt = exportTxt(msgs)
@@ -479,9 +520,12 @@ export function buildExports(script: ChatScript): GeneratedExport[] {
       .map((o) => {
         const shared = indices.filter((i) => o.indices.includes(i))
         if (!shared.length) return null
+        const sharedMedia = shared.filter((i) => all[i].media?.name && all[i].media!.kind !== 'file')
         return {
           with: o.ex.file,
           messages: shared.length,
+          /** shared image/video messages that carry a file name, and how many of them are named differently in the two exports */
+          media: { messages: sharedMedia.length, renamed: mediaNames === 'export-time' || o.ex.mediaNames === 'export-time' ? sharedMedia.length : 0 },
           sentAtRange: [all[shared[0]].sentAt, all[shared[shared.length - 1]].sentAt],
           thisIdxRange: [indices.indexOf(shared[0]), indices.indexOf(shared[shared.length - 1])],
           otherIdxRange: [o.indices.indexOf(shared[0]), o.indices.indexOf(shared[shared.length - 1])],
@@ -509,6 +553,8 @@ export function buildExports(script: ChatScript): GeneratedExport[] {
       sensitiveValues: script.sensitiveValues.filter((v) => txt.includes(v)),
       kinds,
       guessedFormats: msgs.flatMap((m, i) => (m.guess ? [{ idx: i, kind: m.kind }] : [])),
+      use: script.use ?? 'eval',
+      mediaNames,
       textFile: { bom: !!fmt.bom, lineEnding: fmt.crlf ? 'crlf' : 'lf', trailingNewline: fmt.trailingNewline !== false },
       edgeCases: edges,
       media: {
@@ -528,6 +574,7 @@ export function buildExports(script: ChatScript): GeneratedExport[] {
       dateTo: msgs[msgs.length - 1].sentAt,
       purpose: ex.purpose,
       kind: script.kind,
+      use: script.use ?? 'eval',
     }
   })
 }

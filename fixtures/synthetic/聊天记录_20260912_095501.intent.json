@@ -517,6 +517,8 @@
       "kind": "forward"
     }
   ],
+  "use": "eval",
+  "mediaNames": "message-time",
   "textFile": {
     "bom": true,
     "lineEnding": "crlf",

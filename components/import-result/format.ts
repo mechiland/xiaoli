@@ -6,11 +6,13 @@ import type {
   ImportantDateDTO,
   ImportReviewResponse,
   PartialDate,
+  ProfileResponse,
   Progress,
   ReviewItem,
   Status,
   TargetType,
 } from '@/contracts'
+import { DEFAULT_TZ, formatIsoDate } from '@/lib/time'
 
 export type Review = ImportReviewResponse
 export type ReviewSection = Review['sections'][number]
@@ -77,6 +79,7 @@ export const reviewItemKey = (it: ReviewItem) => itemKey(it.type, it.item.id)
 
 // ---- text -------------------------------------------------------------------------------------------------------
 
+/** For MsgTime values ('YYYY-MM-DD HH:MM', wall time of the export) only — IsoString values go through formatIsoDate. */
 function ymd(msgTime: string): [number, number, number] | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(msgTime)
   return m ? [+m[1], +m[2], +m[3]] : null
@@ -144,6 +147,72 @@ export function relationWord(r: { type: string; label: string | null }): string 
   return r.label?.trim() || RELATION_TYPE_LABEL[r.type] || r.type
 }
 
+/** The user's own person reads as 我 on this page, as it does on the person page (person P7): "我是林知夏的爸爸". */
+export function personLabel(p: { id: number; label: string }, selfId: number | null | undefined): string {
+  return selfId != null && p.id === selfId ? '我' : p.label
+}
+
+/** Plain text of a relation row: "from是to的word", self endpoints as 我 (the row renders the same parts with links). */
+export function relationText(r: { from: { id: number; label: string }; to: { id: number; label: string }; type: string; label: string | null }, selfId: number | null | undefined): string {
+  return `${personLabel(r.from, selfId)}是${personLabel(r.to, selfId)}的${relationWord(r)}`
+}
+
+/** People named under an empty result: at most `max`, self as 我, plus how many more ("等 12 人"). */
+export function peopleLine(persons: { id: number; label: string }[], selfId: number | null | undefined, max = 8): { shown: { id: number; label: string }[]; more: number } {
+  return { shown: persons.slice(0, max).map((p) => ({ id: p.id, label: personLabel(p, selfId) })), more: Math.max(0, persons.length - max) }
+}
+
+const squash = (s: string) => s.normalize('NFKC').replace(/\s+/g, '').toLowerCase()
+
+/** A handle that only repeats the person's own label ("又名「王小明」" in 王小明's section) adds nothing new. */
+export function isLabelEcho(value: string, label: string): boolean {
+  const v = squash(value)
+  return v !== '' && v === squash(label)
+}
+
+/**
+ * One line that tells two people with the same label apart (其实是…… picker rows and confirm step):
+ * "『装修群』等 2 个聊天 · 3 个别名 · 5 条信息 · 2026年9月3日建立"; a hand-made empty person reads
+ * "没有聊天记录 · 还没有信息 · 2026年9月3日建立".
+ */
+export function personContext(p: ProfileResponse, tz: string = DEFAULT_TZ): string {
+  return personContextParts(p, tz).join(' · ')
+}
+
+/** The pieces of `personContext`, so the dialog can keep each piece (the date above all) on one line. */
+export function personContextParts(p: ProfileResponse, tz: string = DEFAULT_TZ): string[] {
+  const parts: string[] = []
+  const chats = p.infobox.chats
+  if (chats.length === 0) parts.push('没有聊天记录')
+  else parts.push(chats.length === 1 ? `『${chats[0].chat.title}』` : `『${chats[0].chat.title}』等 ${chats.length} 个聊天`)
+  const aliases = new Set<string>()
+  for (const g of p.aliases) for (const h of g.items) if (h.status !== 'rejected' && h.status !== 'superseded' && !isLabelEcho(h.value, p.person.label)) aliases.add(squash(h.value))
+  if (aliases.size > 0) parts.push(`${aliases.size} 个别名`)
+  const claims = p.sections.reduce((n, s) => n + s.claims.filter((c) => c.status === 'confirmed' || c.status === 'proposed').length, 0)
+  parts.push(claims > 0 ? `${claims} 条信息` : chats.length === 0 && aliases.size === 0 ? '还没有信息' : '')
+  // createdAt is an IsoString (UTC): the calendar day is taken in APP_TZ, like every other date the user sees
+  const created = p.person.createdAt ? formatIsoDate(p.person.createdAt, tz) : ''
+  if (created) parts.push(`${created}建立`)
+  return parts.filter(Boolean)
+}
+
+/** A context piece that may break inside: only the chat names ("『…』等 2 个聊天"); counts and the date never do. */
+export const isWrappablePiece = (piece: string) => piece.startsWith('『')
+
+/**
+ * The picker-row version (PersonPicker gives the label and its reason one line): no dates, no chat list, so the label
+ * itself is not squeezed into "林…". "4 个聊天 · 11 个别名 · 57 条信息"; a person made by hand "没有聊天记录 · 2026年9月3日建立".
+ */
+export function personContextShort(p: ProfileResponse, tz: string = DEFAULT_TZ): string {
+  const chats = p.infobox.chats
+  const title = chats[0]?.chat.title ?? ''
+  const parts = [chats.length === 0 ? '没有聊天记录' : chats.length === 1 ? `『${title.length > 8 ? `${title.slice(0, 8)}…` : title}』` : `${chats.length} 个聊天`]
+  const full = personContextParts(p, tz)
+  for (const part of full) if (/个别名$|条信息$/.test(part)) parts.push(part)
+  if (parts.length === 1 && chats.length === 0) parts.push(full[full.length - 1])
+  return parts.join(' · ')
+}
+
 export function editableText(it: ReviewItem): string {
   switch (it.type) {
     case 'claim':
@@ -157,6 +226,24 @@ export function editableText(it: ReviewItem): string {
     case 'date':
       return formatImportantDate(it.item)
   }
+}
+
+/**
+ * Which "nothing here" copy a finished import with no sections gets. Jobs are windows over the messages that were new
+ * at mapping, so `progress.total === 0` means nothing was read (a re-export whose messages were all stored already).
+ * `newMessageCount` alone is not enough: deleting the earlier import hands its messages to this one and recounts it.
+ * No windows but a message count > 0 is exactly that recount: the messages were read by the earlier import, which is
+ * gone now ('read-before'). The SPEC §9.9 copy is only for an extraction that ran and found nothing.
+ */
+export function emptyResultKind(imp: { newMessageCount: number } | undefined, progress: Progress | undefined): 'nothing-new' | 'read-before' | 'no-output' {
+  if (progress?.total === 0) return (imp?.newMessageCount ?? 0) > 0 ? 'read-before' : 'nothing-new'
+  if (imp?.newMessageCount === 0 && !progress?.total) return 'nothing-new'
+  return 'no-output'
+}
+
+/** Header: a finished import whose messages were reassigned from a deleted import ("36 条消息", not "新增 36 条消息"). */
+export function messagesReadBefore(imp: { newMessageCount: number; status: string } | undefined, progress: Progress | undefined): boolean {
+  return !!imp && imp.status !== 'extracting' && imp.status !== 'mapping' && emptyResultKind(imp, progress) === 'read-before'
 }
 
 // ---- progress ---------------------------------------------------------------------------------------------------

@@ -479,6 +479,8 @@
       "kind": "forward"
     }
   ],
+  "use": "eval",
+  "mediaNames": "message-time",
   "textFile": {
     "bom": false,
     "lineEnding": "lf",

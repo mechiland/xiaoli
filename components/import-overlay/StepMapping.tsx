@@ -107,6 +107,17 @@ export function StepMapping({
   })
 
   const pinnedRows = [...recommended, ...(showOthers ? others : others.filter((c) => c.id === selectedExisting))]
+  const hiddenOthers = showOthers ? 0 : others.filter((c) => c.id !== selectedExisting).length
+  const expander =
+    hiddenOthers > 0 ? (
+      <div className="py-2">
+        <button type="button" onClick={() => setShowOthers(true)} className="flex items-center gap-1 text-[13px] text-ink-3 hover:text-ink" disabled={disabled}>
+          {recommended.length ? '选择其他已有聊天' : '选择已有聊天'}
+          <span className="font-data tabular-nums">（{hiddenOthers}）</span>
+          <ChevronDown className="size-3.5" strokeWidth={1.5} aria-hidden />
+        </button>
+      </div>
+    ) : null
 
   return (
     <div className="space-y-8">
@@ -114,33 +125,28 @@ export function StepMapping({
         <h3 id="map-chat" className="mb-1 font-serif text-[16px] font-semibold">
           聊天
         </h3>
-        <p className="mb-3 text-[13px] leading-6 text-ink-3">这些消息属于哪个聊天？已有聊天会按消息内容合并，重复的消息不会再存一遍。</p>
-        <div role="radiogroup" aria-label="聊天" className="divide-y divide-line border-y border-line">
-          {pinnedRows.map((c) => (
-            <ChoiceRow key={c.id} checked={selectedExisting === c.id} onSelect={() => setChat({ kind: 'existing', chatId: c.id })} disabled={disabled}>
-              <span className="min-w-0">
-                <span className="text-[15px]">{c.title}</span>
-                <span className="ml-2 font-data text-[12px] tabular-nums text-ink-3">
-                  {c.kind === 'private' ? '私聊' : '群聊'} · {c.messageCount} 条
+        <p id="map-chat-hint" className="mb-3 text-[13px] leading-6 text-ink-3">这些消息属于哪个聊天？已有聊天会按消息内容合并，重复的消息不会再存一遍。</p>
+        {/* Only radios live inside the radiogroup (ARIA 1.2); the expander and the new-chat details sit beside it. DECISIONS import I18. */}
+        <div className="divide-y divide-line border-y border-line">
+          {expander && !recommended.length && expander}
+          <div role="radiogroup" aria-labelledby="map-chat" aria-describedby="map-chat-hint" onKeyDown={onRadioGroupKeyDown} className="divide-y divide-line" data-chat-choice>
+            {pinnedRows.map((c) => (
+              <ChoiceRow key={c.id} checked={selectedExisting === c.id} onSelect={() => setChat({ kind: 'existing', chatId: c.id })} disabled={disabled}>
+                <span className="min-w-0">
+                  <span className="text-[15px]">{c.title}</span>
+                  <span className="ml-2 font-data text-[12px] tabular-nums text-ink-3">
+                    {c.kind === 'private' ? '私聊' : '群聊'} · {c.messageCount} 条
+                  </span>
+                  {c.matchReason && <span className="block text-[12px] leading-5 text-ink-3">{c.matchReason}</span>}
                 </span>
-                {c.matchReason && <span className="block text-[12px] leading-5 text-ink-3">{c.matchReason}</span>}
-              </span>
+              </ChoiceRow>
+            ))}
+            <ChoiceRow checked={draft.chat.kind === 'new'} onSelect={() => setChat({ kind: 'new' })} disabled={disabled}>
+              <span className="text-[15px]">新建聊天</span>
             </ChoiceRow>
-          ))}
-          {others.length > 0 && !showOthers && (
-            <div className="py-2">
-              <button type="button" onClick={() => setShowOthers(true)} className="flex items-center gap-1 text-[13px] text-ink-3 hover:text-ink" disabled={disabled}>
-                {recommended.length ? '选择其他已有聊天' : '选择已有聊天'}
-                <span className="font-data tabular-nums">（{others.length}）</span>
-                <ChevronDown className="size-3.5" strokeWidth={1.5} aria-hidden />
-              </button>
-            </div>
-          )}
-          <ChoiceRow checked={draft.chat.kind === 'new'} onSelect={() => setChat({ kind: 'new' })} disabled={disabled}>
-            <span className="text-[15px]">新建聊天</span>
-          </ChoiceRow>
+          </div>
           {draft.chat.kind === 'new' && (
-            <div className="grid gap-3 pb-4 pl-7 pt-1 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="grid gap-3 pb-4 pl-7 pt-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <Input
                 aria-label="聊天名称"
                 placeholder={draft.newKind === 'group' ? '聊天名称，例如：家长群' : '聊天名称'}
@@ -150,13 +156,14 @@ export function StepMapping({
                 onChange={(e) => onChange({ ...draft, newTitle: e.target.value })}
                 className="h-9 bg-paper text-[14px]"
               />
-              <div role="radiogroup" aria-label="聊天类型" className="flex h-9 w-fit justify-self-start border border-line text-[13px]">
+              <div role="radiogroup" aria-label="聊天类型" onKeyDown={onRadioGroupKeyDown} className="flex h-9 w-fit justify-self-start border border-line text-[13px]">
                 {(['private', 'group'] as const).map((k) => (
                   <button
                     key={k}
                     type="button"
                     role="radio"
                     aria-checked={draft.newKind === k}
+                    tabIndex={draft.newKind === k ? 0 : -1}
                     disabled={disabled}
                     onClick={() => onChange(withKindDefaults({ ...draft, newKind: k }, k))}
                     className={cn('px-4 transition-colors', draft.newKind === k ? 'bg-ink text-paper' : 'text-ink-2 hover:bg-paper-hover')}
@@ -170,6 +177,7 @@ export function StepMapping({
               )}
             </div>
           )}
+          {expander && recommended.length > 0 && expander}
         </div>
       </section>
 
@@ -214,22 +222,45 @@ export function StepMapping({
   )
 }
 
+const RADIO_STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
+
+/** WAI-ARIA radio group keys: arrows move focus and select (wrapping), Home/End jump. Tab reaches only the checked radio (roving tabindex). */
+function onRadioGroupKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+  const step = RADIO_STEP[e.key]
+  if (step === undefined && e.key !== 'Home' && e.key !== 'End') return
+  const group = e.currentTarget
+  const radios = Array.from(group.querySelectorAll<HTMLButtonElement>('[role="radio"]')).filter((r) => r.closest('[role="radiogroup"]') === group && !r.disabled)
+  const i = radios.indexOf(e.target as HTMLButtonElement)
+  if (i < 0) return
+  e.preventDefault()
+  const next = e.key === 'Home' ? radios[0] : e.key === 'End' ? radios[radios.length - 1] : radios[(i + step + radios.length) % radios.length]
+  next.focus()
+  if (next.getAttribute('aria-checked') !== 'true') next.click()
+}
+
+/** A single-choice row: round mark (a glyph, not a surface — the 2px corner rule does not apply; DECISIONS import I18), unlike step 1's square checkboxes. */
 function ChoiceRow({ checked, onSelect, disabled, children }: { checked: boolean; onSelect: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={checked}
+      tabIndex={checked ? 0 : -1}
       disabled={disabled}
       onClick={onSelect}
-      className="flex w-full items-start gap-3 py-2.5 text-left disabled:cursor-not-allowed"
+      className="group flex w-full items-start gap-3 py-2.5 text-left disabled:cursor-not-allowed"
     >
-      <span
-        aria-hidden
-        className={cn('mt-[7px] grid size-3.5 shrink-0 place-items-center border', checked ? 'border-ink' : 'border-line-strong')}
-      >
-        {checked && <span className="size-1.5 bg-ink" />}
-      </span>
+      <svg aria-hidden data-choice-mark viewBox="0 0 16 16" className="mt-[5px] size-4 shrink-0">
+        <circle
+          cx="8"
+          cy="8"
+          r="6.5"
+          fill="none"
+          strokeWidth="1"
+          className={cn('transition-colors', checked ? 'stroke-ink' : 'stroke-line-strong group-hover:group-enabled:stroke-ink-3')}
+        />
+        {checked && <circle cx="8" cy="8" r="3.5" className="fill-ink" />}
+      </svg>
       {children}
     </button>
   )

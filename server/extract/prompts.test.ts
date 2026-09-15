@@ -40,6 +40,26 @@ describe('prompt files', () => {
     }
   })
 
+  it('extract.v7 asks for completed milestones as events next to the lasting claim, and keeps plans out (X30)', () => {
+    const md = readFileSync(path.join(__dirname, '../../prompts', 'extract.v7.md'), 'utf8')
+    for (const needle of ['**已经发生的**', 'event 和 claim 各记各的', '还没发生的安排、计划和一时的状态不记', '已经离职这件事记成 event']) expect(md).toContain(needle)
+    expect(md).not.toContain('开店、搬家记成 claim，不记 event')
+    const example = JSON.parse(getPrompt('extract.v7').exampleJson) as { events: unknown[] }
+    expect(example.events.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('extract.v8 = extract.v7 + the known-sender rule and partner words as spouse (overall critic r3 #2, X31)', () => {
+    const v7 = readFileSync(path.join(__dirname, '../../prompts', 'extract.v7.md'), 'utf8')
+    const md = readFileSync(path.join(__dirname, '../../prompts', 'extract.v8.md'), 'utf8')
+    for (const needle of ['event 和 claim 各记各的', '已经离职这件事记成 event', '被叫到的发送者就是这个发送者', '不要为这个称呼新建人物', '这些关系一律用 spouse，不用 other']) expect(md).toContain(needle)
+    expect(getPrompt('extract.v8').exampleJson).toBe(getPrompt('extract.v7').exampleJson)
+    expect(getPrompt('extract.v8').userTemplate).toBe(getPrompt('extract.v7').userTemplate)
+    // only additions to v7's system text: every v7 line except the four edited ones is still there
+    const v8Lines = new Set(md.split('\n'))
+    expect(v7.split('\n').filter((l) => !v8Lines.has(l))).toHaveLength(3)
+    expect(promptFeatures('extract.v8')).toEqual({ packMaxMessages: 40, gapMarkers: true, milestoneRules: true })
+  })
+
   it('parser rejects files without sections or with bad example JSON; templates reject unknown placeholders', () => {
     expect(() => parsePromptFile('no front matter')).toThrow()
     expect(() => parsePromptFile('---\nversion: x\n---\n## system\na\n## user_template\nb\n## example_json\n{bad')).toThrow()
@@ -73,8 +93,9 @@ describe('renderExtractPrompt', () => {
   })
 
   it('packs windows and marks session gaps only from extract.v4, so older versions render byte-identically', () => {
-    expect(promptFeatures('extract.v3')).toEqual({ packMaxMessages: null, gapMarkers: false })
-    expect(promptFeatures('extract.v4')).toEqual({ packMaxMessages: 40, gapMarkers: true })
+    expect(promptFeatures('extract.v3')).toEqual({ packMaxMessages: null, gapMarkers: false, milestoneRules: false })
+    expect(promptFeatures('extract.v4')).toEqual({ packMaxMessages: 40, gapMarkers: true, milestoneRules: false })
+    expect(promptFeatures('extract.v7')).toEqual({ packMaxMessages: 40, gapMarkers: true, milestoneRules: true })
     const gapped: WindowInput = { ...input, messages: [...input.messages, { localSeq: 4, sentAt: '2026-05-03 09:00', senderName: '阿明', senderPersonId: 2, kind: 'text', body: '到家了' }] }
     const v4 = renderExtractPrompt(gapped, 'extract.v4')[1].content
     expect(v4).toContain('#3 [2026-05-01 10:02] 山野(1): [语音] 14"\n—— 间隔约47小时，以下是新的一段对话 ——\n#4 [2026-05-03 09:00] 阿明(2): 到家了')

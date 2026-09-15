@@ -65,15 +65,35 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
     db,
     sql`select count(*) as n from messages where owner_id = ${o} and first_import_id = ${i} and exists (${inOtherImport})`,
   )
-  if (reassignedMessages) {
-    await db
-      .update(messages)
-      .set({
-        firstImportId: sql`(select min(im.import_id) from import_messages im where im.message_id = ${messages.id} and im.import_id <> ${i} and im.owner_id = ${o})`,
-        updatedAt: now,
-      })
-      .where(owned(messages, o, eq(messages.firstImportId, i), sql`exists (${inOtherImport})`))
-  }
+  // The receiving imports now first introduce those messages: `new_message_count` of every other import of this chat
+  // is recounted from `messages.first_import_id` in the same atomic batch as the reassign, so an interrupted delete
+  // cannot leave a count behind, and a re-run heals it (DECISIONS import I19).
+  const recount =
+    imp.chatId === null
+      ? []
+      : [
+          db
+            .update(imports)
+            .set({
+              newMessageCount: sql`(select count(*) from messages m where m.owner_id = ${o} and m.first_import_id = ${imports.id})`,
+              updatedAt: now,
+            })
+            .where(owned(imports, o, eq(imports.chatId, imp.chatId), sql`${imports.id} <> ${i}`)),
+        ]
+  await runBatches(db, [
+    ...(reassignedMessages
+      ? [
+          db
+            .update(messages)
+            .set({
+              firstImportId: sql`(select min(im.import_id) from import_messages im where im.message_id = ${messages.id} and im.import_id <> ${i} and im.owner_id = ${o})`,
+              updatedAt: now,
+            })
+            .where(owned(messages, o, eq(messages.firstImportId, i), sql`exists (${inOtherImport})`)),
+        ]
+      : []),
+    ...recount,
+  ])
 
   // M = messages only this import contained.
   const M = sql`select id from messages where owner_id = ${o} and first_import_id = ${i}`

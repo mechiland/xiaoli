@@ -60,3 +60,36 @@
 - workaround: implemented inside server/extract; recorded in DECISIONS ## extract X26, X27
 - blocking: no
 - Resolution (integrator, wave 2, 2026-09-15): ARCHITECTURE §6 updated (text only): `validateOutput` drop reasons add `low_confidence | momentary | ambiguous_handle | redundant`; new "Round-3 rules" sentence after the round-2 rules paragraph covers group-chat vocative handles, the 0.85 confidence floor, momentary statements, redundant student status, `other` label containing a name (plus the duplicate claim), and moving 儿子/女儿/孩子 claims to the child. §7.5 has a note on `server/extract/scripts/eval-fill.ts`. Checked against `server/extract/types.ts` and DECISIONS X26/X27. No other module affected.
+
+## #5 Record extract.v7 and its version-bound validation rules in ARCHITECTURE §6/§7.5
+- status: done
+- requested-by: extract, overall critic fix round 2, 2026-09-16
+- kind: contract (documentation only)
+- paths: ARCHITECTURE.md §6 (promptFeatures signature, validateOutput rules), §7.5 (eval-fill note)
+- change:
+  (a) `promptFeatures(version)` returns `{ packMaxMessages, gapMarkers, milestoneRules }`; `milestoneRules` is true from `extract.v7`. `validateOutput(json, input, opts?: { milestoneRules?: boolean })`; `extractWindow` passes `promptFeatures(version).milestoneRules`. Earlier versions validate exactly as before (extract.v5 replay identical to report `20260915-171445`).
+  (b) Rules applied only with `milestoneRules` (DECISIONS ## extract X30):
+    - private chat: a new person whose every `address_term` handle is said by self, in messages containing the term, resolves to the other sender;
+    - group chat: a new person known only by `real_name` equal to its label (plus "提供过…" claims), with no relations, dates or events, is dropped with its items;
+    - an `other` relation whose label is a partner word (伴侣/女朋友/男朋友/对象/恋人/未婚夫/未婚妻/老婆/老公/妻子/丈夫/爱人) is typed `spouse`;
+    - an item whose evidence messages are all voice/image/video/sticker/video call/recall/transfer is dropped (`invalid_item`);
+    - an event with a plan word (计划/打算/准备/将要/即将/明天/后天/下周/下个月/明年) or a `happenedAt` after the window's last message is dropped (`momentary`); a malformed `happenedAt` is removed.
+  (c) §7.5 note: `server/extract/scripts/eval-fill.ts --allow-extract-misses` records extract calls only on cassette misses of the current prompt version (a rule that changes new persons changes later windows' known-person lists).
+- why: extract.v7 (events for completed milestones, overall critic r2 #1) is registered with cassettes but is not `PROMPT_VERSION`; its rules must not change the outputs of the verified current version.
+- workaround: implemented inside server/extract; recorded in DECISIONS ## extract X30
+- blocking: no
+- Resolution (integrator, wave 4, 2026-09-16): Done (text only). ARCHITECTURE §6: `promptFeatures` returns `milestoneRules` (true from extract.v7), `validateOutput(json, input, opts?: { milestoneRules?: boolean })`, and a new "extract.v7 rules" paragraph after the round-3 rules lists the five X30 rules. The word lists are copied from `server/extract/validate.ts`, which also has 女友/男友 and 下星期. §7.5 notes `--allow-extract-misses`. Checked against `server/extract/{prompt-version,validate,pipeline}.ts` and `scripts/eval-fill.ts`. No other module affected.
+
+## #6 Record the item-level safe defaults and `DroppedItem.fields` in ARCHITECTURE §6
+- status: done
+- requested-by: extract, overall critic fix round 3, 2026-09-16
+- kind: contract (documentation only)
+- paths: ARCHITECTURE.md §6 (`validateOutput` rules; the X4 normalisation sentence "Before the strict parse …")
+- change:
+  (a) Before each item's strict parse, `validateOutput` applies safe defaults (all prompt versions): `claims.sensitive` missing → `false` (strings "true"/"false" → boolean; the sensitive guard still flags and rewrites matching statements); `dates.calendar` missing → `lunar` when an evidence message states a lunar date (农历/阴历/正月/腊月/"三月初八"-type), else `solar`; `newPersons.evidence` missing or empty → the in-window evidence of the items referencing that tempId. `confidence`, `category`, relation `type`, date `kind`, person refs, `participants` and item `evidence` get no default.
+  (b) `DroppedItem` gains optional `fields: string[]` on schema `invalid_item` drops: field paths and zod issue codes (e.g. `sensitive:invalid_type`, `<key>:unrecognized_keys`), never values. `processNextJob` logs them per window (`level: 'warn'`, `msg: 'extract items dropped (invalid_item)'`, `{path, fields}` only).
+  (c) §6/§7.5 note: `prompts/extract.v8.md` (= v7 + known-sender rule + partner words as spouse) is registered, not `PROMPT_VERSION`; `promptFeatures('extract.v8')` equals v7's.
+- why: overall critic r3 #1 — a live claim without `sensitive` was dropped as `invalid_item`, losing a person's only education facts; the cassettes always carry the key, so eval could not show it.
+- workaround: implemented inside server/extract; recorded in DECISIONS ## extract X31
+- blocking: no
+- Resolution (integrator, wave 4, 2026-09-16): Done (text only). ARCHITECTURE §6 has a new "Safe item defaults" paragraph after the extract.v7 rules, covering (a) the defaults and the non-defaulted fields, (b) `DroppedItem.fields` and the per-window warn log, and (c) extract.v8 registered with v7's `promptFeatures`. The code block adds `export interface DroppedItem { path; reason; fields? }`, and the `promptFeatures` comment notes v8. §7.5 notes that registered versions are run with `--prompt`. The requested "Before the strict parse" X4 sentence does not exist in ARCHITECTURE, so the text went in as a new paragraph. Checked against `server/extract/{validate,types,jobs,prompt-version}.ts`. Additive, no other module affected. DECISIONS integrator I19.

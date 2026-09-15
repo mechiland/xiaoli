@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dateAsWritten, daysText, formatPartialDate, linkMentions, markClassFor, parseAnchor, relationPhrase, sentence } from './format'
+import { categoryHint, dateAsWritten, daysText, formatPartialDate, inlinePronoun, linkMentions, markClassFor, parseAnchor, pronoun, relationPhrase, sentence, withPronoun } from './format'
 
 const A = { id: 1, label: '林知夏' }
 const B = { id: 2, label: '王芳' }
@@ -15,6 +15,30 @@ describe('person format helpers', () => {
     expect(relationPhrase({ ...r, type: 'classmate', label: '大学同学' }, 2, 1)).toEqual({ other: A, term: '同学', note: 'TA 是我的大学同学' })
     expect(relationPhrase({ ...r, type: 'other', label: '邻居' }, 2)).toEqual({ other: A, term: '其他关系', note: 'TA 是对方的邻居' })
     expect(relationPhrase({ ...r, type: 'friend', label: '朋友' }, 2)).toEqual({ other: A, term: '朋友', note: null })
+  })
+
+  it('relationPhrase on the user’s own page speaks as 我', () => {
+    // 我(id 2, self) 是 林知夏 的 爸爸
+    const r = { fromPersonId: 2, from: { id: 2, label: '我' }, to: A, type: 'parent', label: '爸爸' }
+    expect(relationPhrase(r, 2, 2)).toEqual({ other: A, term: '子女', note: '我是对方的爸爸' })
+    // explicit flag wins even when the page does not know the self id
+    expect(relationPhrase(r, 2, null, true)).toEqual({ other: A, term: '子女', note: '我是对方的爸爸' })
+    expect(relationPhrase({ ...r, type: 'classmate', label: '大学同学' }, 2, 2)).toEqual({ other: A, term: '同学', note: '我是对方的大学同学' })
+    // another person's page keeps TA
+    expect(relationPhrase({ ...r, fromPersonId: 3 }, 3, 2).note).toBe('TA 是对方的爸爸')
+    expect(JSON.stringify([relationPhrase(r, 2, 2), relationPhrase(r, 2, null, true)])).not.toContain('TA')
+  })
+
+  it('pronoun copy', () => {
+    expect(pronoun(true)).toBe('我')
+    expect(pronoun(false)).toBe('TA')
+    expect(withPronoun(true, '在群里发言 3 条')).toBe('我在群里发言 3 条')
+    expect(withPronoun(false, '在群里发言 3 条')).toBe('TA 在群里发言 3 条')
+    expect(`还没有关于${inlinePronoun(true)}的信息。`).toBe('还没有关于我的信息。')
+    expect(`还没有关于${inlinePronoun(false)}的信息。`).toBe('还没有关于 TA 的信息。')
+    expect(categoryHint('other', true)).toBe('写一句关于我的事')
+    expect(categoryHint('other', false)).toBe('写一句关于 TA 的事')
+    expect(categoryHint('work', true)).toBe(categoryHint('work', false))
   })
 
   it('markClassFor tightens only after full-width punctuation', () => {

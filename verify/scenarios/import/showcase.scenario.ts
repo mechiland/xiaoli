@@ -40,6 +40,7 @@ export default defineScenario({
       await helpers.setInputFiles('input[data-import-file]', [{ name: '聊天记录_20260915_000000.zip', buffer: Buffer.from('这不是一个 zip 文件'), mimeType: 'application/zip' }])
       await atStep('parse_error').waitFor()
       check('parse error copy', await overlay.getByText('无法识别这个文件').isVisible())
+      check('parse error example name is the synthetic stamp', await overlay.getByText('聊天记录_20260101_120000.zip', { exact: true }).isVisible())
     })
     await shot('parse-error', { fullPage: false })
 
@@ -104,6 +105,35 @@ export default defineScenario({
       check('开始 enabled (all mapped)', await overlay.getByRole('button', { name: '开始', exact: true }).isEnabled())
     })
     await shot('step2-recommended', { fullPage: false })
+
+    await step('step 2: chat choice is one radio group (round mark, roving tabindex, arrow keys)', async () => {
+      const group = overlay.locator('[data-chat-choice]')
+      const radios = group.getByRole('radio')
+      check('chat group is a radiogroup named 聊天', (await overlay.getByRole('radiogroup', { name: '聊天', exact: true }).count()) === 1)
+      check('radiogroup holds only radios', (await group.locator(':scope > *:not([role="radio"])').count()) === 0)
+      check('exactly one chat radio checked', (await group.locator('[role="radio"][aria-checked="true"]').count()) === 1)
+      check('mark is round, not a checkbox square', (await group.locator('svg[data-choice-mark] circle').count()) >= (await radios.count()))
+      check('only the checked radio is in the tab order', (await group.locator('[role="radio"][tabindex="0"]').count()) === 1)
+      await group.getByRole('radio', { checked: true }).focus()
+      await helpers.press('ArrowDown')
+      check('ArrowDown selects 新建聊天', (await overlay.getByRole('radio', { name: '新建聊天' }).getAttribute('aria-checked')) === 'true')
+      check('focus follows the selection', await overlay.getByRole('radio', { name: '新建聊天' }).evaluate((el) => el === document.activeElement))
+      check('previous chat unchecked', (await group.locator('[role="radio"][aria-checked="true"]').count()) === 1)
+      const kind = overlay.getByRole('radiogroup', { name: '聊天类型' })
+      await kind.getByRole('radio', { checked: true }).focus()
+      const before = await kind.getByRole('radio', { checked: true }).innerText()
+      await helpers.press('ArrowRight')
+      check('ArrowRight switches the chat kind', (await kind.getByRole('radio', { checked: true }).innerText()) !== before)
+      await helpers.press('ArrowLeft')
+      await group.getByRole('radio', { name: '新建聊天' }).focus()
+    })
+    await shot('step2-keyboard-new', { fullPage: false })
+    await step('ArrowUp returns to the recommended chat', async () => {
+      await helpers.press('ArrowUp')
+      check('ArrowUp selects 一舟 again', (await overlay.getByRole('radio', { name: /一舟/ }).first().getAttribute('aria-checked')) === 'true')
+      check('self row restored', await overlay.locator(`[data-sender-row="${SELF_NAME}"]`).getByText('设置里登记的我的显示名').isVisible())
+      check('开始 enabled again', await overlay.getByRole('button', { name: '开始', exact: true }).isEnabled())
+    })
 
     await step('step 2: sender picker open', async () => {
       await overlay.locator('[data-sender-row="一舟"] button').first().click()

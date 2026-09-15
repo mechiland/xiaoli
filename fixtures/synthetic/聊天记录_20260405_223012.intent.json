@@ -401,6 +401,8 @@
       "kind": "quote"
     }
   ],
+  "use": "eval",
+  "mediaNames": "message-time",
   "textFile": {
     "bom": false,
     "lineEnding": "lf",
@@ -493,6 +495,10 @@
     {
       "with": "聊天记录_20260914_211545.zip",
       "messages": 32,
+      "media": {
+        "messages": 0,
+        "renamed": 0
+      },
       "sentAtRange": [
         "2026-03-22 10:05",
         "2026-04-05 21:45"

@@ -45,3 +45,24 @@ export const ONE_WINDOW: Line[] = [
   { sender: '山野', at: '2026-06-02 20:00', body: '你搬到重庆了？' },
   { sender: '阿明', at: '2026-06-02 20:01', body: '对，上个月搬的，在一家设计公司上班' },
 ]
+
+/**
+ * Private chat: the other sender posts their own shipping block for an order self places for them (overall critic r1 #1).
+ * Idx 0–3, one window. Senders: 王小明 = person "xiaoming", 山野 = self.
+ */
+export const SHIPPING_BLOCK: Line[] = [
+  { sender: '山野', at: '2026-06-10 19:00', body: '你把收货地址发我，我给你下单' },
+  { sender: '小明同学', at: '2026-06-10 19:02', body: '收货人：王小明\n手机号：13900000000\n所在地区：浙江杭州市西湖区\n详细地址：某某小区1号楼101' },
+  { sender: '山野', at: '2026-06-10 19:05', body: '我在京东为你下了一笔订单' },
+  { sender: '小明同学', at: '2026-06-10 19:06', body: '谢谢！' },
+]
+export const SHIPPING_BLOCK_MAPPING = mappingFor('小明同学', 'private', { 山野: 'me', 小明同学: 'xiaoming' }, 'me')
+
+/** Private chat: the child shares a school ceremony post, the parent later asks about going back to school (critic r1 #3). */
+export const CEREMONY: Line[] = [
+  { sender: '小羽毛', at: '2026-06-12 18:00', body: '[视频号] 云杉市第一中学第十五届成人典礼 https://channels.weixin.qq.com/web/pages/feed?eid=synthetic-0201' },
+  { sender: '山野', at: '2026-06-12 18:05', body: '拍得真好' },
+  { sender: '山野', at: '2026-06-14 20:00', body: '儿子，啥时候返校' },
+  { sender: '小羽毛', at: '2026-06-14 20:03', body: '周日下午' },
+]
+export const CEREMONY_MAPPING = mappingFor('小羽毛', 'private', { 山野: 'me', 小羽毛: 'son' }, 'me')

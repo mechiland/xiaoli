@@ -12,15 +12,33 @@ export const CATEGORY_LABEL: Record<Category, string> = {
 }
 export const CATEGORY_ORDER: Category[] = ['work', 'location', 'education', 'family', 'preference', 'life_event', 'other']
 
+/** How page copy names the page's person: the user's own page speaks in the first person (我), every other page says TA. */
+export function pronoun(isSelf: boolean): '我' | 'TA' {
+  return isSelf ? '我' : 'TA'
+}
+
+/** Pronoun at the start of a sentence: "TA 是…" keeps the Latin/CJK space, "我是…" has none. */
+export function withPronoun(isSelf: boolean, rest: string): string {
+  return isSelf ? `我${rest}` : `TA ${rest}`
+}
+
+/** Pronoun between Chinese characters: "关于我的" / "关于 TA 的". */
+export function inlinePronoun(isSelf: boolean): string {
+  return isSelf ? '我' : ' TA '
+}
+
 /** Placeholder for the section "补充" input. */
-export const CATEGORY_HINT: Record<Category, string> = {
-  work: '比如：在杭州一家设计公司做合伙人',
-  location: '比如：现在住在杭州西湖区',
-  education: '比如：在汉中读的高中',
-  family: '比如：有一个上小学的女儿',
-  preference: '比如：不吃香菜',
-  life_event: '比如：2019 年去新疆骑行过一个月',
-  other: '写一句关于 TA 的事',
+export function categoryHint(category: Category, isSelf: boolean): string {
+  const hints: Record<Category, string> = {
+    work: '比如：在杭州一家设计公司做合伙人',
+    location: '比如：现在住在杭州西湖区',
+    education: '比如：在汉中读的高中',
+    family: '比如：有一个上小学的女儿',
+    preference: '比如：不吃香菜',
+    life_event: '比如：2019 年去新疆骑行过一个月',
+    other: `写一句关于${inlinePronoun(isSelf)}的事`,
+  }
+  return hints[category]
 }
 
 /** Alias groups shown on the page (SPEC §9.5). `mentioned` (the name in "@显示名") is a group display name. */
@@ -61,14 +79,20 @@ export interface RelationPhrase {
  * so the term comes from the type (inverted where the type has an inverse: 父母 ↔ 子女, 服务方 ↔ 客户; `other` →
  * 其他关系) and the label moves into a direction note: "子女 · 林知夏  TA 是对方的妈妈".
  */
-export function relationPhrase(r: Pick<RelationDTO, 'fromPersonId' | 'from' | 'to' | 'type' | 'label'>, personId: number, selfId?: number | null): RelationPhrase {
+export function relationPhrase(
+  r: Pick<RelationDTO, 'fromPersonId' | 'from' | 'to' | 'type' | 'label'>,
+  personId: number,
+  selfId?: number | null,
+  /** the page is the user's own person page: the note speaks as 我 ("我是对方的大学同学") */
+  pageIsSelf: boolean = selfId != null && personId === selfId,
+): RelationPhrase {
   const label = r.label?.trim() || null
   const typeLabel = RELATION_TYPE_LABEL[r.type] ?? r.type
   if (r.fromPersonId !== personId) return { other: r.from, term: label ?? typeLabel, note: null }
   const inv = INVERSE_TYPE[r.type]
   const term = inv ? RELATION_TYPE_LABEL[inv] : r.type === 'other' ? '其他关系' : typeLabel
-  const otherIsSelf = selfId != null && r.to.id === selfId
-  const note = label && label !== term ? `TA 是${otherIsSelf ? '我' : '对方'}的${label}` : null
+  const otherIsSelf = !pageIsSelf && selfId != null && r.to.id === selfId
+  const note = label && label !== term ? withPronoun(pageIsSelf, `是${otherIsSelf ? '我' : '对方'}的${label}`) : null
   return { other: r.to, term, note }
 }
 

@@ -8,7 +8,7 @@ import * as schema from '@/server/db/schema'
 import type { Db } from '@/server/db'
 import { createTestDb, createTestUser } from '@/tests/helpers/test-db'
 import { FILLER_KINDS } from './content'
-import { TAGGED_LABELS } from './names'
+import { TAGGED_LABELS, surnameOf } from './names'
 import { DELETE_ORDER, seedAccounts, type SeedResult } from './write'
 
 const TODAY = '2026-09-15'
@@ -273,6 +273,58 @@ describe('pnpm seed dataset', () => {
     expect(await count(schema.claims, eq(schema.claims.ownerId, owners.seed2))).toBe(30)
     const s2chats = await db.select().from(schema.chats).where(eq(schema.chats.ownerId, owners.seed2)).all()
     expect(s2chats).toHaveLength(1)
+  })
+
+  it('each person reads as one life: one current job and home, no repeats, sane history, family surnames line up', async () => {
+    const claims = await db.select().from(schema.claims).where(eq(schema.claims.ownerId, owners.seed)).all()
+    const byPerson = new Map<number, typeof claims>()
+    for (const c of claims) byPerson.set(c.personId, [...(byPerson.get(c.personId) ?? []), c])
+    for (const [pid, cs] of byPerson) {
+      const current = cs.filter((c) => c.status === 'confirmed' && c.validTo === null)
+      expect(current.filter((c) => c.category === 'work' && /^在.+(的.+做|开了一家)/.test(c.statement)).length, `person ${pid} current jobs`).toBeLessThanOrEqual(1)
+      expect(current.filter((c) => c.category === 'location' && c.statement.startsWith('住在')).length, `person ${pid} current homes`).toBeLessThanOrEqual(1)
+      expect(new Set(cs.map((c) => c.statement)).size, `person ${pid} repeated statements`).toBe(cs.length)
+      expect(cs.filter((c) => /^\d{4}年结婚$/.test(c.statement)).length, `person ${pid} weddings`).toBeLessThanOrEqual(1)
+    }
+    const byId = new Map(claims.map((c) => [c.id, c]))
+    for (const old of claims.filter((c) => c.statusReason === 'superseded')) {
+      const next = byId.get(old.supersededByClaimId!)!
+      expect(old.validTo, `claim ${old.id} validTo`).not.toBeNull()
+      if (next.validFrom) expect(old.validTo! <= next.validFrom, `claim ${old.id} ends before its successor starts`).toBe(true)
+      expect(next.category).toBe(old.category)
+      expect(next.learnedAt >= old.learnedAt || next.createdAt! >= old.createdAt!).toBe(true)
+    }
+
+    // the chat message evidencing an AI claim says it: it shares wording with the statement
+    const ev = await db.select().from(schema.evidence).where(and(eq(schema.evidence.ownerId, owners.seed), eq(schema.evidence.targetType, 'claim'))).all()
+    const msgs = new Map((await db.select({ id: schema.messages.id, body: schema.messages.body }).from(schema.messages).where(eq(schema.messages.ownerId, owners.seed)).all()).map((m) => [m.id, m.body]))
+    const bigrams = (t: string) => {
+      const x = t.replace(/[^\p{Script=Han}A-Za-z0-9]/gu, '')
+      return new Set(Array.from({ length: Math.max(0, x.length - 1) }, (_, i) => x.slice(i, i + 2)))
+    }
+    const evBodies = new Map<number, string[]>()
+    for (const e of ev) evBodies.set(e.targetId, [...(evBodies.get(e.targetId) ?? []), msgs.get(e.messageId) ?? ''])
+    for (const c of claims.filter((x) => x.sourceKind === 'ai')) {
+      const want = bigrams(c.statement)
+      const said = (evBodies.get(c.id) ?? []).some((body) => [...bigrams(body)].some((g) => want.has(g)))
+      expect(said, `claim ${c.id} "${c.statement}" is said by its evidence`).toBe(true)
+    }
+
+    const persons = new Map((await db.select().from(schema.persons).where(eq(schema.persons.ownerId, owners.seed)).all()).map((p) => [p.id, p]))
+    const rels = await db.select().from(schema.relations).where(and(eq(schema.relations.ownerId, owners.seed), ne(schema.relations.status, 'rejected'))).all()
+    const spouses = new Map<number, number>()
+    for (const rel of rels) {
+      const from = persons.get(rel.fromPersonId)!
+      const to = persons.get(rel.toPersonId)!
+      if (from.isSelf || to.isSelf) continue
+      if (['爸爸', '哥哥', '弟弟', '姐姐', '妹妹', '堂弟', '堂妹'].includes(rel.label ?? '')) expect(surnameOf(from.label), `${from.label} is ${to.label}'s ${rel.label}`).toBe(surnameOf(to.label))
+      if (rel.type === 'spouse') for (const id of [from.id, to.id]) spouses.set(id, (spouses.get(id) ?? 0) + 1)
+    }
+    for (const [id, n] of spouses) expect(n, `person ${id} spouses`).toBe(1)
+    const long = first.datasets.seed!.refs.persons['long-profile'].id
+    const husband = rels.find((x) => x.toPersonId === long && x.label === '老公')!
+    const daughter = rels.find((x) => x.toPersonId === long && x.label === '女儿')!
+    expect(surnameOf(persons.get(daughter.fromPersonId)!.label)).toBe(surnameOf(persons.get(husband.fromPersonId)!.label))
   })
 
   it('is idempotent and leaves other users untouched', async () => {

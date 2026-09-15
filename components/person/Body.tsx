@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn'
 import { anchorId, personHref } from '@/lib/links'
 import { personApi, useAction } from './api'
 import { ClaimRow, inputCls } from './ClaimRow'
-import { CATEGORY_HINT, CATEGORY_LABEL, CATEGORY_ORDER, formatIsoDay, formatPartialDate, markClassFor, MARK_TIGHT, relationPhrase, RELATION_TYPE_LABEL } from './format'
+import { CATEGORY_LABEL, CATEGORY_ORDER, categoryHint, formatIsoDay, formatPartialDate, inlinePronoun, markClassFor, MARK_TIGHT, relationPhrase, RELATION_TYPE_LABEL } from './format'
 import { Gap, InlineError, Statement, TextButton } from './Statement'
 
 type MarkOf = (type: 'claim' | 'relation' | 'date' | 'event' | 'handle', id: number) => number
@@ -26,10 +26,15 @@ export function BodySections({ profile, markOf, selfId }: { profile: ProfileResp
   const missing = CATEGORY_ORDER.filter((c) => !present.has(c) && adding !== c)
   const byCat = new Map(profile.sections.map((s) => [s.category, s.claims]))
   const personId = profile.person.id
+  const isSelf = profile.person.isSelf
 
   return (
     <div data-block="body">
-      {shown.length === 0 && <p className="loam-prose text-ink-3">还没有关于 TA 的信息。</p>}
+      {shown.length === 0 && (
+        <p data-body-empty className="loam-prose text-ink-3">
+          还没有关于{inlinePronoun(isSelf)}的信息。
+        </p>
+      )}
       {shown.map((c, i) => (
         <section key={c} aria-labelledby={`sec-${c}`} className={cn(i > 0 && 'mt-10')}>
           <h2 id={`sec-${c}`} className={h2}>
@@ -42,6 +47,7 @@ export function BodySections({ profile, markOf, selfId }: { profile: ProfileResp
           </ul>
           <AddClaim
             personId={personId}
+            isSelf={isSelf}
             category={c}
             startOpen={adding === c}
             onClose={() => {
@@ -67,7 +73,7 @@ export function BodySections({ profile, markOf, selfId }: { profile: ProfileResp
   )
 }
 
-function AddClaim({ personId, category, startOpen, onClose }: { personId: number; category: Category; startOpen: boolean; onClose: () => void }) {
+function AddClaim({ personId, isSelf, category, startOpen, onClose }: { personId: number; isSelf: boolean; category: Category; startOpen: boolean; onClose: () => void }) {
   const [open, setOpen] = useState(startOpen)
   const [value, setValue] = useState('')
   const act = useAction()
@@ -106,7 +112,7 @@ function AddClaim({ personId, category, startOpen, onClose }: { personId: number
         maxLength={500}
         value={value}
         disabled={act.pending}
-        placeholder={`${CATEGORY_HINT[category]}，回车保存`}
+        placeholder={`${categoryHint(category, isSelf)}，回车保存`}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === 'Escape' && close()}
         onBlur={() => {
@@ -142,9 +148,9 @@ function ProposedButtons({ onAccept, onReject, disabled }: { onAccept: () => voi
   )
 }
 
-function RelationRow({ r, personId, mark, selfId }: { r: RelationDTO; personId: number; mark: number; selfId: number | null }) {
+function RelationRow({ r, personId, isSelf, mark, selfId }: { r: RelationDTO; personId: number; isSelf: boolean; mark: number; selfId: number | null }) {
   const act = useAction()
-  const phrase = relationPhrase(r, personId, selfId)
+  const phrase = relationPhrase(r, personId, selfId, isSelf)
   const proposed = r.status === 'proposed'
   const link = (
     <Link href={personHref(phrase.other.id)} className="loam-link">
@@ -191,11 +197,13 @@ export function RelationsSection({ profile, markOf, selfId }: { profile: Profile
       {profile.relations.length > 0 ? (
         <ul className="mt-3 space-y-0.5">
           {profile.relations.map((r) => (
-            <RelationRow key={r.id} r={r} personId={personId} mark={markOf('relation', r.id)} selfId={selfId} />
+            <RelationRow key={r.id} r={r} personId={personId} isSelf={profile.person.isSelf} mark={markOf('relation', r.id)} selfId={selfId} />
           ))}
         </ul>
       ) : (
-        <p className="mt-3 pl-[12px] text-[14px] leading-7 text-ink-3">还没有记下 TA 和谁有关系。</p>
+        <p data-relations-empty className="mt-3 pl-[12px] text-[14px] leading-7 text-ink-3">
+          还没有记下{inlinePronoun(profile.person.isSelf)}和谁有关系。
+        </p>
       )}
       {adding ? (
         <AddRelation personId={personId} label={profile.person.label} selfId={selfId} onDone={() => setAdding(false)} />

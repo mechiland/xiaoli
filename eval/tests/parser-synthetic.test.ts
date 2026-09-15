@@ -6,14 +6,14 @@ import path from 'node:path'
 import { strFromU8, unzipSync } from 'fflate'
 import { describe, expect, it } from 'vitest'
 import { parseExportZip } from '@/lib/wechat-export'
-import { generateEvalExports, OUT_DIR } from '../../scripts/synthetic/generate'
+import { generateEvalExports, generateReexportExports, OUT_DIR } from '../../scripts/synthetic/generate'
 import { TXT_NAME } from '../../scripts/synthetic/lib'
 import { PERF_FILE } from '../../scripts/synthetic/perf'
 import { splitExportText } from '../../scripts/synthetic/split'
 import { REPO_ROOT } from '../src/paths'
 
 const SPEC_KINDS = new Set(['text', 'sticker_code', 'image', 'video', 'voice', 'transfer', 'red_packet', 'mini_program', 'channels', 'animated_sticker', 'video_call', 'unknown'])
-const files = [...generateEvalExports().map((e) => e.file), PERF_FILE]
+const files = [...generateEvalExports().map((e) => e.file), ...generateReexportExports().map((e) => e.file), PERF_FILE]
 
 describe.each(files)('parser on %s', (file) => {
   it('splits exactly like the §6 splitter, and SPEC kinds match the generator', async () => {

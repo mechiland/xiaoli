@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LlmError, LlmJsonRequest, LlmJsonResult } from '@/server/llm'
 import { fakeLlm } from '@/tests/helpers/test-db'
-import { parsedChat, TWO_SESSIONS, TWO_SESSIONS_MAPPING } from './__fixtures__/chats'
+import { CEREMONY, CEREMONY_MAPPING, parsedChat, SHIPPING_BLOCK, SHIPPING_BLOCK_MAPPING, TWO_SESSIONS, TWO_SESSIONS_MAPPING } from './__fixtures__/chats'
 import { extractOffline } from './offline'
 import { PROMPT_VERSION } from './prompt-version'
 
@@ -40,6 +40,48 @@ const window1 = {
 }
 
 describe('extractOffline', () => {
+  it('shipping block in a private chat: the real name goes to the sender, no new person (overall critic r1 #1)', async () => {
+    // The model output the critic observed, on invented data: a new person labelled with the recipient name whose only
+    // item is that name as real_name, next to the sender's generic "提供过…" claims.
+    const llm = fakeLlm([
+      () =>
+        ok({
+          ...empty,
+          newPersons: [{ tempId: 't1', label: '王小明', evidence: [2] }],
+          handles: [{ person: { tempId: 't1' }, kind: 'real_name', value: '王小明', evidence: [2] }],
+          claims: [
+            { person: { personId: 2 }, statement: '提供过收货地址', category: 'other', confidence: 0.9, sensitive: true, evidence: [2] },
+            { person: { personId: 2 }, statement: '提供过手机号', category: 'other', confidence: 0.9, sensitive: true, evidence: [2] },
+          ],
+        }),
+    ])
+    const r = await extractOffline({ parsed: parsedChat(SHIPPING_BLOCK), mapping: SHIPPING_BLOCK_MAPPING, llm, model: 'deepseek-flash', deadlinePolicy: 'app' })
+    expect(r.windows.map((w) => w.outcome)).toEqual(['done'])
+    expect(r.persons.filter((p) => p.key.startsWith('new:'))).toEqual([])
+    expect(r.handles).toEqual([{ person: 'xiaoming', kind: 'real_name', value: '王小明', evidence: [1], windowIndex: 0 }])
+    expect(r.claims.map((c) => [c.person, c.statement])).toEqual([
+      ['xiaoming', '提供过收货地址'],
+      ['xiaoming', '提供过手机号'],
+    ])
+  })
+
+  it('ceremony post + "返校": one education claim, not the generic status next to a school read off the post (overall critic r1 #3)', async () => {
+    feats.pack = 40 // as in-app with extract.v4+: the two sessions share one window
+    const llm = fakeLlm([
+      () =>
+        ok({
+          ...empty,
+          claims: [
+            { person: { personId: 2 }, statement: '在上学，是学生', category: 'education', confidence: 0.9, sensitive: false, evidence: [1, 3] },
+            { person: { personId: 2 }, statement: '在云杉市第一中学读书', category: 'education', confidence: 0.9, sensitive: false, evidence: [1] },
+          ],
+        }),
+    ])
+    const r = await extractOffline({ parsed: parsedChat(CEREMONY), mapping: CEREMONY_MAPPING, llm, model: 'deepseek-flash', deadlinePolicy: 'app' })
+    // the school is only in the shared post's title; the chat text ("返校") supports the status
+    expect(r.claims.map((c) => [c.person, c.statement])).toEqual([['son', '在上学，是学生']])
+  })
+
   it('drops the generic student status when an earlier window of the import already proposed a grade', async () => {
     const llm = fakeLlm([
       (req) => {
@@ -53,7 +95,7 @@ describe('extractOffline', () => {
                 // evidence #2 mentions "老师", so the in-window check keeps it; the earlier grade makes it redundant
                 claims: [
                   { person: { tempId: 't1' }, statement: '在上学，是学生', category: 'education', confidence: 0.9, sensitive: false, evidence: [2] },
-                  { person: { tempId: 't1' }, statement: '下个月答辩', category: 'education', confidence: 0.9, sensitive: false, evidence: [1] },
+                  { person: { tempId: 't1' }, statement: '研究方向是高分子材料', category: 'education', confidence: 0.9, sensitive: false, evidence: [1] },
                 ],
               },
         )
@@ -61,7 +103,7 @@ describe('extractOffline', () => {
     ])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm, model: 'deepseek-flash', deadlinePolicy: 'app' })
     expect(r.windows.map((w) => w.outcome)).toEqual(['done', 'done'])
-    expect(r.claims.map((c) => c.statement)).toEqual(['读研二', '下个月答辩'])
+    expect(r.claims.map((c) => c.statement)).toEqual(['读研二', '研究方向是高分子材料'])
   })
 
   it('plans windows, resolves tempIds across windows, dedups, guards sensitive text and maps evidence to idx', async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { applySensitiveGuard } from './sensitive'
 import type { WindowInput } from './types'
 import { validateOutput } from './validate'
 
@@ -288,6 +289,146 @@ describe('validateOutput', () => {
     expect(statements(knownGrade)).toEqual([])
   })
 
+  it('drops the generic student status next to a named school or "在…读书", but not next to a past school, a major or a teaching job', () => {
+    const base = input(4, { chat: { title: '小羽毛', kind: 'private' } })
+    base.messages[0].body = '一中成人典礼'
+    base.messages[2].body = '儿子，啥时候返校'
+    const student = claim({ statement: '在上学，是学生', category: 'education', evidence: [1, 3] })
+    const statementsWith = (other: Record<string, unknown>) => {
+      const r = validateOutput({ claims: [student, claim({ category: 'education', evidence: [1], ...other })] }, base)
+      if ('error' in r) throw new Error('unexpected')
+      return r.output.claims.map((c) => c.statement)
+    }
+    expect(statementsWith({ statement: '在云杉市第一中学读书' })).toEqual(['在云杉市第一中学读书'])
+    expect(statementsWith({ statement: '在云杉上学' })).toEqual(['在云杉上学'])
+    expect(statementsWith({ statement: '云杉市第一中学学生' })).toEqual(['云杉市第一中学学生'])
+    expect(statementsWith({ statement: '之前在上海上学' })).toEqual(['在上学，是学生', '之前在上海上学'])
+    expect(statementsWith({ statement: '武汉大学计算机系毕业' })).toEqual(['在上学，是学生', '武汉大学计算机系毕业'])
+    expect(statementsWith({ statement: '学机械专业' })).toEqual(['在上学，是学生', '学机械专业'])
+    expect(statementsWith({ statement: '在第一中学教物理', category: 'work' })).toEqual(['在上学，是学生', '在第一中学教物理'])
+
+    // the school only in a shared post title: the text-supported status stays, the inferred school claim goes
+    const shared = input(4, { chat: { title: '小羽毛', kind: 'private' } })
+    shared.messages[0] = { ...shared.messages[0], kind: 'channels', body: '[视频号] 云杉市第一中学第十五届成人典礼' }
+    shared.messages[2].body = '儿子，啥时候返校'
+    const s = validateOutput({ claims: [student, claim({ statement: '在云杉市第一中学读书', category: 'education', evidence: [1] })] }, shared)
+    if ('error' in s) throw new Error('unexpected')
+    expect(s.output.claims.map((c) => c.statement)).toEqual(['在上学，是学生'])
+    expect(s.dropped).toEqual([{ path: 'claims[1]', reason: 'redundant' }])
+    // …unless the school is also said in text
+    const said = validateOutput({ claims: [student, claim({ statement: '在云杉市第一中学读书', category: 'education', evidence: [1, 3] })] }, shared)
+    if ('error' in said) throw new Error('unexpected')
+    expect(said.output.claims.map((c) => c.statement)).toEqual(['在云杉市第一中学读书'])
+
+    const known = base.known.map((p) => (p.personId === 2 ? { ...p, claims: [{ id: 52, statement: '在云杉市第一中学读书', category: 'education' as const }] } : p))
+    const r = validateOutput({ claims: [student] }, { ...base, known })
+    if ('error' in r) throw new Error('unexpected')
+    expect(r.output.claims).toEqual([])
+    expect(r.dropped).toEqual([{ path: 'claims[0]', reason: 'redundant' }])
+  })
+
+  it('private chat: folds a new person that is only the other sender writing their own name (shipping block) into that sender', () => {
+    const shipping = (over: Partial<WindowInput> = {}) => {
+      const w = input(4, { chat: { title: '阿明', kind: 'private' }, ...over })
+      w.messages[1].body = '收货人：王小明\n手机号：13900000000\n所在地区：浙江杭州市西湖区\n详细地址：某某小区1号楼101'
+      w.messages[2].body = '我在京东为你下了一笔订单'
+      return w
+    }
+    const output = (extra: Record<string, unknown[]> = {}) => ({
+      newPersons: [{ tempId: 't1', label: '王小明', evidence: [2] }],
+      handles: [{ person: { tempId: 't1' }, kind: 'real_name', value: '王小明', evidence: [2] }],
+      claims: [
+        claim({ statement: '提供过收货地址', category: 'other', sensitive: true, evidence: [2] }),
+        claim({ person: { tempId: 't1' }, statement: '提供过手机号', category: 'other', sensitive: true, evidence: [2] }),
+      ],
+      ...extra,
+    })
+
+    const r = validateOutput(output(), shipping())
+    if ('error' in r) throw new Error('unexpected')
+    expect(r.output.newPersons).toEqual([])
+    expect(r.output.handles).toEqual([{ person: { personId: 2 }, kind: 'real_name', value: '王小明', evidence: [2] }])
+    expect(r.output.claims.map((c) => [c.person, c.statement])).toEqual([
+      [{ personId: 2 }, '提供过收货地址'],
+      [{ personId: 2 }, '提供过手机号'],
+    ])
+
+    // group chat, extract.v7+ (X30): a name-only contact block person is dropped with its items, never folded into the poster
+    const group = validateOutput(output(), shipping({ chat: { title: '阿明', kind: 'group' } }), { milestoneRules: true })
+    if ('error' in group) throw new Error('unexpected')
+    expect(group.output.newPersons).toEqual([])
+    expect(group.output.handles).toEqual([])
+    expect(group.output.claims.map((c) => [c.person, c.statement])).toEqual([[{ personId: 2 }, '提供过收货地址']])
+
+    // not folded: the name also written by self; more is said about the person (relation, a real fact)
+    const kept = (res: ReturnType<typeof validateOutput>) => ('error' in res ? [] : res.output.newPersons.map((p) => p.label))
+    expect(kept(validateOutput(output(), shipping({ chat: { title: '阿明', kind: 'group' } })))).toEqual(['王小明']) // before extract.v7: group chats left alone
+    expect(kept(validateOutput(output({ claims: [claim({ person: { tempId: 't1' }, statement: '住在杭州', category: 'location', evidence: [2] })] }), shipping({ chat: { title: '阿明', kind: 'group' } })))).toEqual(['王小明'])
+    const selfWrites = shipping()
+    selfWrites.messages[2].body = '王小明，订单下好了'
+    expect(kept(validateOutput(output(), selfWrites))).toEqual(['王小明'])
+    expect(kept(validateOutput(output({ relations: [{ from: { tempId: 't1' }, to: { personId: 2 }, type: 'parent', label: '妈妈', evidence: [2] }] }), shipping()))).toEqual(['王小明'])
+    expect(kept(validateOutput(output({ claims: [claim({ person: { tempId: 't1' }, statement: '住在杭州', category: 'location', evidence: [2] })] }), shipping()))).toEqual(['王小明'])
+  })
+
+  it('extract.v7+, private chat: a new person whom self addresses is the other sender (X30)', () => {
+    // messages: #1 self, #2 阿明, #3 self, #4 阿明
+    const chat = (kind: 'private' | 'group' = 'private') => {
+      const w = input(4, { chat: { title: '阿明', kind } })
+      w.messages[2].body = '好的，小宝，早点睡'
+      w.messages[3].body = '知道啦，下周回学校'
+      return w
+    }
+    const output = (termEvidence = [3]) => ({
+      newPersons: [{ tempId: 't1', label: '小宝', evidence: [3] }],
+      handles: [{ person: { tempId: 't1' }, kind: 'address_term', value: '小宝', evidence: termEvidence }],
+      relations: [
+        { from: { personId: 1 }, to: { tempId: 't1' }, type: 'parent', label: '妈妈', evidence: [3] },
+        { from: { personId: 2 }, to: { tempId: 't1' }, type: 'parent', label: '爸爸', evidence: [3] },
+      ],
+      claims: [claim({ person: { tempId: 't1' }, statement: '在杭州读大学', category: 'education', evidence: [4] })],
+    })
+    const r = validateOutput(output(), chat(), { milestoneRules: true })
+    if ('error' in r) throw new Error('unexpected')
+    expect(r.output.newPersons).toEqual([])
+    expect(r.output.handles).toEqual([{ person: { personId: 2 }, kind: 'address_term', value: '小宝', evidence: [3] }])
+    expect(r.output.relations.map((x) => [x.from, x.to, x.type])).toEqual([[{ personId: 1 }, { personId: 2 }, 'parent']])
+    expect(r.output.claims.map((c) => [c.person, c.statement])).toEqual([[{ personId: 2 }, '在杭州读大学']])
+
+    const kept = (res: ReturnType<typeof validateOutput>) => ('error' in res ? [] : res.output.newPersons.map((p) => p.label))
+    // said by the other sender (the listener is self), or in a group chat (the listener can be anyone): stays new
+    const other = chat()
+    other.messages[3].body = '小宝，你也早点睡'
+    expect(kept(validateOutput(output([4]), other, { milestoneRules: true }))).toEqual(['小宝'])
+    expect(kept(validateOutput(output(), chat('group'), { milestoneRules: true }))).toEqual(['小宝'])
+    // before extract.v7 the rule is off
+    expect(kept(validateOutput(output(), chat()))).toEqual(['小宝'])
+  })
+
+  it('extract.v7+: types partner `other` relations as spouse and drops items resting only on invisible messages (X30)', () => {
+    const w = input(5)
+    w.messages[1].kind = 'voice'
+    w.messages[1].body = '[语音] 6"'
+    const r = validateOutput(
+      {
+        relations: [
+          { from: { personId: 2 }, to: { personId: 1 }, type: 'other', label: '带回家见家长的女朋友', evidence: [3] },
+          { from: { personId: 2 }, to: { personId: 1 }, type: 'sibling', label: '弟弟', evidence: [2] },
+        ],
+        claims: [claim({ statement: '喜欢唱歌', evidence: [2] }), claim({ statement: '在上海做护士', evidence: [2, 4] })],
+      },
+      w,
+      { milestoneRules: true },
+    )
+    if ('error' in r) throw new Error('unexpected')
+    expect(r.output.relations.map((x) => [x.type, x.label])).toEqual([['spouse', '带回家见家长的女朋友']])
+    expect(r.output.claims.map((c) => c.statement)).toEqual(['在上海做护士'])
+    expect(r.dropped).toEqual([
+      { path: 'relations[1]', reason: 'invalid_item' },
+      { path: 'claims[0]', reason: 'invalid_item' },
+    ])
+  })
+
   it('drops a solar date the model converted from a lunar date on the same messages', () => {
     const r = validateOutput(
       {
@@ -316,9 +457,121 @@ describe('validateOutput', () => {
     expect(r.output.dates[0].person).toEqual({ personId: 2 })
   })
 
+  it('extract.v7+: drops events that have not happened yet (plan words or a date after the last message), strips malformed dates', () => {
+    const base = input(5)
+    base.messages.forEach((m, i) => (m.sentAt = `2026-05-0${i + 1} 10:00`))
+    const ev = (over: Record<string, unknown>) => ({ summary: '阿明和小禾在老家办婚礼', participants: [{ personId: 2 }], evidence: [2], ...over })
+    const r = validateOutput(
+      {
+        events: [
+          ev({ happenedAt: '2026-05-03' }),
+          ev({ summary: '阿明打算下个月搬到杭州', evidence: [3] }),
+          ev({ summary: '阿明的火锅店开业', happenedAt: '2026-06', evidence: [4] }),
+          ev({ summary: '全家一起吃饭给周明庆生', happenedAt: '5月初', evidence: [5] }),
+          ev({ summary: '周明从原公司离职', happenedAt: '2026-05', evidence: [1] }),
+        ],
+      },
+      base,
+      { milestoneRules: true },
+    )
+    if ('error' in r) throw new Error('unexpected')
+    expect(r.output.events.map((e) => [e.summary, e.happenedAt])).toEqual([
+      ['阿明和小禾在老家办婚礼', '2026-05-03'],
+      ['全家一起吃饭给周明庆生', undefined],
+      ['周明从原公司离职', '2026-05'],
+    ])
+    expect(r.output.events[1]).not.toHaveProperty('happenedAt')
+    expect(r.dropped).toEqual([
+      { path: 'events[1]', reason: 'momentary' },
+      { path: 'events[2]', reason: 'momentary' },
+    ])
+  })
+
   it('does not accept self when no self person exists', () => {
     const r = validateOutput({ claims: [claim({ person: { personId: 0 } })] }, input(5, { selfPersonId: 0 }))
     if ('error' in r) throw new Error('unexpected')
     expect(r.output.claims).toEqual([])
+  })
+
+  describe('safe defaults for omitted fields (overall critic r3 #1, X31)', () => {
+    const privateChat = (): WindowInput => ({
+      chat: { title: '周小舟', kind: 'private' },
+      selfPersonId: 1,
+      known: [
+        { personId: 1, label: '我', handles: [{ kind: 'display_private', value: '我' }], claims: [] },
+        { personId: 2, label: '周小舟', handles: [{ kind: 'display_private', value: '周小舟' }], claims: [] },
+      ],
+      messages: [
+        { localSeq: 1, sentAt: '2026-08-26 06:46', senderName: '我', senderPersonId: 1, kind: 'text', body: '儿子，啥时候返校' },
+        { localSeq: 2, sentAt: '2026-08-26 07:10', senderName: '周小舟', senderPersonId: 2, kind: 'text', body: '下周一返校，高二开学' },
+        { localSeq: 3, sentAt: '2026-08-26 07:12', senderName: '周小舟', senderPersonId: 2, kind: 'text', body: '新号码 138 1234 5678，旧的别打了' },
+        { localSeq: 4, sentAt: '2026-08-26 07:15', senderName: '我', senderPersonId: 1, kind: 'text', body: '你外婆农历三月初八生日，记得打电话' },
+        { localSeq: 5, sentAt: '2026-08-26 07:16', senderName: '周小舟', senderPersonId: 2, kind: 'text', body: '同桌小安9月20号生日' },
+      ],
+    })
+    const noSensitive = (over: Record<string, unknown>) => {
+      const { sensitive: _s, ...c } = claim(over)
+      return c
+    }
+
+    it('keeps a claim without `sensitive` as sensitive=false', () => {
+      const r = validateOutput({ claims: [noSensitive({ statement: '在读高二', category: 'education', evidence: [2] })] }, privateChat())
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.dropped).toEqual([])
+      expect(r.output.claims).toEqual([{ person: { personId: 2 }, statement: '在读高二', category: 'education', confidence: 0.9, sensitive: false, evidence: [2] }])
+    })
+
+    it('a phone-number statement without `sensitive` is rewritten to 提供过手机号 and flagged by the guard', () => {
+      const r = validateOutput({ claims: [noSensitive({ statement: '手机号是13812345678', category: 'other', evidence: [3] })] }, privateChat())
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.output.claims).toHaveLength(1)
+      const g = applySensitiveGuard(r.output)
+      expect(g.output.claims).toEqual([expect.objectContaining({ statement: '提供过手机号', sensitive: true })])
+      expect(g.rewritten).toBe(1)
+    })
+
+    it('reads "true"/"false" strings for `sensitive`; other bad values still drop the item', () => {
+      const r = validateOutput({ claims: [claim({ statement: '在读高二', evidence: [2], sensitive: 'false' }), claim({ statement: '喜欢打篮球', evidence: [2], sensitive: 'maybe' })] }, privateChat())
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.output.claims.map((c) => [c.statement, c.sensitive])).toEqual([['在读高二', false]])
+      expect(r.dropped).toEqual([{ path: 'claims[1]', reason: 'invalid_item', fields: ['sensitive:invalid_type'] }])
+    })
+
+    it('defaults a missing date calendar from its evidence: lunar only when a message states a lunar date', () => {
+      const r = validateOutput(
+        {
+          newPersons: [{ tempId: 't1', label: '外婆', evidence: [4] }, { tempId: 't2', label: '小安', evidence: [5] }],
+          dates: [
+            { person: { tempId: 't1' }, kind: 'birthday', month: 3, day: 8, evidence: [4] },
+            { person: { tempId: 't2' }, kind: 'birthday', month: 9, day: 20, evidence: [5] },
+          ],
+        },
+        privateChat(),
+      )
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.output.dates.map((d) => d.calendar)).toEqual(['lunar', 'solar'])
+    })
+
+    it('gives a new person without evidence the evidence of the items about it', () => {
+      const r = validateOutput(
+        { newPersons: [{ tempId: 't1', label: '小安' }], claims: [noSensitive({ person: { tempId: 't1' }, statement: '是周小舟的同桌', category: 'other', evidence: ['#5'] })] },
+        privateChat(),
+      )
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.output.newPersons).toEqual([{ tempId: 't1', label: '小安', evidence: [5] }])
+      expect(r.output.claims).toHaveLength(1)
+    })
+
+    it('does not default confidence or category; the drop names the failing fields without values', () => {
+      const { confidence: _c, category: _k, ...bare } = claim({ statement: '在读高二', evidence: [2] })
+      const r = validateOutput({ claims: [bare, claim({ statement: '在读高二', evidence: [2], mood: '开心' })] }, privateChat())
+      if ('error' in r) throw new Error('unexpected')
+      expect(r.output.claims).toEqual([])
+      expect(r.dropped).toEqual([
+        { path: 'claims[0]', reason: 'invalid_item', fields: ['category:invalid_value', 'confidence:invalid_type'] },
+        { path: 'claims[1]', reason: 'invalid_item', fields: ['mood:unrecognized_keys'] },
+      ])
+      expect(JSON.stringify(r.dropped)).not.toContain('开心')
+    })
   })
 })

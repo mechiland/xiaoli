@@ -14,9 +14,16 @@ recall, contact card, location, file, link, merged forward, group system message
 | `聊天记录_20260914_211545.zip` | 私聊 | 204 | 2026-03-22 10:05 → 2026-09-14 20:51 | eval | 私聊，第二次导出（与 `聊天记录_20260405_223012.zip` 重叠 32 条消息，2026-03-22 10:05 至 2026-04-05 21:45） | — |
 | `聊天记录_20260910_183020.zip` | 群聊 | 178 | 2026-08-24 09:00 → 2026-09-10 20:40 | eval | 群聊（家长群） | — |
 | `聊天记录_20260912_095501.zip` | 群聊 | 215 | 2026-06-02 07:40 → 2026-09-12 08:43 | eval | 群聊（家庭群） | UTF-8 BOM、CRLF 换行、文件末尾无换行 |
+| `聊天记录_20260611_213407.zip` | 私聊 | 79 | 2026-03-06 07:45 → 2026-06-11 20:51 | re-export dedup only, not annotated | 私聊，第一次导出（与 `聊天记录_20260915_081926.zip` 重叠 32 条消息，2026-05-30 10:12 至 2026-06-11 20:51，其中 12 条图片/视频在两次导出里文件名不同） | — |
+| `聊天记录_20260915_081926.zip` | 私聊 | 91 | 2026-05-30 10:12 → 2026-09-06 11:44 | re-export dedup only, not annotated | 私聊，第二次导出（与 `聊天记录_20260611_213407.zip` 重叠 32 条消息，2026-05-30 10:12 至 2026-06-11 20:51，其中 12 条图片/视频在两次导出里文件名不同） | — |
 | `perf-5000.zip` | 群聊 | 5000 | 2024-03-01 09:45 → 2024-11-14 05:54 | perf only (P1), not annotated | parse-time budget | — |
 
-The two private-chat exports are the same chat exported twice with a partial overlap (message dedup, SPEC §8.4).
+The two private-chat eval exports are the same chat exported twice with a partial overlap (message dedup, SPEC §8.4).
+Their image/video files are named by message time, identically in both exports; their overlap holds no image or video.
+
+The two re-export dedup ZIPs are another chat exported twice the way WeChat really names media: every image/video file is
+`微信图片_<export minute>_<n>.jpg` / `微信视频_<export minute>_<n>.mp4`, so the same photo has a different name in each
+export (identical bytes). Their overlap is mostly photos and videos. Importing both into one chat must add no duplicate.
 
 `<name>.intent.json` records what the generator planted (facts, negatives, edge cases, expected kinds). It is **not gold**.
 Annotators must not open intent files before freezing gold (ARCHITECTURE §7.6).

@@ -17,7 +17,7 @@ const OTHER = '一舟'
 
 export default defineScenario({
   id: 'import-result/delete-import',
-  description: '删除这次导入（新账号）：底部按钮 → 确认对话框 → 删除失败时对话框内报错 → 删除成功回到首页；被删导入 404、只出现在它里面的人物消失、另一份导入与聊天保留',
+  description: '删除这次导入（新账号）：底部按钮 → 确认对话框 → 删除失败时对话框内报错 → 删除成功回到首页；被删导入的页面直接显示没有找到（无失败请求）；另一份导入的结果页说明消息在已删除的导入里读过；被删导入 404、只出现在它里面的人物消失、另一份导入与聊天保留',
   account: 'fresh',
   destructive: true,
   expectedFailures: [
@@ -74,6 +74,8 @@ export default defineScenario({
       bId = b.json!.import.id
       const mb = await api.post(`/api/imports/${bId}/mapping`, { chat: { existingChatId: chatId }, senders: [{ senderName: SELF, target: { self: true } }] })
       check('mapping B 200', mb.status === 200, { status: mb.status, text: mb.text.slice(0, 200) })
+      const bd = (await api.get<Detail>(`/api/imports/${bId}`)).json
+      check('B is a re-export: 0 new messages, no windows', bd?.import.newMessageCount === 0 && bd?.progress.total === 0, { imp: bd?.import, progress: bd?.progress })
     })
 
     await step('open A', async () => {
@@ -116,6 +118,45 @@ export default defineScenario({
       await helpers.settle()
     })
     await shot('home-after-delete', { fullPage: false })
+
+    // An old tab or bookmark: the server page finds no import and renders the missing state itself, so the browser
+    // never asks GET /api/imports/:id and the console stays clean (overall critic r3 #3).
+    await step('deleted import page: missing state, no failing fetch', async () => {
+      await helpers.clearRoutes()
+      await guardJobs(page)
+      const hits: string[] = []
+      const own = new RegExp(`/api/imports/${aId}(/|$)`)
+      const onRequest = (req: { url(): string }) => {
+        if (own.test(req.url())) hits.push(req.url())
+      }
+      page.on('request', onRequest)
+      const status = await helpers.goto(`/imports/${aId}`, { waitFor: '[data-import-result-missing]' })
+      await helpers.settle()
+      page.off('request', onRequest)
+      check('missing state copy', ((await page.locator('[data-import-result-missing]').textContent()) ?? '').includes('它可能已经被删除了'))
+      check('no request for the deleted import', hits.length === 0, { hits })
+      check('document answers 200', status === 200, { status })
+    })
+    await shot('deleted-import-page', { fullPage: false })
+
+    // B's 40 messages were A's; deleting A hands them to B and recounts it (ARCHITECTURE §11 step 1). B still read
+    // nothing, so its page must not say "新增 40 条消息" above "之前都导入过" (overall critic r3 #4).
+    await step('re-export page after the earlier import is deleted', async () => {
+      const d = (await api.get<Detail>(`/api/imports/${bId}`)).json
+      check('B recounted, still no windows', d?.import.newMessageCount === bMessages && d?.progress.total === 0, { imp: d?.import, progress: d?.progress })
+      await helpers.goto(`/imports/${bId}`, { waitFor: '[data-empty-result]' })
+      const box = page.locator('[data-empty-result]')
+      const text = (await box.textContent()) ?? ''
+      check('kind read-before', (await box.getAttribute('data-empty-result')) === 'read-before')
+      check('says the messages were read by the deleted import', text.includes('这份记录里的消息在之前那次导入时读过（那次导入已删除），这次没有再读取'), { text })
+      check('no "之前都导入过" copy', !text.includes('之前都导入过'))
+      const sub = ((await page.locator('[data-import-subtitle]').textContent()) ?? '').replace(/\s/g, '')
+      check('subtitle: count without 新增', !sub.includes('新增') && sub.includes(`${bMessages}条消息`), { sub })
+      const people = page.locator('[data-earlier-people] a[href^="/p/"]')
+      check('links the people, not the chat', (await people.count()) > 0 && (await box.locator('a[href^="/chats/"]').count()) === 0)
+      check('own person named 我', (await people.allTextContents()).includes('我'), { people: await people.allTextContents() })
+    })
+    await shot('reexport-after-delete', { fullPage: false })
 
     await step('server state after delete', async () => {
       await helpers.clearRoutes()

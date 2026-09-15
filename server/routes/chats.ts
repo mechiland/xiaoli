@@ -17,7 +17,7 @@ const route = new Hono<AppEnv>()
   })
   .get('/attachments/:id', validator('param', IdParamSchema), async (c) => {
     const user = requireUser(c)
-    const s = await getAttachmentStream(c.var.db, getR2(c), user.id, c.req.valid('param').id, { ifNoneMatch: c.req.header('if-none-match') })
+    const s = await getAttachmentStream(c.var.db, getR2(c), user.id, c.req.valid('param').id, { ifNoneMatch: c.req.header('if-none-match'), download: c.req.query('download') === '1' })
     if (s.notModified) return c.body(null, 304, s.headers)
     return c.body(s.body as ReadableStream, 200, s.headers)
   })

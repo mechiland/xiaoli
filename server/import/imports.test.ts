@@ -342,6 +342,11 @@ describe('import routes', () => {
     const left = await db.select().from(messages).where(eq(messages.chatId, chat1)).orderBy(messages.seq)
     expect(left.map((m) => m.fingerprint)).toEqual(p2.messages.map((m) => m.fingerprint))
     expect(left.every((m) => m.firstImportId === import2)).toBe(true)
+    // import2 now first introduces every message of the chat, including the 32 reassigned ones (overall critic r1)
+    expect((await json(await call(asUserA, 'GET', `/api/imports/${import2}`))).import.newMessageCount).toBe(p2.messages.length)
+    expect((await json(await call(asUserA, 'GET', `/api/chats/${chat1}`))).imports).toEqual([
+      expect.objectContaining({ id: import2, newMessageCount: p2.messages.length }),
+    ])
     expect(await db.select().from(claims).where(eq(claims.id, onlyM.id)).get()).toBeUndefined()
     expect(await db.select().from(claims).where(eq(claims.id, old.id)).get()).toMatchObject({ status: 'confirmed', supersededByClaimId: null, statusReason: null })
     expect((await db.select().from(evidence).where(eq(evidence.targetId, mixed.id))).map((e) => e.messageId)).toEqual([onlySecond.id])

@@ -72,7 +72,11 @@ async function recentImportIds(db: Db, ownerId: string): Promise<number[]> {
   return rows.map((r) => r.id)
 }
 
-/** People with confirmed claims from the last few imports, newest confirmation first, each with that latest claim. */
+/**
+ * People with confirmed claims from the last few imports, newest confirmation first, each with that latest claim.
+ * Sensitive claims ("提供过手机号" placeholders, SPEC §8 / ARCHITECTURE §6 guard) are not information to show here, so they
+ * neither become `latest` nor bring a person into the list on their own (DECISIONS home H10).
+ */
 export async function loadRecentlyUpdated(db: Db, ownerId: string): Promise<HomeResponse['recentlyUpdated']> {
   const ids = await recentImportIds(db, ownerId)
   if (ids.length === 0) return []
@@ -80,7 +84,7 @@ export async function loadRecentlyUpdated(db: Db, ownerId: string): Promise<Home
     .select({ id: claims.id, statement: claims.statement, category: claims.category, personId: persons.id, label: persons.label })
     .from(claims)
     .innerJoin(persons, eq(persons.id, claims.personId))
-    .where(owned(claims, ownerId, inArray(claims.importId, ids), eq(claims.status, 'confirmed'), visiblePerson(ownerId)))
+    .where(owned(claims, ownerId, inArray(claims.importId, ids), eq(claims.status, 'confirmed'), eq(claims.sensitive, false), visiblePerson(ownerId)))
     .orderBy(desc(claims.statusChangedAt), desc(claims.id))
     .all()
   const seen = new Set<number>()

@@ -175,6 +175,39 @@ describe('processNextJob', () => {
     expect(old?.status).toBe('confirmed')
   })
 
+  it('stores a claim the model emitted without `sensitive`; logs schema drops by field name only (overall critic r3 #1, X31)', async () => {
+    const s = await seedImport([
+      { sender: 'me', at: '2026-08-26 06:46', body: '阿明，孩子啥时候返校' },
+      { sender: 'ming', at: '2026-08-26 07:10', body: '我在成都一中教物理，下周一开学' },
+      { sender: 'ming', at: '2026-08-26 07:12', body: '新号码13812345678' },
+    ])
+    await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2 * 1024]])
+    const out = {
+      ...empty,
+      claims: [
+        { person: { personId: s.ming.id }, statement: '在成都一中教物理', category: 'work', confidence: 0.9, evidence: [2] },
+        { person: { personId: s.ming.id }, statement: '手机号13812345678', category: 'other', confidence: 0.9, evidence: [3] },
+        { person: { personId: s.ming.id }, statement: '喜欢爬山', category: 'hobby', confidence: 0.9, evidence: [2] },
+      ],
+    }
+    const logs: string[] = []
+    const spy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => void logs.push(String(line)))
+    try {
+      const r = await processNextJob(db, fakeLlm([ok(out)]), s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+      expect(r.processed).toMatchObject({ status: 'done', itemsCreated: 2 })
+    } finally {
+      spy.mockRestore()
+    }
+    const cl = await db.select().from(claims).where(and(eq(claims.ownerId, s.ownerId), eq(claims.importId, s.imp.id))).all()
+    expect(cl.map((c) => [c.statement, c.sensitive, c.status]).sort()).toEqual([
+      ['在成都一中教物理', false, 'proposed'],
+      ['提供过手机号', true, 'proposed'],
+    ])
+    const warn = logs.map((l) => JSON.parse(l) as { msg: string; items?: unknown }).find((l) => l.msg === 'extract items dropped (invalid_item)')
+    expect(warn?.items).toEqual([{ path: 'claims[2]', fields: ['category:invalid_value'] }])
+    expect(logs.join('\n')).not.toMatch(/喜欢爬山|13812345678/)
+  })
+
   it('retries a failing window (max 3 attempts), fails it, continues the others; retryFailedJobs resets', async () => {
     const s = await seedImport(SESSIONS)
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 4 * 1024]])

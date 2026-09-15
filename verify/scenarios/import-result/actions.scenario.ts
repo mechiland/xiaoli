@@ -1,7 +1,8 @@
 import type { Route } from 'playwright'
-import type { ClaimDTO, ReviewItem } from '@/contracts'
+import type { ClaimDTO, ProfileResponse, ReviewItem } from '@/contracts'
+import { formatIsoDate } from '@/lib/time'
 import { defineScenario } from '@/verify/lib'
-import { compactReview, elementShot, fulfillJson, guardJobs, itemsOf, reviewUrl, type Review } from './_support'
+import { clone, compactReview, elementShot, fulfillJson, guardJobs, itemsOf, reviewUrl, type Review } from './_support'
 
 // Review actions on the import result page against a stateful route mock (seed account, read-only on the server):
 // 确认 / 不对 / 改写 (text and date) stay in place, 变化 confirm strikes the old statement, 本节全部确认, the two-step
@@ -9,7 +10,7 @@ import { compactReview, elementShot, fulfillJson, guardJobs, itemsOf, reviewUrl,
 // The real round trip (persistence after reload) is covered by `import-result/live-flow`.
 export default defineScenario({
   id: 'import-result/actions',
-  description: '导入结果页操作：确认、不对、改写（文字与日期）、变化确认、本节全部确认、两步批量确认、新人物改名、其实是……合并、保存失败重试、已全部处理（接口为有状态的路由模拟，不改种子数据）',
+  description: '导入结果页操作：确认、不对、改写（文字与日期）、变化确认、本节全部确认、两步批量确认、新人物改名（与已有人物同名）、其实是……同名候选带上下文与合并、合并后与名字相同的别名变淡、保存失败重试、已全部处理（接口为有状态的路由模拟，不改种子数据）',
   account: 'seed',
   requiredTags: ['import:review-mixed', 'person:long-profile'],
   expectedFailures: [{ urlPattern: /\/api\/review\/claim\/\d+$/, status: 500, step: 'save fails, retry succeeds', consoleText: 'status of 500' }],
@@ -19,6 +20,11 @@ export default defineScenario({
     const target = await seed.person('long-profile')
     const state: Review = compactReview((await api.get<Review>(`/api/imports/${mixed.id}/review`)).json!)
     const newSection = state.sections.find((s) => s.person.isNew)!
+    // A real name that repeats the target's label: after the merge it must read as muted ("和名字相同"), not as news.
+    const baseHandle = itemsOf(newSection).find((i) => i.type === 'handle')
+    const echoHandleId = 990_001
+    if (baseHandle && baseHandle.type === 'handle')
+      newSection.aliasesAndRelations.push({ type: 'handle', item: { ...baseHandle.item, id: echoHandleId, kind: 'real_name', value: target.label ?? '', chatTitle: null, status: 'proposed' } })
 
     // ---- the mock --------------------------------------------------------------------------------------------
     const find = (type: string, id: number) => {
@@ -171,11 +177,12 @@ export default defineScenario({
       check('no proposed rows left in the section', (await sec.locator('[data-review-item][data-status="proposed"]').count()) === 0)
     })
 
+    // Renamed to exactly the target's label: the duplicate-person case the 其实是…… dialog has to disambiguate.
     await step('新人物: rename', async () => {
       const input = page.locator(`[data-person-section="${newSection.person.id}"] [data-person-label-input]`)
-      await input.fill('贺知遥（大学）')
+      await input.fill(target.label ?? '')
       await input.press('Enter')
-      await page.locator(`[data-person-section="${newSection.person.id}"] h2`).getByText('贺知遥（大学）').waitFor()
+      await page.locator(`[data-person-section="${newSection.person.id}"] h2`).getByText(target.label ?? '', { exact: true }).waitFor()
       check('已保存', ((await page.locator(`[data-person-section="${newSection.person.id}"]`).textContent()) ?? '').includes('已保存'))
     })
 
@@ -189,20 +196,67 @@ export default defineScenario({
       check('every high-confidence claim confirmed', leftover.length === 0, { leftover })
     })
 
-    await step('其实是…… → merge', async () => {
+    // The target as a person made by hand (no chats, no aliases, no claims): its context line is
+    // "没有聊天记录 · 还没有信息 · <date>建立", the line whose date used to break mid-token at 1440 (overall critic r3).
+    const realProfile = (await api.get<ProfileResponse>(`/api/people/${target.id}`)).json!
+    const handMade: ProfileResponse = { ...clone(realProfile), aliases: [], sections: [], infobox: { ...clone(realProfile.infobox), chats: [] } }
+    await page.route(new RegExp(`/api/people/${target.id}$`), (r: Route) => (r.request().method() === 'GET' ? fulfillJson(r, handMade) : r.fallback()))
+
+    await step('其实是……: same-label person listed first, with context', async () => {
       await page.locator(`[data-person-section="${newSection.person.id}"] [data-merge-open]`).click()
       await page.locator('[data-merge-dialog] input[role=combobox]').waitFor()
+      const option = page.locator('[data-merge-dialog] [role=option]').filter({ hasText: /个聊天|『|没有聊天记录/ }).first()
+      await option.waitFor({ timeout: 10_000 })
+      const text = (await option.textContent()) ?? ''
+      check('candidate is the same-label target', text.startsWith(target.label ?? '\u0000'), { text })
+      check('candidate carries context (chats / aliases)', /个聊天|『.+』|没有聊天记录/.test(text), { text })
+      const label = option.locator('span').first()
+      check('label is not truncated by the context', await label.evaluate((el) => el.scrollWidth <= el.clientWidth), { label: await label.textContent() })
+    })
+    await shot('merge-picker-same-label', { fullPage: false })
+    await step('其实是…… → merge', async () => {
       await helpers.type(target.label ?? '')
       await page.locator('[data-merge-dialog] [role=option]').filter({ hasText: target.label ?? '' }).first().click()
       await page.locator('[data-merge-confirm]').waitFor()
+      const q = (await page.locator('[data-merge-question]').textContent()) ?? ''
+      check('question says which is which', q === `把这次导入新出现的「${target.label}」合并到已有的「${target.label}」？`, { q })
+      await page.locator('[data-merge-target-context]').filter({ hasText: '建立' }).waitFor({ timeout: 10_000 })
+      const ctxText = (await page.locator('[data-merge-context]').textContent()) ?? ''
+      check('both sides have context', ctxText.includes('这次导入新建') && /\d+ 条新信息/.test(ctxText) && /建立/.test(ctxText), { ctxText })
+      check('no to-do wording (SPEC §9.3)', !ctxText.includes('待处理'), { ctxText })
+      const createdAt = handMade.person.createdAt
+      const day = formatIsoDate(createdAt, 'Asia/Shanghai')
+      const targetText = ((await page.locator('[data-merge-target-context]').textContent()) ?? '').trim()
+      check('hand-made target context', targetText === `· 没有聊天记录 · 还没有信息 · ${day}建立`, { targetText })
+      check('creation date is the local day (Asia/Shanghai), not the UTC date', ctxText.includes(`${day}建立`), { createdAt, ctxText })
+      // every count / date piece sits on one line (an inline span that wraps has more than one client rect)
+      const pieces = await page.locator('[data-merge-context] [data-context-piece]').evaluateAll((els) =>
+        els.map((el) => ({ text: el.textContent ?? '', lines: el.getClientRects().length, nowrap: getComputedStyle(el).whiteSpace === 'nowrap' })),
+      )
+      const datePiece = pieces.find((p) => p.text.endsWith('建立'))
+      check('date piece is nowrap and on one line', !!datePiece && datePiece.nowrap && datePiece.lines === 1, { datePiece })
+      check('no count/date piece is broken across lines', pieces.filter((p) => p.nowrap).every((p) => p.lines === 1), { pieces })
     })
     await shot('merge-confirm-step', { fullPage: false })
+    await elementShot(ctx, 'merge-confirm-dialog', '[data-merge-dialog]')
     await step('merge executes', async () => {
       await page.locator('[data-merge-confirm]').click()
       await page.locator('[data-merge-dialog]').waitFor({ state: 'detached' })
       await page.locator(`[data-person-section="${target.id}"]`).waitFor({ timeout: 10_000 })
       check('new person section gone', (await page.locator(`[data-person-section="${newSection.person.id}"]`).count()) === 0)
     })
+    if (baseHandle) {
+      await step('merged: a handle equal to the label is muted', async () => {
+        const echo = page.locator(`[data-person-section="${target.id}"] [data-review-item="handle:${echoHandleId}"]`)
+        await echo.waitFor()
+        check('marked as label echo', (await echo.locator('[data-label-echo]').count()) === 1)
+        check('muted color', (await echo.locator('[data-label-echo]').getAttribute('class'))?.includes('text-ink-3') === true)
+        check('meta says 和名字相同', ((await echo.textContent()) ?? '').includes('和名字相同 · 真名'))
+        const other = page.locator(`[data-person-section="${target.id}"] [data-review-item^="handle:"]:not([data-review-item="handle:${echoHandleId}"])`).first()
+        if ((await other.count()) > 0) check('other aliases not muted', (await other.locator('[data-label-echo]').count()) === 0)
+      })
+      await elementShot(ctx, 'merged-aliases', `[data-person-section="${target.id}"] [data-group="aliasesAndRelations"]`)
+    }
 
     await step('finish: 已全部处理', async () => {
       for (;;) {

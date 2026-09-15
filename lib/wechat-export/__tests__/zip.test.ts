@@ -39,10 +39,10 @@ describe('parseExportZip', () => {
   it('parses messages, links attachments, lists media without names flag (WeChat iOS style)', async () => {
     const zip = sampleZip()
     const progress: number[] = []
-    const p = await parseExportZip(zip, { fileName: '聊天记录_20260915_142841.zip', onProgress: (x) => progress.push(x) })
+    const p = await parseExportZip(zip, { fileName: '聊天记录_20260101_120000.zip', onProgress: (x) => progress.push(x) })
     expect(() => ParsedExportSchema.parse(p)).not.toThrow()
     expect(p.sha256).toBe(createHash('sha256').update(zip).digest('hex'))
-    expect(p.exportedAt).toBe('2026-09-15T06:28:41.000Z')
+    expect(p.exportedAt).toBe('2026-01-01T04:00:00.000Z')
     expect(p.messages.map((m) => [m.kind, m.attachmentName])).toEqual([
       ['text', null],
       ['image', '微信图片_202609011000_1.jpg'],

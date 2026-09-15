@@ -32,9 +32,24 @@ function hex4(n: number): string {
   return n.toString(16).padStart(4, '0')
 }
 
-/** ARCHITECTURE §1.2: FNV-1a 64 hex of `${senderName}${sentAt}${kind}${body}`. */
+/**
+ * WeChat names exported media `微信图片_<YYYYMMDDHHMM>_<n>.<ext>` / `微信视频_…` from the EXPORT time, with `n` counting
+ * through the export, so a later export of the same chat renames every image/video (DECISIONS parser P14).
+ */
+const GENERATED_MEDIA_NAME_RE = /微信(图片|视频)_\d{8,14}(?:_\d+)?\.[A-Za-z0-9]{1,5}/g
+
+/** Body as fingerprinted: image/video bodies with generated media file names replaced by a constant; others unchanged. */
+export function fingerprintBody(kind: MessageKind, body: string): string {
+  if (kind !== 'image' && kind !== 'video') return body
+  return body.replace(GENERATED_MEDIA_NAME_RE, '微信$1_*')
+}
+
+/**
+ * ARCHITECTURE §1.2: FNV-1a 64 hex of `${senderName}${sentAt}${kind}${fingerprintBody(kind, body)}`. For image/video,
+ * a generated media file name counts as a constant, so re-exports align.
+ */
 export function fingerprint(m: { senderName: string; sentAt: string; body: string; kind: MessageKind }): string {
-  return fnv1a64Hex(`${m.senderName}${m.sentAt}${m.kind}${m.body}`)
+  return fnv1a64Hex(`${m.senderName}${m.sentAt}${m.kind}${fingerprintBody(m.kind, m.body)}`)
 }
 
 function getSubtle(): SubtleCrypto | null {

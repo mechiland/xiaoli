@@ -1,0 +1,155 @@
+{
+  "intentVersion": 1,
+  "generator": "scripts/synthetic/generate.ts",
+  "generatorVersion": 1,
+  "note": "Planted by the generator. Annotators must not read this file before freezing gold (ARCHITECTURE §7.6). Not gold: ids, texts and idx are the generator's intent only.",
+  "zip": "聊天记录_20260611_213407.zip",
+  "chatScript": "private-reexport",
+  "purpose": "私聊，第一次导出",
+  "chat": {
+    "title": "小棠",
+    "kind": "private"
+  },
+  "self": "小满",
+  "messageCount": 79,
+  "dateFrom": "2026-03-06 07:45",
+  "dateTo": "2026-06-11 20:51",
+  "senders": [
+    {
+      "name": "小棠",
+      "count": 43
+    },
+    {
+      "name": "小满",
+      "count": 36
+    }
+  ],
+  "members": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "displayName": "小满",
+      "note": "self (the user)"
+    },
+    {
+      "key": "xiaotang",
+      "label": "小棠",
+      "displayName": "小棠",
+      "note": "hiking friend; remark name"
+    }
+  ],
+  "planted": [],
+  "negatives": [],
+  "sensitiveValues": [],
+  "kinds": {
+    "text": 51,
+    "sticker_code": 5,
+    "image": 15,
+    "animated_sticker": 2,
+    "video": 4,
+    "mini_program": 1,
+    "file": 1
+  },
+  "guessedFormats": [
+    {
+      "idx": 66,
+      "kind": "file"
+    }
+  ],
+  "use": "reexport",
+  "mediaNames": "export-time",
+  "textFile": {
+    "bom": false,
+    "lineEnding": "lf",
+    "trailingNewline": true
+  },
+  "edgeCases": {
+    "multiline": [],
+    "bodyLineStartsWithDot": [],
+    "bodyLineLooksLikeTime": [],
+    "emptyImageName": [
+      64
+    ],
+    "missingMedia": [
+      62
+    ],
+    "unknownBracket": [],
+    "sameMinuteDuplicate": [],
+    "stickerOnly": [
+      5,
+      23,
+      30,
+      38,
+      53
+    ],
+    "stickerMixed": [
+      4,
+      9,
+      57
+    ],
+    "unicodeEmoji": [],
+    "mention": [],
+    "quote": [],
+    "recall": [],
+    "contactCard": [],
+    "location": [],
+    "link": [],
+    "file": [
+      66
+    ],
+    "forward": [],
+    "system": [],
+    "bom": [],
+    "crlf": [],
+    "noTrailingNewline": []
+  },
+  "media": {
+    "included": [
+      "微信图片_202606112134_1.jpg",
+      "微信视频_202606112134_1.mp4",
+      "微信图片_202606112134_2.jpg",
+      "微信图片_202606112134_3.jpg",
+      "微信图片_202606112134_4.jpg",
+      "微信图片_202606112134_5.jpg",
+      "微信图片_202606112134_6.jpg",
+      "微信图片_202606112134_7.jpg",
+      "微信图片_202606112134_8.jpg",
+      "微信图片_202606112134_9.jpg",
+      "微信视频_202606112134_2.mp4",
+      "微信图片_202606112134_10.jpg",
+      "露营装备清单.xlsx",
+      "微信图片_202606112134_12.jpg",
+      "微信图片_202606112134_13.jpg",
+      "微信视频_202606112134_3.mp4",
+      "微信视频_202606112134_4.mp4",
+      "微信图片_202606112134_14.jpg"
+    ],
+    "missing": [
+      "微信图片_202606112134_11.jpg"
+    ],
+    "emptyName": 1,
+    "unreferenced": []
+  },
+  "overlaps": [
+    {
+      "with": "聊天记录_20260915_081926.zip",
+      "messages": 32,
+      "media": {
+        "messages": 12,
+        "renamed": 12
+      },
+      "sentAtRange": [
+        "2026-05-30 10:12",
+        "2026-06-11 20:51"
+      ],
+      "thisIdxRange": [
+        47,
+        78
+      ],
+      "otherIdxRange": [
+        0,
+        31
+      ]
+    }
+  ]
+}

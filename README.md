@@ -28,9 +28,13 @@ Secrets: `DEEPSEEK_API_KEY` lives in `.env.local` (gitignored); `pnpm dev:ensure
 | `eval`, `eval:*` | eval-synthetic module (`eval/src/cli.ts`) |
 | `extract:offline` | extract module (`scripts/extract-offline.ts`) |
 | `llm:usage` | llm module (`scripts/llm-usage.ts`) |
-| `preview:prod` | `opennextjs-cloudflare build && preview` (integrator only) |
+| `preview:prod` | production build in a clean worktree, served by workerd on :8787 with local D1/R2 (`scripts/deploy/preview-prod.ts`, deploy; wired by core request deploy#1) |
 
 Scripts that point at another module's entry print which module owns it when the file does not exist yet.
+
+## Deploy (Cloudflare)
+
+See `docs/DEPLOY.md`. `pnpm tsx scripts/deploy/setup.ts` prints the plan; `--apply --url <origin>` creates D1/R2, applies remote migrations, builds in a clean worktree (never in place: OpenNext would compile `.env.local` into the worker), deploys, sets secrets and runs `scripts/deploy/smoke.ts`.
 
 ## Pinned versions (checked 2026-09-15)
 
@@ -41,7 +45,8 @@ Scripts that point at another module's entry print which module owns it when the
 | next | 16.3.5 |
 | react / react-dom | 19.3.0 |
 | @opennextjs/cloudflare | 1.20.6 |
-| wrangler | 4.131.2 |
+| wrangler | 4.131.2 (workerd 1.20260911.1) |
+| Workers compatibility_date / flags | 2026-09-01 / `nodejs_compat`, `global_fetch_strictly_public` |
 | better-auth / @better-auth/drizzle-adapter | 1.7.5 |
 | hono | 4.13.8 |
 | @hono/zod-validator | 0.9.1 |

@@ -33,7 +33,8 @@ export default defineScenario({
       check('POST /api/imports 201', res.status() === 201)
       importId = ((await res.json()) as { import: { id: number } }).import.id
       await page.locator('[data-import-overlay][data-step="mapping"]').waitFor()
-      check('private preselected for two senders', (await overlay.getByRole('radio', { name: '私聊' }).getAttribute('aria-checked')) === 'true')
+      check('chat choice: exactly one radio checked', (await overlay.locator('[data-chat-choice] [role="radio"][aria-checked="true"]').count()) === 1)
+      check('private preselected for two senders',(await overlay.getByRole('radio', { name: '私聊' }).getAttribute('aria-checked')) === 'true')
       check('chat title defaults to the other sender', (await overlay.getByLabel('聊天名称').inputValue()) === '一舟')
     })
     await shot('mapping', { fullPage: false })

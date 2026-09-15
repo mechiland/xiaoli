@@ -145,21 +145,17 @@ function UpcomingRow({ u, today }: { u: HomeResponse['upcoming'][number]; today:
         <Link href={personHref(u.person.id, { type: 'date', id: u.dateId })} className={nameLink}>
           {u.person.label}
         </Link>
-        <span className="px-2 text-ink-3" aria-hidden>
-          ·
-        </span>
+        <Sep className="px-1" />{' '}
         <span className="text-ink-2">{u.label}</span>
       </div>
       <div className="col-span-2 col-start-1 row-start-2 text-[13px] leading-6 text-ink-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:text-right">
         {u.lunarLabel && (
           <>
-            <span>{u.lunarLabel}</span>
-            <span className="px-1.5 text-ink-3" aria-hidden>
-              ·
-            </span>
+            <span className="whitespace-nowrap">{u.lunarLabel}</span>
+            <Sep />{' '}
           </>
         )}
-        <span className="font-data tabular-nums">{solar}</span>
+        <span className="whitespace-nowrap font-data tabular-nums">{solar}</span>
       </div>
       <div
         className={cn(
@@ -170,6 +166,19 @@ function UpcomingRow({ u, today }: { u: HomeResponse['upcoming'][number]; today:
         {daysLabel(u.days)}
       </div>
     </li>
+  )
+}
+
+/**
+ * A " ·" separator glued to the end of the piece before it: a no-break space keeps the line from breaking before the
+ * dot, and the ordinary space the caller puts after it is the break point. A wrapped line may end with "·" but never
+ * starts with one (same rule as person P15; DECISIONS home H11).
+ */
+function Sep({ className }: { className?: string }) {
+  return (
+    <span data-home-sep aria-hidden className={cn('px-0.5 text-ink-3', className)}>
+      {'\u00A0·'}
+    </span>
   )
 }
 
@@ -376,17 +385,13 @@ function RecentImportsSection({ slot, today, tz }: { slot: Slot<HomeResponse['re
                   <Link href={importHref(r.id)} className="text-ink-2 decoration-line-strong underline-offset-4 hover:text-ink hover:underline">
                     {r.chatTitle ?? '未命名的聊天'}
                   </Link>
+                  <Sep />{' '}
                   {range && (
                     <>
-                      <span className="px-1.5" aria-hidden>
-                        ·
-                      </span>
-                      <span className="font-data tabular-nums">{range}</span>
+                      <span className="whitespace-nowrap font-data tabular-nums">{range}</span>
+                      <Sep />{' '}
                     </>
                   )}
-                  <span className="px-1.5" aria-hidden>
-                    ·
-                  </span>
                   <span className="whitespace-nowrap font-data tabular-nums">{formatImportedAt(r.createdAt, today, tz)}</span>
                 </li>
               )

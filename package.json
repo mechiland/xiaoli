@@ -32,7 +32,11 @@
     "extract:cassettes": "tsx scripts/run-owned.ts server/extract/__fixtures__/build-cassettes.ts extract --",
     "llm:usage": "tsx scripts/run-owned.ts scripts/llm-usage.ts llm --",
     "llm:smoke": "tsx scripts/run-owned.ts server/llm/smoke.ts llm --",
-    "preview:prod": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
+    "preview:prod": "tsx scripts/deploy/preview-prod.ts",
+    "deploy:setup": "tsx scripts/deploy/setup.ts",
+    "deploy:build": "tsx scripts/deploy/build.ts",
+    "deploy:size": "tsx scripts/deploy/size-check.ts",
+    "deploy:smoke": "tsx scripts/deploy/smoke.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.5",

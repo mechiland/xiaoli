@@ -1,4 +1,4 @@
-# Gold file format (`eval/gold/<source>/<zip file name>.json`, e.g. `聊天记录_20260915_142841.zip.json`; `<name without .zip>.json` is also accepted)
+# Gold file format (`eval/gold/<source>/<zip file name>.json`, e.g. `聊天记录_20260101_120000.zip.json`; `<name without .zip>.json` is also accepted)
 
 Binding schema: `eval/src/gold-schema.ts` (zod, `GoldFileSchema`). Architecture: ARCHITECTURE.md §7.2 and §7.6.
 Annotation rules come from SPEC §8.7. Gold is written only by the annotator. Nobody edits it to raise scores.
@@ -62,6 +62,8 @@ Use `optional` for facts that are true but borderline under SPEC §8.7 (e.g. wea
 - `key`: `p1`, `p2` … for real data; short slugs are fine for synthetic data.
 - `label`: the best name for this person. `aliases`: other names the chat uses for them. Both are used to recognise a
   person the pipeline creates (`new:<label>`); matching ignores spaces, width and case.
+  A created person whose name is the label or an alias of a **sender** person is scored as a duplicate of that
+  sender (all its items are false positives), so list every name a sender goes by under that sender.
 - `inChat`: true when the person is a sender in this export.
 
 ## `handles` (kinds: `mentioned` | `real_name` | `address_term`)

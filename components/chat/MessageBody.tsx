@@ -1,8 +1,10 @@
 'use client'
 // Message content for the transcript: text, the same gray chips as the evidence block (SPEC §9.6), image thumbnails and
 // the "图片未导入" placeholder (SPEC §9.10). Owner: chat.
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AttachmentDTO, MessageDTO } from '@/contracts'
+import { ImageUnavailable } from './ImageUnavailable'
+import { thumbFit, type ThumbFit } from './thumb'
 
 /** Same look as review's evidence chip (components/evidence/message.tsx), which its public entry does not export. */
 export function Chip({ children }: { children: ReactNode }) {
@@ -43,6 +45,20 @@ export interface BodyParts {
 }
 
 export function ImageThumb({ att, onOpen }: { att: AttachmentDTO; onOpen: () => void }) {
+  // The box stays 180×135 (no layout shift, C5); only the crop anchor changes once the natural size is known.
+  // Tall phone screenshots anchor to the top: their centre band is often empty white (C13).
+  const ref = useRef<HTMLImageElement>(null)
+  const [fit, setFit] = useState<ThumbFit>('center')
+  // A HEIC photo named .jpg (or a damaged file) loads with 200 but cannot be decoded: show the placeholder (C14).
+  const [failed, setFailed] = useState(false)
+  const measure = (img: HTMLImageElement | null) => {
+    if (!img?.complete) return
+    if (img.naturalWidth > 0) setFit(thumbFit(img.naturalWidth, img.naturalHeight))
+    else img.decode().catch(() => setFailed(true)) // broken before hydration, when onError has already fired
+  }
+  // an image served from cache can finish loading before hydration, when onLoad has already fired
+  useEffect(() => measure(ref.current), [att.url])
+  if (failed) return <ImageUnavailable att={att} variant="thumb" />
   return (
     <button
       type="button"
@@ -52,7 +68,17 @@ export function ImageThumb({ att, onOpen }: { att: AttachmentDTO; onOpen: () => 
       className="group block h-[135px] w-[180px] max-w-full overflow-hidden rounded-[2px] border border-line bg-paper-hover"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- owner-checked stream, no Next image loader */}
-      <img src={att.url!} alt={att.fileName ?? '图片'} loading="lazy" decoding="async" className="block h-full w-full object-cover transition-opacity group-hover:opacity-90" />
+      <img
+        ref={ref}
+        src={att.url!}
+        alt={att.fileName ?? '图片'}
+        loading="lazy"
+        decoding="async"
+        onLoad={(e) => measure(e.currentTarget)}
+        onError={() => setFailed(true)}
+        data-thumb-fit={fit}
+        className={`block h-full w-full object-cover transition-opacity group-hover:opacity-90 ${fit === 'top' ? 'object-top' : 'object-center'}`}
+      />
     </button>
   )
 }

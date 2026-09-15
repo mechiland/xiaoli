@@ -9,16 +9,17 @@ import { AttachmentUploadStatus } from '@/components/import-overlay'
 import { BlockBoundary, BlockError, Data, PageTitle, Skeleton } from '@/components/loam'
 import type { ImportDetailResponse, ImportReviewResponse, Progress } from '@/contracts'
 import { cn } from '@/lib/cn'
-import { personHref } from '@/lib/links'
+import { chatHref, personHref } from '@/lib/links'
 import { useBulkAccept, useImportDetail, useImportReview, useRetryFailed, useSettings } from './data'
 import { DeleteImportControl } from './delete-import'
-import { deriveReview, formatDateRange, markIndexes, readingProgress, reviewItemKey, sectionItems } from './format'
+import { deriveReview, emptyResultKind, formatDateRange, markIndexes, messagesReadBefore, peopleLine, personLabel, readingProgress, reviewItemKey, sectionItems } from './format'
 import { useExtractionLoop } from './loop'
 import { PersonSection } from './section'
+import { AppTzProvider } from './tz'
 
 const shell = 'mx-auto w-full max-w-[760px] px-5 pb-24 pt-10 sm:px-8 sm:pt-14'
 
-export function ImportResult({ importId }: { importId: number }) {
+export function ImportResult({ importId, tz, selfId = null }: { importId: number; tz?: string; selfId?: number | null }) {
   const detail = useImportDetail(importId)
   const detailMissing = detail.error?.status === 404
   const status = detail.data?.import.status
@@ -26,18 +27,22 @@ export function ImportResult({ importId }: { importId: number }) {
   const reviewEnabled = !detailMissing && ((detail.isSuccess && status !== 'mapping') || (detail.isError && !detailMissing))
   const review = useImportReview(importId, reviewEnabled)
 
-  if (detailMissing || review.error?.status === 404) return <NotFound />
+  // an id unknown at render time never reaches here (the server page renders ImportNotFound); this covers a delete in another tab
+  if (detailMissing || review.error?.status === 404) return <ImportNotFound />
   if (status === 'mapping' || (!detail.data && review.data?.import.status === 'mapping')) return <Unfinished importId={importId} />
   return (
-    <ResultPage
-      importId={importId}
-      detail={detail.data}
-      detailError={detail.isError}
-      retryDetail={() => void detail.refetch()}
-      review={review.data}
-      reviewError={review.isError && !review.data && !review.isFetching}
-      retryReview={() => void review.refetch()}
-    />
+    <AppTzProvider tz={tz}>
+      <ResultPage
+        importId={importId}
+        selfId={selfId}
+        detail={detail.data}
+        detailError={detail.isError}
+        retryDetail={() => void detail.refetch()}
+        review={review.data}
+        reviewError={review.isError && !review.data && !review.isFetching}
+        retryReview={() => void review.refetch()}
+      />
+    </AppTzProvider>
   )
 }
 
@@ -45,6 +50,7 @@ export function ImportResult({ importId }: { importId: number }) {
 
 function ResultPage({
   importId,
+  selfId,
   detail,
   detailError,
   retryDetail,
@@ -53,6 +59,7 @@ function ResultPage({
   retryReview,
 }: {
   importId: number
+  selfId: number | null
   detail: ImportDetailResponse | undefined
   detailError: boolean
   retryDetail: () => void
@@ -84,7 +91,9 @@ function ResultPage({
                   </span>
                 ))}
               <span className="whitespace-nowrap">
-                新增 <Data>{imp.newMessageCount}</Data> 条消息
+                {/* messages handed over from a deleted import were not new to this one: no "新增" (IR14) */}
+                {messagesReadBefore(imp, progress) ? '' : '新增 '}
+                <Data>{imp.newMessageCount}</Data> 条消息
               </span>
             </p>
           ) : detailError ? (
@@ -106,7 +115,7 @@ function ResultPage({
             <BlockError message="这次导入的结果没有加载出来" onRetry={retryReview} />
           </div>
         ) : (
-          <Body importId={importId} review={review} extracting={extracting} />
+          <Body importId={importId} selfId={selfId} review={review} persons={detail?.persons} extracting={extracting} progress={progress} />
         )}
       </BlockBoundary>
 
@@ -240,15 +249,39 @@ function useFresh(review: ImportReviewResponse | undefined) {
   }
 }
 
-function Body({ importId, review, extracting }: { importId: number; review: ImportReviewResponse | undefined; extracting: boolean }) {
+function Body({
+  importId,
+  selfId,
+  review,
+  persons,
+  extracting,
+  progress,
+}: {
+  importId: number
+  selfId: number | null
+  review: ImportReviewResponse | undefined
+  persons: ImportDetailResponse['persons'] | undefined
+  extracting: boolean
+  progress: Progress | undefined
+}) {
   const isFresh = useFresh(review)
   if (!review) return <BodySkeleton />
 
   if (review.sections.length === 0) {
     if (extracting) return null
+    const kind = emptyResultKind(review.import, progress ?? review.progress)
     return (
-      <div data-empty-result className="pt-14">
-        <p className="font-serif text-[18px] leading-8 text-ink-2">这段聊天里没有找到需要记下来的信息</p>
+      <div data-empty-result={kind} className="pt-14">
+        {kind === 'no-output' ? (
+          <p className="font-serif text-[18px] leading-8 text-ink-2">这段聊天里没有找到需要记下来的信息</p>
+        ) : (
+          <>
+            <p className="font-serif text-[18px] leading-8 text-ink-2">
+              {kind === 'read-before' ? '这份记录里的消息在之前那次导入时读过（那次导入已删除），这次没有再读取' : '这份记录里的消息之前都导入过，没有新的消息需要读取'}
+            </p>
+            <EarlierInfoLine persons={persons} selfId={selfId} chat={review.chat} />
+          </>
+        )}
       </div>
     )
   }
@@ -258,7 +291,7 @@ function Body({ importId, review, extracting }: { importId: number; review: Impo
   return (
     <div data-review-body>
       {review.sections.map((s) => (
-        <PersonSection key={s.person.id} importId={importId} section={s} marks={marks} isFresh={isFresh} />
+        <PersonSection key={s.person.id} importId={importId} section={s} marks={marks} isFresh={isFresh} selfId={selfId} />
       ))}
       {derived.allHandled && !extracting && (
         <div data-all-handled className="mt-16 border-t border-line pt-6">
@@ -269,7 +302,7 @@ function Body({ importId, review, extracting }: { importId: number; review: Impo
               <span key={p.id}>
                 {i > 0 && '、'}
                 <Link href={personHref(p.id)} className="loam-link">
-                  {p.label}
+                  {personLabel(p, selfId)}
                 </Link>
               </span>
             ))}
@@ -277,6 +310,41 @@ function Body({ importId, review, extracting }: { importId: number; review: Impo
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Where the earlier information lives: the people of this import (its senders and the people it created), linked to
+ * their pages. The chat page holds messages, not information, so it is named only when the people are not known.
+ */
+function EarlierInfoLine({ persons, selfId, chat }: { persons: ImportDetailResponse['persons'] | undefined; selfId: number | null; chat: ImportReviewResponse['chat'] }) {
+  if (persons && persons.length > 0) {
+    const { shown, more } = peopleLine(persons, selfId)
+    return (
+      <p className="mt-2 text-[14px] leading-7 text-ink-3" data-earlier-people>
+        之前读到的信息在相关人物的页面上：
+        {shown.map((p, i) => (
+          <span key={p.id}>
+            {i > 0 && '、'}
+            <Link href={personHref(p.id)} className="loam-link whitespace-nowrap">
+              {p.label}
+            </Link>
+          </span>
+        ))}
+        {more > 0 && <span className="whitespace-nowrap">{` 等 ${persons.length} 人`}</span>}
+        。
+      </p>
+    )
+  }
+  if (!chat) return null
+  return (
+    <p className="mt-2 text-[14px] leading-7 text-ink-3">
+      这些消息在
+      <Link href={chatHref(chat.id)} className="loam-link mx-1">
+        {chat.title}
+      </Link>
+      里，读到的信息在相关人物的页面上。
+    </p>
   )
 }
 
@@ -320,7 +388,8 @@ function Unfinished({ importId }: { importId: number }) {
   )
 }
 
-function NotFound() {
+/** Unknown or deleted import. Rendered by the server page for an id it cannot find (no client fetch, no 404 in the console). */
+export function ImportNotFound() {
   return (
     <div className={shell} data-import-result-missing>
       <header className="border-b border-line pb-5">

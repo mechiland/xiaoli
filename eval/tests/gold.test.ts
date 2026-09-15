@@ -55,6 +55,14 @@ describe('checkGold (validate-gold rules)', () => {
     expect(checkGold(gold, parsed, digest, ZIP)).toEqual({ errors: [], warnings: [] })
   })
 
+  it('treats a stale anchor as a warning when messageCount and messagesSha256 match (no drift)', async () => {
+    const { gold, parsed, digest } = await setup()
+    const stale: GoldFile = { ...gold, anchors: [{ idx: 0, fingerprint: 'stale' }, ...gold.anchors.slice(1)] }
+    const r = checkGold(stale, parsed, digest, ZIP)
+    expect(r.errors).toEqual([])
+    expect(r.warnings.join('\n')).toContain('anchor idx 0 fingerprint differs')
+  })
+
   it('reports every rule violation', async () => {
     const { gold, parsed, digest } = await setup()
     const bad: GoldFile = {

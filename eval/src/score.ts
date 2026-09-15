@@ -10,6 +10,9 @@ export const ERROR_CODES = ['factual_error', 'wrong_person', 'over_inference', '
 export type ErrorCode = (typeof ERROR_CODES)[number]
 export const SUB_LABELS = ['transactional', 'coordination', 'invisible_content', 'not_about_person'] as const
 export const UNKNOWN_PERSON = 'unknown'
+/** Person value of items owned by a `new:` person whose name is a sender's label/alias: `duplicate:<sender key>`. */
+export const DUPLICATE_PREFIX = 'duplicate:'
+const isPhantom = (person: string) => person === UNKNOWN_PERSON || person.startsWith(DUPLICATE_PREFIX)
 const SINGULAR = { claims: 'claim', relations: 'relation', handles: 'handle', dates: 'date', events: 'event' } as const
 const SYMMETRIC = new Set(['spouse', 'sibling', 'friend', 'colleague', 'classmate', 'relative'])
 const INVERSE: Record<string, string> = { parent: 'child', child: 'parent' }
@@ -41,6 +44,8 @@ export interface ZipCounts {
   rawItemCount: number
   evidenceOverlapCount: number
   unmatchedNewPersons: number
+  /** `new:` persons whose label equals a sender person's gold label/alias (in-app: a duplicate of that sender) */
+  duplicateSenderPersons: number
   kindMismatch: number
   categoryMismatch: number
   windows: { total: number; failed: number; dedupSkipped: number; attemptMs: number[]; failedCodes: Record<string, number> }
@@ -49,7 +54,7 @@ export interface ZipCounts {
 export interface TpDetail { type: TypeName; predIndex: number; goldId: string; verdict: Verdict; text: string; goldText: string; evidenceOverlap: boolean }
 export interface FpDetail { type: TypeName; fpId: string; predIndex: number; person: string; text: string; evidence: number[]; label: ErrorCode; subLabel: FpSubLabel | null; goldId: string | null; negativeId: string | null; reason: string }
 export interface FnDetail { type: TypeName; goldId: string; text: string; lessSpecificMatch: boolean }
-export interface ZipDetails { tp: TpDetail[]; fp: FpDetail[]; fn: FnDetail[]; unmatchedNewPersons: string[] }
+export interface ZipDetails { tp: TpDetail[]; fp: FpDetail[]; fn: FnDetail[]; unmatchedNewPersons: string[]; duplicatePersons: { key: string; person: string }[] }
 export interface ZipScore { counts: ZipCounts; details: ZipDetails }
 
 const zeroErrors = (): Record<ErrorCode, number> => Object.fromEntries(ERROR_CODES.map((c) => [c, 0])) as Record<ErrorCode, number>
@@ -68,6 +73,7 @@ export function emptyCounts(): ZipCounts {
     rawItemCount: 0,
     evidenceOverlapCount: 0,
     unmatchedNewPersons: 0,
+    duplicateSenderPersons: 0,
     kindMismatch: 0,
     categoryMismatch: 0,
     windows: { total: 0, failed: 0, dedupSkipped: 0, attemptMs: [], failedCodes: {} },
@@ -77,7 +83,7 @@ export function emptyCounts(): ZipCounts {
 /** Micro-average building block: sums every counter. */
 export function addCounts(a: ZipCounts, b: ZipCounts): ZipCounts {
   const r = emptyCounts()
-  const scalar = ['messages', 'transactionalClaims', 'sensitiveInStatement', 'invalidEvidencePost', 'droppedInvalidEvidence', 'rawItemCount', 'evidenceOverlapCount', 'unmatchedNewPersons', 'kindMismatch', 'categoryMismatch'] as const
+  const scalar = ['messages', 'transactionalClaims', 'sensitiveInStatement', 'invalidEvidencePost', 'droppedInvalidEvidence', 'rawItemCount', 'evidenceOverlapCount', 'unmatchedNewPersons', 'duplicateSenderPersons', 'kindMismatch', 'categoryMismatch'] as const
   for (const k of scalar) r[k] = a[k] + b[k]
   for (const t of TYPES) {
     for (const k of Object.keys(r.types[t]) as (keyof TypeCounts)[]) r.types[t][k] = a.types[t][k] + b.types[t][k]
@@ -110,7 +116,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   const n = args.messages.length
   const counts = emptyCounts()
   counts.messages = n
-  const details: ZipDetails = { tp: [], fp: [], fn: [], unmatchedNewPersons: [] }
+  const details: ZipDetails = { tp: [], fp: [], fn: [], unmatchedNewPersons: [], duplicatePersons: [] }
 
   // ---- persons
   const goldKeys = new Set(gold.persons.map((p) => p.key))
@@ -118,17 +124,27 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   const labelToKey = new Map<string, string>()
   for (const p of gold.persons) for (const name of [p.label, ...(p.aliases ?? [])]) if (!labelToKey.has(normKey(name))) labelToKey.set(normKey(name), p.key)
   const predLabels = new Map(pred.persons.map((p) => [p.key, p.label]))
+  // A sender is always a known person in the pipeline, so a created person carrying a sender's name is a duplicate
+  // of that sender in the app (not the sender itself): its items are FPs labelled wrong_person, never TPs.
+  const senderKeys = new Set([gold.mapping.self, ...gold.mapping.senders.map((s) => s.person)].filter(Boolean))
   const unmatched = new Set<string>()
+  const duplicates = new Map<string, string>()
   const mapPerson = (key: string): string => {
     if (goldKeys.has(key)) return key
     const label = predLabels.get(key) ?? (key.startsWith('new:') ? key.slice(4) : null)
-    const hit = label === null ? undefined : labelToKey.get(normKey(label))
-    if (hit) return hit
+    const names = [label, key.startsWith('new:') ? key.slice(4) : null].filter((x): x is string => x !== null)
+    const hits = names.map((x) => labelToKey.get(normKey(x))).filter((x): x is string => x !== undefined)
+    const sender = hits.find((h) => senderKeys.has(h))
+    if (sender) {
+      duplicates.set(key, sender)
+      return DUPLICATE_PREFIX + sender
+    }
+    if (hits[0]) return hits[0]
     if (key.startsWith('new:') || predLabels.has(key)) unmatched.add(key)
     return UNKNOWN_PERSON
   }
   for (const p of pred.persons) mapPerson(p.key)
-  const labelOf = (mapped: string, raw: string) => (mapped === UNKNOWN_PERSON ? predLabels.get(raw) ?? raw : gold.persons.find((p) => p.key === mapped)?.label ?? mapped)
+  const labelOf = (mapped: string, raw: string) => (isPhantom(mapped) ? predLabels.get(raw) ?? raw : gold.persons.find((p) => p.key === mapped)?.label ?? mapped)
 
   // ---- evidence validity (independent of the pipeline's own filter)
   const windows = new Map(pred.windows.map((w) => [w.index, w]))
@@ -150,6 +166,12 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     events: pred.events.map((e, i) => ({ type: 'events', index: i, person: e.participants.map(mapPerson)[0] ?? UNKNOWN_PERSON, text: e.summary, sensitiveText: e.summary, evidence: e.evidence, windowIndex: e.windowIndex })),
   }
   const relEnds = pred.relations.map((r) => ({ from: mapPerson(r.from), to: mapPerson(r.to), type: r.type }))
+  /** the item names a duplicate-of-sender person (any relation end / event participant) */
+  const duplicateOf = (it: PredItem): string | null => {
+    const ps = it.type === 'relations' ? [relEnds[it.index].from, relEnds[it.index].to] : it.type === 'events' ? pred.events[it.index].participants.map(mapPerson) : [it.person]
+    const d = ps.find((x) => x.startsWith(DUPLICATE_PREFIX))
+    return d ? d.slice(DUPLICATE_PREFIX.length) : null
+  }
 
   // ---- matching: predIndex → match, per type
   const tp: Record<TypeName, Map<number, { goldId: string; verdict: Verdict }>> = { claims: new Map(), relations: new Map(), handles: new Map(), dates: new Map(), events: new Map() }
@@ -166,7 +188,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     const used = new Set<string>()
     const ordered = [...goldList.filter((g) => !g.optional), ...goldList.filter((g) => g.optional)]
     for (const it of items[type]) {
-      if (it.person === UNKNOWN_PERSON) continue
+      if (isPhantom(it.person)) continue
       const g = ordered.find((x) => !used.has(x.id) && ok(it.index, x))
       if (g) {
         used.add(g.id)
@@ -190,7 +212,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
 
   matchDeterministic('handles', gold.handles, (i, g) => g.person === items.handles[i].person && normKey(g.value) === normKey(pred.handles[i].value))
   for (const [i, m] of tp.handles) if (gold.handles.find((g) => g.id === m.goldId)!.kind !== pred.handles[i].kind) counts.kindMismatch++
-  matchDeterministic('relations', gold.relations, (i, g) => relEnds[i].to !== UNKNOWN_PERSON && relMatches(relEnds[i], g))
+  matchDeterministic('relations', gold.relations, (i, g) => !isPhantom(relEnds[i].to) && relMatches(relEnds[i], g))
   matchDeterministic('dates', gold.dates, (i, g) => dateMatches(pred.dates[i], items.dates[i].person, g))
 
   /** judge verdicts → one-to-one: pass 1 `same` by gold order, pass 2 `less_specific` */
@@ -224,11 +246,12 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     const g = gold.claims.find((c) => c.id === m.goldId)!
     if (![g.category, ...(g.acceptCategories ?? [])].includes(pred.claims[i].category)) counts.categoryMismatch++
   }
-  if (gold.events.length && items.events.length) {
+  const matchableEvents = items.events.filter((e) => duplicateOf(e) === null)
+  if (gold.events.length && matchableEvents.length) {
     const out = await judge.matchClaims({
       person: { key: '__events__', label: '事件' },
       gold: gold.events.map((g) => ({ id: g.id, statement: g.summary, category: 'other' as const })),
-      pred: items.events.map((p) => ({ index: p.index, statement: p.text, category: 'other' as const })),
+      pred: matchableEvents.map((p) => ({ index: p.index, statement: p.text, category: 'other' as const })),
     })
     assignJudged('events', gold.events.map((g) => g.id), out)
   }
@@ -265,6 +288,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
       const base = { type: t, fpId, predIndex: it.index, person: it.person, text: it.text, evidence: it.evidence, subLabel: null, goldId: null, negativeId: null }
       if (invalidEvidence(it.evidence, it.windowIndex)) fpRows.push({ ...base, label: 'invalid_evidence', reason: 'evidence index out of range or outside its window' })
       else if (it.sensitiveText && sensitiveHits(it.sensitiveText, gold.sensitiveValues).length) fpRows.push({ ...base, label: 'sensitive_leak', reason: `matched ${sensitiveHits(it.sensitiveText, gold.sensitiveValues).join(',')}` })
+      else if (duplicateOf(it) !== null) fpRows.push({ ...base, label: 'wrong_person', reason: `duplicate person of sender ${duplicateOf(it)} (name matches its gold label/alias)` })
       else if (wrongPersonDet(it)) fpRows.push({ ...base, label: 'wrong_person', reason: 'same value exists in gold under another person' })
       else toJudge.push({ ...it, fpId })
     }
@@ -341,5 +365,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   }
   counts.unmatchedNewPersons = unmatched.size
   details.unmatchedNewPersons = [...unmatched]
+  counts.duplicateSenderPersons = duplicates.size
+  details.duplicatePersons = [...duplicates].map(([key, person]) => ({ key, person }))
   return { counts, details }
 }

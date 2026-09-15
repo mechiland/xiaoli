@@ -37,7 +37,7 @@ export default defineScenario({
   id: 'person/showcase',
   description: '人物页：长档案、稀疏、只有未确认、农历生日、历史、别名、证据、悬停操作、改写、补充、工具菜单、加载、错误、找不到、窄屏、锚点',
   account: 'seed',
-  requiredTags: ['person:long-profile', 'person:sparse-profile', 'person:with-history', 'person:review-new-person', 'person:lunar-birthday-soon'],
+  requiredTags: ['person:long-profile', 'person:sparse-profile', 'person:with-history', 'person:review-new-person', 'person:lunar-birthday-soon', 'person:self'],
   expectedFailures: [
     { urlPattern: /\/api\/people\/\d+$/, status: 500, step: 'block-error', consoleText: 'Failed to load resource' },
   ],
@@ -47,6 +47,7 @@ export default defineScenario({
     const history = await seed.person('with-history')
     const proposedOnly = await seed.person('review-new-person')
     const lunar = await seed.person('lunar-birthday-soon')
+    const self = await seed.person('self')
     const narrow = width < 1024
     const topbarStatic = () => page.addStyleTag({ content: 'header.sticky{position:static!important}' })
 
@@ -91,6 +92,44 @@ export default defineScenario({
         await page.getByRole('button', { name: '收起信息框' }).click()
       })
     }
+
+    await step('infobox value evidence spans the whole infobox', async () => {
+      await page.evaluate('window.scrollTo(0,0)')
+      if (narrow) await page.getByRole('button', { name: '展开信息框' }).click()
+      const field = page.locator('#infobox-fields [data-field="工作"]')
+      check('long-profile has a 工作 value', (await field.count()) === 1)
+      await field.locator('[data-evidence-mark]').click()
+      const block = field.locator('.evidence-block')
+      await block.locator('[data-evidence-message]').first().waitFor({ timeout: 10_000 })
+      await helpers.settle({ quietMs: 200 })
+      // no named helpers inside evaluate: tsx's keepNames would inject __name, which the page does not define
+      const g = await field.evaluate((el) => {
+        const f = el.getBoundingClientRect()
+        const b = el.querySelector('.evidence-block')!.getBoundingClientRect()
+        const dt = el.querySelector('dt')!.getBoundingClientRect()
+        const dd = el.querySelector('dd')!.getBoundingClientRect()
+        return { fieldLeft: f.left, fieldWidth: f.width, dtLeft: dt.left, blockLeft: b.left, blockWidth: b.width, ddWidth: dd.width }
+      })
+      check('block starts at the label edge', Math.abs(g.blockLeft - g.dtLeft) <= 1, g)
+      check('block spans the full field width', Math.abs(g.blockWidth - g.fieldWidth) <= 1 && g.blockWidth > g.ddWidth + 80, g)
+      const sw = Number(await page.evaluate('document.documentElement.scrollWidth'))
+      check('no horizontal scroll with infobox evidence open', sw <= width, { sw })
+      // each message's time, sender and the start of its body share the first line (not one fragment per line)
+      const firstLine = await block.locator('[data-evidence-message]').first().evaluate((li) => {
+        const kids = [...li.children].slice(0, 3).map((k) => k.getBoundingClientRect().top)
+        return kids.every((t) => Math.abs(t - kids[0]) < 8)
+      })
+      check('time and sender stay on one line', firstLine)
+      await block.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+    })
+    await shot('infobox-evidence', { fullPage: false })
+    await step('close infobox evidence', async () => {
+      const field = page.locator('#infobox-fields [data-field="工作"]')
+      await field.locator('[data-evidence-mark]').click()
+      check('block closed', (await field.locator('.evidence-block').count()) === 0)
+      await page.evaluate('window.scrollTo(0,0)')
+      if (narrow) await page.getByRole('button', { name: '收起信息框' }).click()
+    })
 
     await step('alias list expanded', async () => {
       await page.getByRole('button', { name: /^又名：/ }).click()
@@ -199,6 +238,49 @@ export default defineScenario({
       await page.locator('[data-block=history]').scrollIntoViewIfNeeded()
     })
     await shot('history-expanded')
+
+    type Rel = { id: number; fromPersonId: number; toPersonId: number; from: { id: number; label: string }; to: { id: number; label: string }; type: string; label: string | null }
+    await step('self page (seed) has no TA', async () => {
+      await helpers.goto(`/p/${self.id}`, { waitFor: '[data-person-id]' })
+      check('no TA on the self page', !/TA/.test(await page.locator('article').innerText()))
+    })
+
+    await step('self page relation notes speak as 我 (relations stubbed to start from self)', async () => {
+      // seed stores self's relations as "<other> 是 我 的 <label>" (from = other), which renders no note on the self page;
+      // flip them so the self page is `from` and the label names me: "我是对方的<label>"
+      const r = await api.get<Record<string, unknown> & { relations: Rel[] }>(`/api/people/${self.id}`)
+      const rels = r.json!.relations.filter((x) => x.label).slice(0, 4)
+      check('self has labelled relations to flip', rels.length > 0, { count: rels.length })
+      const flipped = rels.map((x) => ({ ...x, fromPersonId: x.toPersonId, toPersonId: x.fromPersonId, from: x.to, to: x.from, type: 'other' }))
+      const un = await helpers.stubJson(new RegExp(`/api/people/${self.id}$`), { ...r.json!, relations: flipped })
+      await page.goto(`/dev/person/live/${self.id}`)
+      await page.locator('[data-person-id]').waitFor({ timeout: 15_000 })
+      await topbarStatic()
+      const notes = await page.locator('[data-relation-note]').allInnerTexts()
+      check('one note per flipped relation', notes.length === flipped.length, { notes: notes.length })
+      check('relation notes read 我是对方的…', notes.length > 0 && notes.every((n) => n.startsWith('我是对方的')), { bad: notes.filter((n) => !n.startsWith('我是对方的')).length })
+      check('no TA on the stubbed self page', !/TA/.test(await page.locator('article').innerText()))
+      await page.locator('[data-block=relations]').evaluate((el) => el.scrollIntoView({ block: 'center' }))
+      await shot('self-relations', { fullPage: false })
+      await un()
+    })
+
+    await step('self page, nothing known yet (stubbed empty profile)', async () => {
+      const r = await api.get<Record<string, unknown>>(`/api/people/${self.id}`)
+      const empty = { ...r.json!, sections: [], relations: [], events: [], history: [] }
+      const un = await helpers.stubJson(new RegExp(`/api/people/${self.id}$`), empty)
+      await page.goto(`/dev/person/live/${self.id}`)
+      await page.locator('[data-person-id]').waitFor({ timeout: 15_000 })
+      check('empty body reads 还没有关于我的信息。', (await page.locator('[data-body-empty]').innerText()).trim() === '还没有关于我的信息。')
+      check('empty relations read 还没有记下我和谁有关系。', (await page.locator('[data-relations-empty]').innerText()).trim() === '还没有记下我和谁有关系。')
+      await page.locator('[data-block=body]').getByRole('button', { name: '其他', exact: true }).click()
+      const input = page.getByRole('textbox', { name: '补充一条其他信息' })
+      check('其他 hint speaks as 我', (await input.getAttribute('placeholder')) === '写一句关于我的事，回车保存')
+      await input.press('Escape')
+      check('no TA on the empty self page', !/TA/.test(await page.locator('article').innerText()))
+      await un()
+    })
+    await shot('self-empty', { fullPage: false })
 
     await step('sparse profile', async () => {
       await helpers.goto(`/p/${sparse.id}`, { waitFor: '[data-person-id]' })

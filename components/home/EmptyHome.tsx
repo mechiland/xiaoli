@@ -123,7 +123,7 @@ export function EmptyHome({ needsOnboarding }: { needsOnboarding: boolean }) {
               选择文件
             </Button>
             <span className="text-[13px] leading-6 text-ink-3">
-              ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">聊天记录_20260915_142841.zip</span>
+              ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">聊天记录_20260101_120000.zip</span>
             </span>
           </div>
           <input

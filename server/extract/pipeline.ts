@@ -4,10 +4,10 @@ import type { LlmClient, LlmError, LlmJsonRequest, LlmJsonResult, LlmRequestCont
 import { DEDUP_MAX_CANDIDATES, runDedup } from './dedup'
 import type { DedupGroupInput } from './prompt'
 import { renderExtractPrompt } from './prompt'
-import { PROMPT_VERSION } from './prompt-version'
+import { PROMPT_VERSION, promptFeatures } from './prompt-version'
 import { applySensitiveGuard } from './sensitive'
 import type { ExtractStore, LoadedWindow, ResolvedItems, WindowErrorCode, WindowOutcome, WindowRef, WindowUsage } from './types'
-import { GRADE, normName, STUDENT_STATUS, validateOutput } from './validate'
+import { GRADE, normName, statesEnrolment, STUDENT_STATUS, validateOutput } from './validate'
 
 export const EXTRACT_MAX_TOKENS = 8192
 /** ARCHITECTURE §6 step 1: extract call ≤ 20 s and leaves 6 s for dedup + persistence */
@@ -130,7 +130,7 @@ export async function extractWindow(deps: ExtractDeps, window: WindowRef): Promi
   }
   raw = res.raw
 
-  const v = validateOutput(res.json, input)
+  const v = validateOutput(res.json, input, { milestoneRules: promptFeatures(version).milestoneRules })
   if ('error' in v) return fail('retryable_error', 'validation_failed', v.issues.slice(0, 3).join('; '))
   const guarded = applySensitiveGuard(v.output)
   const droppedInvalidEvidence = v.dropped.filter((d) => d.reason === 'evidence_out_of_window').length
@@ -147,8 +147,11 @@ export async function extractWindow(deps: ExtractDeps, window: WindowRef): Promi
   for (const [personId, idxs] of byPerson) {
     const candidates = (await deps.store.findSimilarClaims(personId, window.importId)).slice(-DEDUP_MAX_CANDIDATES)
     if (!candidates.length) continue
-    // validateOutput drops the generic student status next to a grade in the same window; here against this import's claims.
-    const gradeKnown = candidates.some((c) => GRADE.test(c.statement))
+    // validateOutput drops the generic student status next to a grade or a named school in the same window; here against
+    // this import's claims (DECISIONS ## extract X28).
+    // Proposed candidates carry no evidence kinds, so only a grade or class counts for them; a named school counts once
+    // the user has confirmed it.
+    const gradeKnown = candidates.some((c) => (c.status === 'confirmed' ? statesEnrolment(c.statement) : GRADE.test(normName(c.statement))))
     const exact = new Map(candidates.map((c) => [normName(c.statement), c.id]))
     const rest: { index: number; statement: string }[] = []
     for (const i of idxs) {

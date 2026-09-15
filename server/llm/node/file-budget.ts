@@ -22,7 +22,7 @@ export function envBudgetLimit(): number {
 }
 
 export function resolveBudgetPath(p?: string): string {
-  return path.resolve(process.cwd(), p ?? DEFAULT_BUDGET_PATH)
+  return path.resolve(/*turbopackIgnore: true*/ process.cwd(), p ?? DEFAULT_BUDGET_PATH)
 }
 
 function lockPathOf(file: string): string {

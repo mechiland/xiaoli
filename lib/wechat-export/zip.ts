@@ -1,7 +1,8 @@
-import { unzipSync, type UnzipFileInfo } from 'fflate'
+import { Inflate, unzipSync, type UnzipFileInfo } from 'fflate'
 import type { MediaFileInfo, ParsedExport } from '@/contracts'
 import { ParseError } from './errors'
 import { sha256Hex } from './hash'
+import { SNIFF_BYTES, sniffImageMime } from './sniff'
 import { buildParsedExport, type Warning } from './text'
 
 export function toU8(zip: Uint8Array | ArrayBuffer): Uint8Array {
@@ -86,6 +87,82 @@ interface Entry {
   path: string
   name: string
   originalSize: number
+  /** position in the central directory (fflate calls the filter once per directory entry, in order) */
+  index: number
+  compression: number
+  /** compressed size */
+  size: number
+}
+
+const u16 = (b: Uint8Array, o: number) => b[o] | (b[o + 1] << 8)
+const u32 = (b: Uint8Array, o: number) => (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0
+const u64 = (b: Uint8Array, o: number) => u32(b, o) + u32(b, o + 4) * 2 ** 32
+
+/**
+ * Local header offset of every central directory entry, in directory order (ZIP64 aware). [] when the directory
+ * cannot be read — callers then simply skip byte sniffing. fflate's UnzipFileInfo has no offset, hence this reader.
+ */
+export function localHeaderOffsets(b: Uint8Array): number[] {
+  const min = Math.max(0, b.length - 65558)
+  let e = b.length - 22
+  while (e >= min && u32(b, e) !== 0x06054b50) e--
+  if (e < min) return []
+  let count = u16(b, e + 10)
+  let o = u32(b, e + 16)
+  if (e >= 20 && u32(b, e - 20) === 0x07064b50) {
+    const ze = u64(b, e - 12)
+    if (ze + 56 <= b.length && u32(b, ze) === 0x06064b50) {
+      count = u64(b, ze + 32)
+      o = u64(b, ze + 48)
+    }
+  }
+  const out: number[] = []
+  for (let i = 0; i < count; i++) {
+    if (o + 46 > b.length || u32(b, o) !== 0x02014b50) return []
+    const n = u16(b, o + 28)
+    const x = u16(b, o + 30)
+    const c = u16(b, o + 32)
+    let off = u32(b, o + 42)
+    if (off === 0xffffffff) {
+      // ZIP64 extra (id 1): present fields in order uncompressed, compressed, offset
+      for (let p = o + 46 + n, end = p + x; p + 4 <= end; p += 4 + u16(b, p + 2)) {
+        if (u16(b, p) !== 1) continue
+        let f = p + 4
+        if (u32(b, o + 24) === 0xffffffff) f += 8
+        if (u32(b, o + 20) === 0xffffffff) f += 8
+        off = u64(b, f)
+        break
+      }
+    }
+    out.push(off)
+    o += 46 + n + x + c
+  }
+  return out
+}
+
+/** Up to `want` leading bytes of an entry's content without inflating the rest; null when unreadable. */
+export function entryHead(b: Uint8Array, localOffset: number, compression: number, size: number, want = SNIFF_BYTES): Uint8Array | null {
+  try {
+    if (localOffset + 30 > b.length || u32(b, localOffset) !== 0x04034b50) return null
+    const start = localOffset + 30 + u16(b, localOffset + 26) + u16(b, localOffset + 28)
+    const end = Math.min(b.length, start + size)
+    if (compression === 0) return b.slice(start, Math.min(end, start + want))
+    if (compression !== 8) return null
+    const head = new Uint8Array(want)
+    let got = 0
+    const inflate = new Inflate((chunk) => {
+      const part = chunk.subarray(0, want - got)
+      head.set(part, got)
+      got += part.length
+    })
+    for (let p = start; p < end && got < want; p += 1024) {
+      const q = Math.min(end, p + 1024)
+      inflate.push(b.subarray(p, q), q === end)
+    }
+    return head.slice(0, got)
+  } catch {
+    return null
+  }
 }
 
 function basename(p: string): string {
@@ -116,10 +193,12 @@ export async function parseExportZip(
   const bytes = toU8(zip)
   progress(0)
   const entries: Entry[] = []
+  let index = 0
   const files = safeUnzip(bytes, (f) => {
     const path = decodeEntryName(f.name)
+    const at = index++
     if (isJunk(path)) return false
-    entries.push({ rawName: f.name, path, name: basename(path), originalSize: f.originalSize })
+    entries.push({ rawName: f.name, path, name: basename(path), originalSize: f.originalSize, index: at, compression: f.compression, size: f.size })
     // only text files are inflated; media are listed by size without decompressing
     return path.toLowerCase().endsWith('.txt') && (f.compression === 0 || f.compression === 8)
   })
@@ -139,9 +218,22 @@ export async function parseExportZip(
   const sha256 = await sha256Hex(bytes)
   progress(0.7)
 
+  // Images: the mime comes from the leading bytes when they name a format (HEIC photos are exported as 微信图片_….jpg);
+  // only those bytes are inflated. Everything else, and unrecognised bytes, keep the extension's mime. DECISIONS P15.
+  let offsets: number[] | null = null
   const mediaFiles: MediaFileInfo[] = entries
     .filter((e) => e !== chosen)
-    .map((e) => ({ name: e.name, path: e.path, ...mediaKindAndMime(e.name), byteSize: e.originalSize, referenced: false }))
+    .map((e) => {
+      const km = mediaKindAndMime(e.name)
+      if (km.kind === 'image') {
+        offsets ??= localHeaderOffsets(bytes)
+        const off = offsets.length === index ? offsets[e.index] : undefined
+        const head = off === undefined ? null : entryHead(bytes, off, e.compression, e.size)
+        const sniffed = head ? sniffImageMime(head) : null
+        if (sniffed) km.mime = sniffed
+      }
+      return { name: e.name, path: e.path, ...km, byteSize: e.originalSize, referenced: false }
+    })
 
   const parsed = buildParsedExport(text, { fileName: opts.fileName, mediaFiles, sha256, warnings })
   progress(1)

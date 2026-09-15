@@ -1,6 +1,6 @@
 // GET /api/export and DELETE /api/data: table lists (§11), owner isolation, R2 prefix, idempotency. Synthetic data only.
 import { eq } from 'drizzle-orm'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { ExportDumpSchema } from '@/contracts'
 import {
   attachments,
@@ -26,7 +26,7 @@ import {
   type Db,
 } from '@/server/db'
 import { createTestApp, createTestDb, createTestUser } from '@/tests/helpers/test-db'
-import { countOwnerRows, DELETE_ALL_TABLES, EXPORT_TABLE_KEYS } from './data'
+import { countOwnerRows, DELETE_ALL_TABLES, EXPORT_TABLE_KEYS, exportFileName } from './data'
 
 const STATS = { byKind: {}, bySender: {}, images: { count: 0, bytes: 0 }, videos: { count: 0, bytes: 0 } }
 const NOW = '2026-09-15T08:00:00.000Z'
@@ -91,8 +91,8 @@ describe('settings data routes: export + delete all', () => {
   let userA: { id: string; email: string; name: string }
   let userB: { id: string; email: string; name: string }
 
-  const call = async (userId: string | null, method: string, url: string, body?: unknown) => {
-    const app = createTestApp({ db, r2, userId })
+  const call = async (userId: string | null, method: string, url: string, body?: unknown, env?: Record<string, unknown>) => {
+    const app = createTestApp({ db, r2, userId, env })
     const res = await app.request(url, {
       method,
       headers: body === undefined ? undefined : { 'content-type': 'application/json' },
@@ -142,6 +142,25 @@ describe('settings data routes: export + delete all', () => {
     // nothing of user B leaks
     expect(r.text).not.toContain('周以宁B')
     expect(r.text).not.toContain(userB.id)
+  })
+
+  it('export file name is dated in APP_TZ, not UTC (16:30Z is already the next day in Asia/Shanghai)', async () => {
+    const clock = new Date('2026-09-15T16:30:00.000Z')
+    expect(exportFileName('Asia/Shanghai', clock)).toBe('xiaoli-export-20260916.json')
+    expect(exportFileName(undefined, clock)).toBe('xiaoli-export-20260916.json') // default tz = Asia/Shanghai
+    expect(exportFileName('UTC', clock)).toBe('xiaoli-export-20260915.json')
+    expect(exportFileName('America/Los_Angeles', new Date('2026-09-16T06:59:00.000Z'))).toBe('xiaoli-export-20260915.json')
+
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(clock)
+      const local = await call(userA.id, 'GET', '/api/export', undefined, { APP_TZ: 'Asia/Shanghai' })
+      expect(local.headers.get('content-disposition')).toBe('attachment; filename="xiaoli-export-20260916.json"')
+      const utc = await call(userA.id, 'GET', '/api/export', undefined, { APP_TZ: 'UTC' })
+      expect(utc.headers.get('content-disposition')).toBe('attachment; filename="xiaoli-export-20260915.json"')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('export of an account with no data is a valid, empty dump', async () => {

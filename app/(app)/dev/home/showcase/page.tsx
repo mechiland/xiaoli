@@ -88,10 +88,21 @@ function long(r: HomeBlocksResult): HomeBlocksResult {
         ...(r.blocks.recentlyUpdated ?? []).filter((x) => x.person.id !== first.id).slice(0, 3),
       ],
       pinned: [{ id: first.id, label: longLabel }, ...(r.blocks.pinned ?? []).filter((x) => x.id !== first.id).slice(0, 6)],
+      // titles of several lengths so that at 390 and 1440 some line fills up right before a " ·" separator
       recentImports: [
-        { id: r.blocks.recentImports?.[0]?.id ?? 1, chatTitle: '2016 级建筑系研究生毕业十周年返校聚会筹备群（暂定名，欢迎大家提建议）', dateFrom: '2025-11-02 09:12', dateTo: '2026-09-14 22:40', createdAt: new Date().toISOString(), status: 'done' },
-        ...(r.blocks.recentImports ?? []).slice(1, 5),
-      ],
+        '2016 级建筑系研究生毕业十周年返校聚会筹备群（暂定名，欢迎大家提建议）',
+        '周末一起去西溪湿地骑车的朋友们',
+        '小区三期业主装修交流群',
+        '外婆八十大寿家宴筹备小组（请大家确认到场人数）',
+        '羽毛球搭子',
+      ].map((chatTitle, i) => ({
+        id: r.blocks.recentImports?.[i]?.id ?? r.blocks.recentImports?.[0]?.id ?? 1,
+        chatTitle,
+        dateFrom: i === 1 ? '2026-09-14 08:00' : '2025-11-02 09:12',
+        dateTo: i === 1 ? '2026-09-15 21:30' : '2026-09-14 22:40',
+        createdAt: new Date(Date.now() - i * 3_600_000).toISOString(),
+        status: 'done' as const,
+      })),
     },
   }
 }

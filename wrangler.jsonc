@@ -1,9 +1,22 @@
 {
-  // Bootstrapped by core (wave 1); owned by deploy from wave 4. Secrets are never written here:
-  // local → .dev.vars (gitignored, created by `pnpm dev:ensure`); deployed → `wrangler secret put`.
+  // Owned by deploy (ARCHITECTURE §1.13). docs/DEPLOY.md is the owner's runbook.
+  //
+  // Two targets in one file:
+  // - top level  = LOCAL: `next dev` (initOpenNextCloudflareForDev), vitest/CLI getPlatformProxy, `pnpm preview:prod`.
+  //   The all-zero database_id is the local miniflare key of .wrangler/state; do not change it, or the local D1 data
+  //   (seed accounts) is orphaned.
+  // - env.production = REMOTE: every wrangler/opennextjs command for Cloudflare takes `--env production`.
+  //   Bindings and vars are not inherited by environments, so they are repeated there on purpose.
+  //
+  // No secrets here. Local: .dev.vars (gitignored, written by `pnpm dev:ensure`).
+  // Remote: `wrangler secret put DEEPSEEK_API_KEY --env production` and `... BETTER_AUTH_SECRET ...`
+  // (scripts/deploy/setup.ts does both, prompting; values are never echoed).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "xiaoli",
   "main": ".open-next/worker.js",
+  // OpenNext needs nodejs_compat (Better Auth + Next server use AsyncLocalStorage, node:crypto, Buffer) and a
+  // compatibility_date ≥ 2024-09-23 (nodejs_compat v2). global_fetch_strictly_public: the worker's own fetches
+  // (DeepSeek) never loop back to the zone. Must be ≤ the bundled workerd's date (workerd 1.20260911.1).
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
@@ -14,7 +27,6 @@
     {
       "binding": "DB",
       "database_name": "xiaoli",
-      // Placeholder for local development; deploy replaces it with the id from `wrangler d1 create xiaoli`.
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "drizzle"
     }
@@ -27,5 +39,41 @@
   ],
   "vars": {
     "APP_TZ": "Asia/Shanghai"
+  },
+
+  "env": {
+    "production": {
+      // Keep the worker called "xiaoli" (without this wrangler would name it "xiaoli-production").
+      "name": "xiaoli",
+      "workers_dev": true,
+      "preview_urls": false,
+      "observability": { "enabled": true },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "xiaoli",
+          // PLACEHOLDER: `pnpm tsx scripts/deploy/setup.ts --apply` writes the id printed by `wrangler d1 create xiaoli`.
+          "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+          "migrations_dir": "drizzle"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          // Created by `wrangler r2 bucket create xiaoli-files` (setup.ts). The name is not secret.
+          "bucket_name": "xiaoli-files"
+        }
+      ],
+      "vars": {
+        "APP_TZ": "Asia/Shanghai",
+        // PLACEHOLDER: the public origin, e.g. https://xiaoli.<account-subdomain>.workers.dev (setup.ts --url).
+        // Better Auth uses it as baseURL and the only trusted origin, so sign-up fails until it is correct.
+        "BETTER_AUTH_URL": "https://REPLACE_WITH_PUBLIC_ORIGIN",
+        // Monthly LLM token budget for the deployed app (server/llm d1Budget). LLM_BUDGET_SINCE (ISO datetime with
+        // offset) moves the window start; unset = start of the current month.
+        "LLM_BUDGET_TOKENS": "3000000",
+        "EXTRACT_MODEL": "deepseek-flash"
+      }
+    }
   }
 }

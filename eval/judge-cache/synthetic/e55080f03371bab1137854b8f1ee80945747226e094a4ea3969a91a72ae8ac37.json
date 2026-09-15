@@ -1,0 +1,26 @@
+{
+  "inputHash": "e55080f03371bab1137854b8f1ee80945747226e094a4ea3969a91a72ae8ac37",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T18:06:25.137Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#13",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c13",
+        "negativeId": null,
+        "reason": "看房的是大海，但搬家计划属于建国和花"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日对应公历8月21日，属推断陷阱"
+      }
+    ]
+  }
+}

@@ -9,7 +9,7 @@ const route = new Hono<AppEnv>()
   .get('/export', async (c) => {
     const user = requireUser(c)
     const dump = await buildExportDump(c.var.db, user)
-    c.header('content-disposition', `attachment; filename="${exportFileName()}"`)
+    c.header('content-disposition', `attachment; filename="${exportFileName(c.var.env.APP_TZ)}"`)
     c.header('cache-control', 'no-store')
     return c.json(dump)
   })

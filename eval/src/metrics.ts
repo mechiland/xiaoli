@@ -24,6 +24,7 @@ export type TypeMetrics = Record<TypeName, TypeStat> & {
   rawItemCount: number
   evidenceOverlap: number | null
   unmatchedNewPersons: number
+  duplicateSenderPersons: number
   kindMismatch: number
   categoryMismatch: number
   errors: Record<TypeName, Record<ErrorCode, number>>
@@ -65,6 +66,7 @@ export function metricsFromCounts(c: ZipCounts): TypeMetrics {
     rawItemCount: c.rawItemCount,
     evidenceOverlap: ratio(c.evidenceOverlapCount, tpTotal),
     unmatchedNewPersons: c.unmatchedNewPersons,
+    duplicateSenderPersons: c.duplicateSenderPersons,
     kindMismatch: c.kindMismatch,
     categoryMismatch: c.categoryMismatch,
     errors: JSON.parse(JSON.stringify(c.errors)),

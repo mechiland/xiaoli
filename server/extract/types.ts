@@ -65,6 +65,8 @@ export type DropReason =
 export interface DroppedItem {
   path: string
   reason: DropReason
+  /** `invalid_item` from the strict item schema: failing field paths and issue codes ("confidence:invalid_type"), never values (DECISIONS ## extract X31). */
+  fields?: string[]
 }
 
 export type ValidateResult =

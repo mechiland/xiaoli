@@ -1,7 +1,7 @@
 // Full owner export and delete-all (ARCHITECTURE §2.4 ExportDump, §11 "Delete all data" / "Export"). Owner: settings.
 import { asc, eq, sql } from 'drizzle-orm'
 import type { DeleteAllResponse, ExportDump } from '@/contracts'
-import { nowIso } from '@/lib/time'
+import { DEFAULT_TZ, nowIso, todayInTz } from '@/lib/time'
 import {
   attachments,
   chats,
@@ -133,10 +133,12 @@ export async function buildExportDump(db: Db, user: { id: string; email: string;
   }
 }
 
-/** `xiaoli-export-20260915.json` (date in APP_TZ-independent UTC; the file name is only a label). */
-export function exportFileName(now: Date = new Date()): string {
-  const d = now.toISOString().slice(0, 10).replaceAll('-', '')
-  return `xiaoli-export-${d}.json`
+/**
+ * `xiaoli-export-20260916.json`: the calendar date in `tz` (APP_TZ, §3 "today"), so the label matches
+ * the local dates shown everywhere else (an export at 00:40 Asia/Shanghai is dated that local day, not UTC's).
+ */
+export function exportFileName(tz: string = DEFAULT_TZ, now: Date = new Date()): string {
+  return `xiaoli-export-${todayInTz(tz, now).replaceAll('-', '')}.json`
 }
 
 type BatchItem = Parameters<Db['batch']>[0][number]

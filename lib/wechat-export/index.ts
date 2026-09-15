@@ -5,7 +5,7 @@ import { buildParsedExport } from './text'
 
 export { PARSER_VERSION } from './version'
 export { ParseError, isParseError, type ParseErrorCode } from './errors'
-export { fingerprint, sha256Hex, messagesDigest } from './hash'
+export { fingerprint, fingerprintBody, sha256Hex, messagesDigest } from './hash'
 export { classifyBody, extractMentions, STICKER_CODES } from './classify'
 export { parseExportZip, readMediaFiles } from './zip'
 export { summarize } from './summarize'

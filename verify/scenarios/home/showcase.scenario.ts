@@ -34,6 +34,8 @@ export default defineScenario({
       check('long label is a link in the index', (await main.locator('[id^="people-"] a', { hasText: longLabel.label! }).count()) === 1)
       const upcomingText = await section('即将到来').innerText()
       check('lunar upcoming row shows the lunar date and its solar day', /农历.+·\s*\d+月\d+日/.test(upcomingText) && upcomingText.includes(lunarSoon.label!))
+      const updated = await section('最近有新信息的人').locator('a[href*="claim-"]').allInnerTexts()
+      check('recently updated never shows a sensitive placeholder as latest', updated.length > 0 && !updated.some((x) => x.startsWith('提供过')), { rows: updated.length })
       const importRows = await section('最近导入').locator('a[href^="/imports/"]').count()
       check('recent imports: at most 5 links to the result page', importRows > 0 && importRows <= 5, { importRows })
       const text = await main.innerText()
@@ -116,6 +118,14 @@ export default defineScenario({
       await helpers.goto('/dev/home/showcase?variant=long')
       const overflow = await page.evaluate('document.documentElement.scrollWidth > document.documentElement.clientWidth')
       check('no horizontal overflow with long content', overflow === false)
+      // a wrapped line never starts with a " ·" separator (the dot glues to the piece before it)
+      const lineStarts = await page.evaluate(`[...document.querySelectorAll('main [data-home-sep]')].filter((sep) => {
+        const row = sep.closest('li').getBoundingClientRect()
+        const rects = sep.getClientRects()
+        return rects.length > 0 && rects[0].left - row.left < 2
+      }).length`)
+      const seps = await main.locator('[data-home-sep]').count()
+      check('no line starts with a separator', seps > 0 && lineStarts === 0, { seps, lineStarts })
     })
     await shot('long')
 

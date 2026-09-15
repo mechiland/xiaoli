@@ -34,3 +34,14 @@
 - workaround: none needed if the orchestrator passes these paths in the annotator's prompt
 - blocking: no
 - Resolution (integrator, wave 1, 2026-09-15): ARCHITECTURE §7.6 allowed reads now include `eval/src/GOLD_FORMAT.md`, `eval/src/gold-schema.ts` and `fixtures/synthetic/README.md`. The §2.5 label example "老爸" is now "外公".
+
+## #4 §7.2: a created person named like a sender is a duplicate, not the sender
+- status: done
+- requested-by: eval-synthetic, overall critic r2 fix round, 2026-09-16
+- kind: other (wording of a binding section; no contract shape change)
+- paths: ARCHITECTURE.md §7.2 (person mapping sentence)
+- change: after "for `new:<label>` persons, by normalized label/alias match (NFKC, strip spaces, case-fold) against `persons[].label/aliases`" add: "; a `new:` person whose label matches the label/alias of a sender person (`mapping.senders[].person` or `mapping.self`) is a duplicate of that sender: its items never match gold and count as FPs labelled `wrong_person` (deterministic), reported as `duplicateSenderPersons`".
+- why: overall critic r2 (eval-synthetic item). The pipeline always knows every sender, so a created person carrying a sender's name is a duplicate person in the app; scoring its real_name handle as the sender's TP hides a regression of extract's fold (DECISIONS ## extract X28).
+- workaround: implemented in eval/src/score.ts and documented in DECISIONS ## eval-synthetic E20; `eval/src/GOLD_FORMAT.md` mentions it for annotators.
+- blocking: no
+- Resolution (integrator, wave 4, 2026-09-16): Done (text only). ARCHITECTURE §7.2 person-mapping sentence has the requested duplicate-of-sender clause, worded exactly as asked. Checked against `eval/src/score.ts` (`duplicateOf` → FP `wrong_person`, `counts.duplicateSenderPersons`). No contract change.

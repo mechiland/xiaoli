@@ -12,6 +12,11 @@ import { combinedReport, compareReports, summaryLines, writeCompare, writeEvalRe
 import { addCounts, emptyCounts, scoreZip, type ZipCounts } from './score'
 
 export const PERF_ZIP = 'perf-5000.zip'
+/**
+ * Synthetic ZIPs that are never annotated: perf and the re-export dedup pair (DECISIONS eval-synthetic E19). They are
+ * listed as no_gold without a warning. `eval/tests/reexport-synthetic.test.ts` keeps this in sync with the generator.
+ */
+export const NOT_ANNOTATED_ZIPS: ReadonlySet<string> = new Set([PERF_ZIP, '聊天记录_20260611_213407.zip', '聊天记录_20260915_081926.zip'])
 
 export interface RunOptions {
   source: Source | 'all'
@@ -131,7 +136,7 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
       const label = source === 'real' ? 'a real zip' : plan.file
       const base: ZipReport = { zip: plan.file, source, status: 'no_gold', messageCount: null, windows: null, metrics: null, errors: null }
       if (!plan.gold && !plan.goldIssues) {
-        if (plan.file !== PERF_ZIP) warnings.push(`no gold for ${plan.file}; skipped`)
+        if (!NOT_ANNOTATED_ZIPS.has(plan.file)) warnings.push(`no gold for ${plan.file}; skipped`)
         zips.push(base)
         continue
       }

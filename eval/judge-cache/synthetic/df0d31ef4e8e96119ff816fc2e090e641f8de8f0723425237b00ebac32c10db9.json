@@ -1,0 +1,26 @@
+{
+  "inputHash": "df0d31ef4e8e96119ff816fc2e090e641f8de8f0723425237b00ebac32c10db9",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T18:15:15.610Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#11",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c13",
+        "negativeId": null,
+        "reason": "看房的是大海帮父母，计划搬家的是建国和花"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日对应公历8月21日，不能记成公历生日"
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import { DEFAULT_TZ, todayInTz } from '@/lib/time'
 import { defineScenario } from '@/verify/lib'
 import type { Dump } from './_support'
 
@@ -77,7 +78,10 @@ export default defineScenario({
       await page.locator('#self-name-input').fill('阿满')
       await page.locator('#self-name-input').press('Enter')
       await block('self').locator('[data-save-state="saving"]').waitFor()
-      check('new name appears immediately', await page.locator('[data-self-names]').getByText('阿满', { exact: true }).isVisible())
+      // The optimistic cache update lands a tick after the saving note (onMutate awaits cancelQueries), so wait briefly;
+      // the PATCH is held for 3 s, so a name seen while the note still says saving is shown before the server answers.
+      const shown = await page.locator('[data-self-names]').getByText('阿满', { exact: true }).waitFor({ timeout: 1000 }).then(() => true, () => false)
+      check('new name appears immediately', shown && (await block('self').locator('[data-save-state="saving"]').count()) === 1)
       check('input cleared', (await page.locator('#self-name-input').inputValue()) === '')
     })
     await viewShot('saving', '[data-settings-block="self"]')
@@ -136,15 +140,20 @@ export default defineScenario({
     })
 
     await step('export downloads a JSON dump', async () => {
+      const localDay = () => todayInTz(DEFAULT_TZ).replaceAll('-', '') // dev server runs with the default APP_TZ
+      const before = localDay()
       const [download] = await Promise.all([page.waitForEvent('download'), block('data').getByRole('button', { name: '导出为 JSON' }).click()])
       const name = download.suggestedFilename()
-      check('file name', /^xiaoli-export-\d{8}\.json$/.test(name), name)
+      const after = localDay()
+      // dated in APP_TZ, not UTC (00:00–08:00 Asia/Shanghai is still the previous UTC day)
+      check('file name dated in APP_TZ', name === `xiaoli-export-${before}.json` || name === `xiaoli-export-${after}.json`, { name, before, after })
       const path = await download.path()
       const { readFileSync } = await import('node:fs')
       const dump = JSON.parse(readFileSync(path, 'utf8')) as Dump
       check('dump version 1 with settings', dump.version === 1 && dump.settings.selfDisplayNames.includes('阿满'), dump.settings)
       await block('data').getByText(`已下载 ${name}`).waitFor()
     })
+    await viewShot('export-done', '[data-settings-block="data"]')
 
     await step('delete-all dialog: wrong text', async () => {
       await block('data').getByRole('button', { name: '删除全部数据…' }).click()

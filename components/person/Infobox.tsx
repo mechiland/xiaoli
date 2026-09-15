@@ -7,17 +7,24 @@ import type { ClaimDTO, ImportantDateDTO, ProfileResponse } from '@/contracts'
 import { cn } from '@/lib/cn'
 import { anchorId } from '@/lib/links'
 import { personApi, useAction } from './api'
-import { dateAsWritten, dateName, daysText, formatMsgDay, formatSolarDay, markClassFor } from './format'
+import { dateAsWritten, dateName, daysText, formatMsgDay, formatSolarDay, markClassFor, withPronoun } from './format'
 import { InlineError, TextButton } from './Statement'
 
 type MarkOf = (type: 'claim' | 'relation' | 'date' | 'event' | 'handle', id: number) => number
 
-/** Label column + value; `stacked` puts the label on its own line so list values (dates, chats) get the full width. */
+// literal class strings (Tailwind only sees whole literals): label column 84px + gap-x-3 (0.75rem)
+const breakout = '[&_.evidence-block]:ml-[calc(-1*(84px_+_0.75rem))] [&_.evidence-block]:w-[calc(100%_+_84px_+_0.75rem)]'
+
+/**
+ * Label column + value; `stacked` puts the label on its own line so list values (dates, chats) get the full width.
+ * An evidence block opened from a value (rendered by EvidenceRow inside the value) breaks out of the value column to
+ * the left edge, so it spans the whole infobox below the field row instead of being squeezed into ~170 px.
+ */
 function Field({ label, children, stacked = false }: { label: string; children: ReactNode; stacked?: boolean }) {
   return (
-    <div className={cn('py-2 first:pt-0 last:pb-0', !stacked && 'grid grid-cols-[84px_minmax(0,1fr)] gap-x-3')}>
+    <div data-field={label} className={cn('py-2 first:pt-0 last:pb-0', !stacked && 'grid grid-cols-[84px_minmax(0,1fr)] gap-x-3')}>
       <dt className="pt-[1px] text-[13px] leading-6 text-ink-3">{label}</dt>
-      <dd className="min-w-0 text-[14px] leading-6 text-ink [overflow-wrap:anywhere]">{children}</dd>
+      <dd className={cn('min-w-0 text-[14px] leading-6 text-ink [overflow-wrap:anywhere]', !stacked && breakout)}>{children}</dd>
     </div>
   )
 }
@@ -222,7 +229,7 @@ export function InfoboxFields({ profile, markOf }: { profile: ProfileResponse; m
               const detail =
                 c.chat.kind === 'private'
                   ? `私聊共 ${count}${c.lastMessageAt ? `，最后一条在 ${formatMsgDay(c.lastMessageAt)}` : ''}`
-                  : `TA 在群里发言 ${count}${c.lastMessageAt ? `，最后一条在 ${formatMsgDay(c.lastMessageAt)}` : ''}`
+                  : `${withPronoun(profile.person.isSelf, `在群里发言 ${count}`)}${c.lastMessageAt ? `，最后一条在 ${formatMsgDay(c.lastMessageAt)}` : ''}`
               return (
                 <li key={c.chat.id} title={detail} className="flex items-baseline gap-3">
                   {/* the full-width 『 has an empty left half: pull it back so the title aligns with the label */}
