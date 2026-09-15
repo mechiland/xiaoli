@@ -1,2 +1,22 @@
 .DS_Store
 *.zip
+
+# secrets
+.env*.local
+.dev.vars
+
+# real data (PLAN.md 规则)
+fixtures/real/
+eval/gold/real/
+eval/reports/real/
+artifacts/
+fixtures/cassettes/real/
+
+# build
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.dev/
+*.tsbuildinfo
+next-env.d.ts
