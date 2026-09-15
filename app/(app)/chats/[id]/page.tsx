@@ -1,11 +1,18 @@
-// BOOTSTRAP PLACEHOLDER created by core (ARCHITECTURE §1.1). Owner: chat — overwrite freely.
-import { Meta, PageShell } from '@/components/loam'
+import { ChatNotFound, ChatPage } from '@/components/chat'
 
-export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  return (
-    <PageShell title={`聊天 #${id}`} width="reading">
-      <Meta>这一页还在建设中</Meta>
-    </PageShell>
-  )
+// /chats/:id?at=:msgId — read-only transcript (SPEC §9.10). Data loads per block on the client (DECISIONS chat C1).
+export default async function ChatRoute({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ id }, sp] = await Promise.all([params, searchParams])
+  const chatId = /^[1-9]\d{0,15}$/.test(id) ? Number(id) : null
+  const at = typeof sp.at === 'string' && /^[1-9]\d{0,15}$/.test(sp.at) ? Number(sp.at) : null
+  if (chatId == null) return <ChatNotFound />
+  // keyed by chat only: ChatPage re-windows itself when ?at= names a new message, and ignores ?at= disappearing
+  // (跳到最早/最新 drop it from the address, which Next syncs back into these props)
+  return <ChatPage key={chatId} chatId={chatId} at={at} />
 }

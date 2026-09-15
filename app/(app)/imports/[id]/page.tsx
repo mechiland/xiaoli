@@ -1,11 +1,9 @@
-// BOOTSTRAP PLACEHOLDER created by core (ARCHITECTURE §1.1). Owner: import-result — overwrite freely.
-import { Meta, PageShell } from '@/components/loam'
+import { notFound } from 'next/navigation'
+import { ImportResult } from '@/components/import-result'
 
+// /imports/:id — import result page (SPEC §9.9, ARCHITECTURE §1.10). Data is client-fetched per block.
 export default async function ImportResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  return (
-    <PageShell title={`导入 #${id}`} width="reading">
-      <Meta>这一页还在建设中</Meta>
-    </PageShell>
-  )
+  if (!/^\d+$/.test(id) || Number(id) <= 0) notFound()
+  return <ImportResult importId={Number(id)} />
 }

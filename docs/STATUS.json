@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-15T20:45:48+08:00",
+  "updatedAt": "2026-09-15T22:39:01+08:00",
   "modules": {
     "architecture": {
       "round": 3,
@@ -47,8 +47,10 @@
       "round": 2,
       "score": 8.7,
       "passed": true,
-      "openIssues": [],
-      "lastArtifacts": "artifacts/import__showcase/20260915-204202/, artifacts/import__flow/20260915-204337/, artifacts/critic/import/"
+      "openIssues": [
+        "step 2 chat choice is exclusive but drawn as square checkboxes — should read as a single choice"
+      ],
+      "lastArtifacts": "artifacts/import__showcase/20260915-223715/, artifacts/import__flow/20260915-223627/, artifacts/import__upload-resume/20260915-223641/, artifacts/import__abandon-step2/20260915-223243/, artifacts/critic/import/"
     },
     "extract": {
       "round": 3,
@@ -72,39 +74,39 @@
       "lastArtifacts": "artifacts/search__showcase/20260915-204408/, artifacts/search__person-picker/20260915-204436/, artifacts/critic/search/"
     },
     "person": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 2,
+      "score": 8.6,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/person__showcase/20260915-222125/, artifacts/person__actions/20260915-223328/, artifacts/critic/person/r2/"
     },
     "import-result": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 1,
+      "score": 8.6,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/import-result__showcase/20260915-222419/, artifacts/import-result__actions/20260915-222619/, artifacts/import-result__delete-import/20260915-223420/, artifacts/critic/import-result/"
     },
     "home": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 1,
+      "score": 8.6,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/home__showcase/20260915-222221/, artifacts/home__empty/20260915-222946/, artifacts/home__onboarding/20260915-223040/, artifacts/home__small-account/20260915-222941/, artifacts/critic/home/"
     },
     "chat": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 3,
+      "score": 8.8,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/chat__showcase/20260915-222255/, artifacts/critic/chat/r4/"
     },
     "settings": {
-      "round": 0,
-      "score": null,
-      "passed": false,
+      "round": 1,
+      "score": 8.6,
+      "passed": true,
       "openIssues": [],
-      "lastArtifacts": ""
+      "lastArtifacts": "artifacts/settings__showcase/20260915-223002/, artifacts/settings__delete-all/20260915-223354/, artifacts/critic/settings/"
     },
     "deploy": {
       "round": 0,
@@ -119,10 +121,8 @@
     "passed": true
   },
   "llmUsage": {
-    "inputTokens": 2304938,
-    "outputTokens": 85917
+    "inputTokens": 2393239,
+    "outputTokens": 92005
   },
-  "blockers": [
-    "verify _smoke/perf-budgets reports home and person budgets as missing until wave-3 pages land (expected, DECISIONS V2)"
-  ]
+  "blockers": []
 }

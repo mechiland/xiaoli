@@ -18,6 +18,21 @@ export async function parseFixture(p: string): Promise<ParsedExport> {
 
 type Api = ScenarioContext['api']
 
+/**
+ * Integrator (wave 3): /imports/:id is now import-result's real page, whose progress loop POSTs jobs/next (live LLM).
+ * Import UI scenarios never call the model: answer jobs/next with the import's current progress and no processed job.
+ */
+export async function stubJobsNext(page: ScenarioContext['page']): Promise<void> {
+  await page.route('**/api/imports/*/jobs/next', async (route) => {
+    const url = new URL(route.request().url())
+    const id = url.pathname.match(/imports\/(\d+)\/jobs/)?.[1]
+    const d = await page.context().request.get(`${url.origin}/api/imports/${id}`, { failOnStatusCode: false })
+    if (d.status() !== 200) return route.fulfill({ status: d.status(), contentType: 'application/json', body: await d.text() })
+    const j = (await d.json()) as { progress: unknown; import: { status: string } }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ processed: null, progress: j.progress, importStatus: j.import.status }) })
+  })
+}
+
 /** Imports a synthetic ZIP entirely through the API (no uploads). Idempotent: an existing import of the file is reused. */
 export async function importViaApi(api: Api, file: string, chat: { title: string; kind: 'private' | 'group' }): Promise<{ importId: number; chatId: number }> {
   const p = await parseFixture(file)

@@ -1,5 +1,5 @@
 import { defineScenario } from '@/verify/lib'
-import { deleteImportOf, GROUP, importViaApi, PRIVATE_1, PRIVATE_2, SELF_NAME, waitFor } from './_support'
+import { deleteImportOf, GROUP, importViaApi, PRIVATE_1, PRIVATE_2, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // Import overlay states (ARCHITECTURE §12 import/showcase): drop veil, step 1 pick / loading / preview / attachments,
 // duplicate, parse error, step 2 with a recommended chat + picker, step 2 new group chat (long sender list),
@@ -176,6 +176,7 @@ export default defineScenario({
     let failUploads: null | (() => Promise<void>) = null
     await step('step 3: start → /imports/:id', async () => {
       // start from the upload-status host so a client-side back shows this tab's upload runner (F5)
+      await stubJobsNext(page)
       await helpers.goto('/dev/import/upload-status')
       failUploads = await helpers.simulateError('**/api/imports/*/attachments/**', { status: 500 })
       await page.getByRole('button', { name: '导入', exact: true }).click()

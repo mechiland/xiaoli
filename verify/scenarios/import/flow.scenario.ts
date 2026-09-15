@@ -1,5 +1,5 @@
 import { defineScenario } from '@/verify/lib'
-import { deleteImportOf, PRIVATE_1, SELF_NAME, waitFor } from './_support'
+import { deleteImportOf, PRIVATE_1, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // Wave-2 import flow (ARCHITECTURE §12): top bar 导入 → choose file → preview → step 2 → 开始 → /imports/:id.
 // Asserts mapping 200, URL = importHref(id), placeholder page renders, progress.total > 0, uploads rising to done.
@@ -12,6 +12,7 @@ export default defineScenario({
     const overlay = page.locator('[data-import-overlay]')
     await step('setup', async () => {
       await api.patch('/api/settings', { selfDisplayNames: [SELF_NAME], onboarded: true })
+      await stubJobsNext(page)
       await deleteImportOf(api, PRIVATE_1)
       await helpers.goto('/')
     })
@@ -68,6 +69,8 @@ export default defineScenario({
     })
 
     await step('cleanup', async () => {
+      // leave the result page first: its loop would otherwise 404 against the deleted import
+      await helpers.goto('/')
       if (importId) await api.delete(`/api/imports/${importId}`)
     })
   },

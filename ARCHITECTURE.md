@@ -163,7 +163,7 @@ deleteStagedPayload(r2: R2Bucket, ownerId: string, importId: number): Promise<vo
 **Responsibilities**: page `/imports/:id` (SPEC §9.9): progress loop calling `POST /api/imports/:id/jobs/next` sequentially while mounted, fades in new items, per-person sections, confirm/reject/edit, bulk confirm (threshold from `GET /api/me` settings; count = `highConfidenceCount`), "变化" two-column, "其实是……" merge via `PersonPicker` + `POST /api/people/:id/merge`, retry failed windows (`POST /api/imports/:id/jobs/retry`), finished states. **Mounts `<AttachmentUploadStatus importId />` (import) below the subtitle**; does not implement uploading.
 **Delete this import (the only UI for `DELETE /api/imports/:id`; PLAN §5 final flow)**: a quiet small gray text button "删除这次导入" at the very foot of the page (below "已全部处理"/item list, never in the header; available in every state incl. extracting — the progress loop stops first). Click → shadcn `AlertDialog`: title "删除这次导入？", body "这次导入首次带来的消息会被删除；只由这些消息支持的信息也会一起删除，还有其他证据的信息会保留。", buttons "取消" / "删除" (destructive). On confirm: `DELETE /api/imports/:id` → on 200 `queryClient.invalidateQueries()` → `router.replace('/')`; on error an inline BlockError-style line inside the dialog, dialog stays open. No undo, no toast.
 **Unfinished import state**: when `GET /api/imports/:id` returns `import.status = 'mapping'` (user left during overlay step 2 and the overlay's cleanup did not run), the page renders only the title "这次导入没有完成", one line "可以重新导入这份文件。" and the same "删除这次导入" control; no progress loop, no review query.
-Consumes: `GET /api/imports/:id`, `GET /api/imports/:id/review`, `DELETE /api/imports/:id`, review endpoints, `@/components/evidence` (review), `@/components/person-picker` (search), `@/components/import-overlay` (import).
+Consumes: `GET /api/imports/:id`, `GET /api/imports/:id/review`, `DELETE /api/imports/:id`, review endpoints, `PATCH /api/people/:id` (person; rename of a new person, SPEC §9.9 — until person's handler lands it answers 501 and the page shows "名字暂时改不了"), `@/components/evidence` (review), `@/components/person-picker` (search), `@/components/import-overlay` (import).
 
 ### 1.11 chat (wave 3)
 **Owns**: `app/(app)/chats/**`, `components/chat/**`, `server/routes/chats.ts`, `server/chat/**`, `app/(app)/dev/chat/**`, `verify/scenarios/chat/**`
@@ -994,6 +994,7 @@ R2 key layout (all under `u/<ownerId>/`, so delete-all's prefix delete covers ev
 | import-result (3) | `@/components/evidence`, review routes | review (2) |
 | import-result (3) | `@/components/person-picker` | search (2) |
 | import-result (3) | `AttachmentUploadStatus`, import routes incl. `DELETE /api/imports/:id` (delete-import control) | import (2) |
+| import-result (3) | `PATCH /api/people/:id` (rename new person) | person (3) — same-wave route; 501 stub until person lands, page degrades inline; import-result scenarios stub it |
 | home (3) | `@/server/search.listPeopleIndex`, `SearchTrigger` | search (2) |
 | home (3) | `useImportOverlay` | import (2) |
 | home (3) | `PATCH /api/settings`, `GET /api/me` | core (1) |

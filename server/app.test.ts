@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createTestApp, createTestDb, createTestUser } from '@/tests/helpers/test-db'
 import type { Db } from '@/server/db'
+import { Hono } from 'hono'
+import { notImplemented } from '@/server/routes/_stub'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const json = (r: Response): Promise<any> => r.json()
@@ -58,7 +60,9 @@ describe('Hono app: health, me, settings, stubs, errors', () => {
 
   it('stub routes return the 501 envelope; validation runs first (400)', async () => {
     const app = createTestApp({ db, userId: alice.id })
-    const stub = await app.request('/api/home')
+    // Every wave-3 module has replaced its route stub, so test the shared 501 helper directly.
+    const stubApp = new Hono().get('/stub', notImplemented)
+    const stub = await stubApp.request('/stub')
     expect(stub.status).toBe(501)
     expect(await json(stub)).toEqual({ error: { code: 'not_implemented', message: '这个功能还在建设中' } })
     const bad = await app.request('/api/people/abc')

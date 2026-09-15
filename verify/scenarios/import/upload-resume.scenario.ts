@@ -1,5 +1,5 @@
 import { defineScenario } from '@/verify/lib'
-import { deleteImportOf, PRIVATE_1, PRIVATE_2, SELF_NAME, waitFor } from './_support'
+import { deleteImportOf, PRIVATE_1, PRIVATE_2, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // F5 (ARCHITECTURE §10): attachment uploads survive client-side navigation (count keeps rising), a reload shows
 // "还没有上传 · 重新选择这份文件继续", a different file is refused, the same file finishes the queue.
@@ -15,6 +15,7 @@ export default defineScenario({
 
     await step('setup', async () => {
       await api.patch('/api/settings', { selfDisplayNames: [SELF_NAME], onboarded: true })
+      await stubJobsNext(page)
       await deleteImportOf(api, PRIVATE_1)
       await helpers.goto(host)
     })
