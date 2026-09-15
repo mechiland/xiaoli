@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-16T04:36:03+08:00",
+  "updatedAt": "2026-09-16T04:38:47+08:00",
   "modules": {
     "architecture": {
       "round": 3,
@@ -137,7 +137,7 @@
     }
   },
   "eval": {
-    "latestReport": "eval/reports/20260915-190954.json",
+    "latestReport": "eval/reports/20260915-203752.json",
     "passed": true
   },
   "llmUsage": {
@@ -145,7 +145,12 @@
     "outputTokens": 108612
   },
   "blockers": [
-    "SPEC §11 M6 online acceptance not executed: a full import + review on the deployed Cloudflare URL needs the owner's Cloudflare credentials (and live DeepSeek tokens); every setup.ts --apply path, wrangler r2/secret list output parsing and smoke.ts --extract are also unverified. Checklist: docs/DEPLOY.md §7.",
-    "Blind comparison invalid (recorded, not a gate): the judge received no screenshot paths and answered placeholders; re-run with a fresh judge given artifacts/blind-judge/20260916-041245/pairs/<n>/{A,B}.png (DECISIONS blind comparison B1/B2)."
-  ]
+    "SPEC §11 M6 online acceptance not executed: a full import + review on the deployed Cloudflare URL needs the owner's Cloudflare credentials (and live DeepSeek tokens); every setup.ts --apply path, wrangler r2/secret list output parsing and smoke.ts --extract are also unverified. Checklist: docs/DEPLOY.md §7."
+  ],
+  "blindComparison": {
+    "valid": true,
+    "result": "ours preferred on both questions in both pairs",
+    "caveats": "reference = Monica 2018 classic UI with demo data; branding visible; not a gate",
+    "decisions": "DECISIONS ## blind comparison B3"
+  }
 }
