@@ -1,0 +1,131 @@
+{
+  "updatedAt": "2026-09-15T18:34:34+08:00",
+  "modules": {
+    "architecture": {
+      "round": 3,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "/tmp/claude-1000/-home-michael-work-xiaoli/797c4b4c-9cc9-4744-b805-99c85eda3f07/scratchpad/own.py"
+    },
+    "core": {
+      "round": 1,
+      "score": 8.5,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/critic/core/r1/"
+    },
+    "parser": {
+      "round": 1,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/critic/parser/r1/"
+    },
+    "llm": {
+      "round": 1,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/critic/llm/"
+    },
+    "verify-seed": {
+      "round": 1,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/_smoke__home-loads/20260915-183420/"
+    },
+    "eval-synthetic": {
+      "round": 2,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/critic/"
+    },
+    "import": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "extract": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [
+        "Prompt must use relation reading `from` 是 `to` 的 `type`, label names `from` (ARCHITECTURE §2.5, DECISIONS I2)"
+      ],
+      "lastArtifacts": ""
+    },
+    "review": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "search": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "person": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "import-result": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "home": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "chat": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "settings": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    },
+    "deploy": {
+      "round": 0,
+      "score": null,
+      "passed": false,
+      "openIssues": [],
+      "lastArtifacts": ""
+    }
+  },
+  "eval": {
+    "latestReport": "",
+    "passed": false
+  },
+  "llmUsage": {
+    "inputTokens": 149,
+    "outputTokens": 19
+  },
+  "blockers": [
+    "Gold not frozen: eval:validate-gold passes synthetic 4/4 but real only 1/3 (2 real gold files have schema errors, 1 has a parser-version warning); annotator must fix and freeze before extract's gated eval (DECISIONS I3)",
+    "verify _smoke/perf-budgets reports home and person budgets as missing until wave-3 pages land (expected, DECISIONS V2)"
+  ]
+}

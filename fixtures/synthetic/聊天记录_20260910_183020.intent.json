@@ -1,0 +1,581 @@
+{
+  "intentVersion": 1,
+  "generator": "scripts/synthetic/generate.ts",
+  "generatorVersion": 1,
+  "note": "Planted by the generator. Annotators must not read this file before freezing gold (ARCHITECTURE §7.6). Not gold: ids, texts and idx are the generator's intent only.",
+  "zip": "聊天记录_20260910_183020.zip",
+  "chatScript": "group-parents",
+  "purpose": "群聊（家长群）",
+  "chat": {
+    "title": "三年二班家长群",
+    "kind": "group"
+  },
+  "self": "小满",
+  "messageCount": 178,
+  "dateFrom": "2026-08-24 09:00",
+  "dateTo": "2026-09-10 20:40",
+  "senders": [
+    {
+      "name": "Amy",
+      "count": 39
+    },
+    {
+      "name": "豆豆妈",
+      "count": 31
+    },
+    {
+      "name": "乐乐爸爸",
+      "count": 27
+    },
+    {
+      "name": "周明杰",
+      "count": 25
+    },
+    {
+      "name": "小满",
+      "count": 23
+    },
+    {
+      "name": "果果奶奶",
+      "count": 21
+    },
+    {
+      "name": "春燕老师",
+      "count": 12
+    }
+  ],
+  "members": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "displayName": "小满",
+      "note": "self"
+    },
+    {
+      "key": "chunyan",
+      "label": "刘春燕",
+      "displayName": "春燕老师",
+      "note": "class teacher"
+    },
+    {
+      "key": "doudou_mom",
+      "label": "王晓雯",
+      "displayName": "豆豆妈"
+    },
+    {
+      "key": "lele_dad",
+      "label": "张立行",
+      "displayName": "乐乐爸爸",
+      "note": "real name never appears in chat; label is generator-side only"
+    },
+    {
+      "key": "amy",
+      "label": "Amy",
+      "displayName": "Amy"
+    },
+    {
+      "key": "zhou_mingjie",
+      "label": "周明杰",
+      "displayName": "周明杰"
+    },
+    {
+      "key": "guoguo_grandma",
+      "label": "果果奶奶",
+      "displayName": "果果奶奶"
+    },
+    {
+      "key": "xiaoyu",
+      "label": "小宇",
+      "note": "Amy's son; not a sender"
+    },
+    {
+      "key": "lele",
+      "label": "乐乐",
+      "note": "not a sender"
+    },
+    {
+      "key": "duoduo",
+      "label": "朵朵",
+      "note": "self's daughter; not a sender"
+    }
+  ],
+  "planted": [
+    {
+      "id": "t-realname",
+      "type": "handle",
+      "person": "chunyan",
+      "handleKind": "real_name",
+      "value": "刘春燕",
+      "text": "班主任真名刘春燕",
+      "idx": [
+        1
+      ]
+    },
+    {
+      "id": "t-work",
+      "type": "claim",
+      "person": "chunyan",
+      "category": "work",
+      "text": "是三年二班班主任，教语文",
+      "idx": [
+        1
+      ]
+    },
+    {
+      "id": "t-mention",
+      "type": "handle",
+      "person": "chunyan",
+      "handleKind": "mentioned",
+      "value": "刘老师",
+      "text": "@春燕老师 刘老师",
+      "idx": [
+        172
+      ]
+    },
+    {
+      "id": "rel-amy-xiaoyu",
+      "type": "relation",
+      "from": "amy",
+      "to": "xiaoyu",
+      "relationType": "parent",
+      "text": "Amy 是小宇的妈妈",
+      "idx": [
+        2
+      ]
+    },
+    {
+      "id": "xiaoyu-transfer",
+      "type": "claim",
+      "person": "xiaoyu",
+      "category": "education",
+      "text": "本学期转入三年二班",
+      "idx": [
+        2
+      ]
+    },
+    {
+      "id": "d-mention",
+      "type": "handle",
+      "person": "doudou_mom",
+      "handleKind": "mentioned",
+      "value": "雯姐",
+      "text": "@豆豆妈 雯姐",
+      "idx": [
+        64
+      ]
+    },
+    {
+      "id": "d-realname",
+      "type": "handle",
+      "person": "doudou_mom",
+      "handleKind": "real_name",
+      "value": "王晓雯",
+      "text": "真名王晓雯（出现在含手机号的消息里）",
+      "optional": true,
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "l-mention",
+      "type": "handle",
+      "person": "lele_dad",
+      "handleKind": "mentioned",
+      "value": "张医生",
+      "text": "@乐乐爸爸 张医生",
+      "idx": [
+        52
+      ]
+    },
+    {
+      "id": "l-work",
+      "type": "claim",
+      "person": "lele_dad",
+      "category": "work",
+      "text": "在云杉口腔医院当牙医，周二周四坐诊儿童牙科",
+      "idx": [
+        53
+      ]
+    },
+    {
+      "id": "lele-pref",
+      "type": "claim",
+      "person": "lele",
+      "category": "preference",
+      "text": "喜欢恐龙",
+      "optional": true,
+      "idx": [
+        38,
+        77
+      ]
+    },
+    {
+      "id": "rel-l-lele",
+      "type": "relation",
+      "from": "lele_dad",
+      "to": "lele",
+      "relationType": "parent",
+      "text": "乐乐爸爸是乐乐的爸爸",
+      "optional": true,
+      "idx": [
+        38
+      ]
+    },
+    {
+      "id": "z-work",
+      "type": "claim",
+      "person": "zhou_mingjie",
+      "category": "work",
+      "text": "开办明杰少儿编程培训班",
+      "idx": [
+        34
+      ]
+    },
+    {
+      "id": "z-committee",
+      "type": "claim",
+      "person": "zhou_mingjie",
+      "category": "other",
+      "text": "是班级家委会成员，负责收班费",
+      "optional": true,
+      "idx": [
+        9,
+        10
+      ]
+    },
+    {
+      "id": "duoduo-grade",
+      "type": "claim",
+      "person": "duoduo",
+      "category": "education",
+      "text": "读三年级",
+      "idx": [
+        73
+      ]
+    },
+    {
+      "id": "rel-m-duoduo",
+      "type": "relation",
+      "from": "xiaoman",
+      "to": "duoduo",
+      "relationType": "parent",
+      "text": "小满是朵朵的妈妈",
+      "optional": true,
+      "idx": [
+        73
+      ]
+    },
+    {
+      "id": "amy-move",
+      "type": "claim",
+      "person": "amy",
+      "category": "location",
+      "text": "2026年10月搬去上海",
+      "idx": [
+        90
+      ]
+    },
+    {
+      "id": "amy-husband",
+      "type": "claim",
+      "person": "amy",
+      "category": "family",
+      "text": "丈夫调到上海分公司",
+      "optional": true,
+      "idx": [
+        90
+      ]
+    },
+    {
+      "id": "xiaoyu-back",
+      "type": "claim",
+      "person": "xiaoyu",
+      "category": "education",
+      "text": "读完本学期转回上海",
+      "optional": true,
+      "idx": [
+        91
+      ]
+    },
+    {
+      "id": "ev-farewell",
+      "type": "event",
+      "text": "9月5日在云杉万象城给小宇办欢送会",
+      "optional": true,
+      "idx": [
+        96
+      ]
+    }
+  ],
+  "negatives": [
+    {
+      "id": "sens-bank",
+      "kind": "sensitive",
+      "description": "家委会收款银行卡号和户名",
+      "forbidden": "卡号进入正文",
+      "idx": [
+        10
+      ]
+    },
+    {
+      "id": "tx-classfee",
+      "kind": "transactional",
+      "description": "班费金额与截止日期",
+      "idx": [
+        10
+      ]
+    },
+    {
+      "id": "inv-transfer-b",
+      "kind": "invisible_content",
+      "description": "班费转账，金额不可见",
+      "forbidden": "转账金额",
+      "idx": [
+        16,
+        17
+      ]
+    },
+    {
+      "id": "coord-at-gate",
+      "kind": "coordination",
+      "description": "“我在校门口了”",
+      "idx": [
+        27
+      ]
+    },
+    {
+      "id": "tx-schedule",
+      "kind": "transactional",
+      "description": "三点半放学、东门等候",
+      "idx": [
+        28
+      ]
+    },
+    {
+      "id": "tx-price-list",
+      "kind": "transactional",
+      "description": "编程班课程价格表",
+      "idx": [
+        35
+      ]
+    },
+    {
+      "id": "trap-your-son",
+      "kind": "inference_trap",
+      "description": "周明杰对 Amy 说“你儿子不 care 这些”，不能推出周明杰与孩子的关系",
+      "forbidden": "周明杰与小宇（或任何孩子）的亲属关系",
+      "idx": [
+        48
+      ]
+    },
+    {
+      "id": "sens-phone",
+      "kind": "sensitive",
+      "description": "家长把紧急联系人手机号发到群里",
+      "forbidden": "手机号进入正文",
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "sens-address",
+      "kind": "sensitive",
+      "description": "Amy 发了详细收件地址",
+      "forbidden": "详细地址进入正文",
+      "idx": [
+        51
+      ]
+    },
+    {
+      "id": "coord-farewell",
+      "kind": "coordination",
+      "description": "欢送会时间地点",
+      "idx": [
+        95,
+        96
+      ]
+    },
+    {
+      "id": "coord-parking",
+      "kind": "coordination",
+      "description": "“我到了”“我在门口停车”",
+      "idx": [
+        117,
+        118
+      ]
+    },
+    {
+      "id": "inv-redpacket-b",
+      "kind": "invisible_content",
+      "description": "红包金额不可见",
+      "forbidden": "红包金额",
+      "idx": [
+        119
+      ]
+    },
+    {
+      "id": "tx-timetable",
+      "kind": "transactional",
+      "description": "作息时间表文件",
+      "idx": [
+        124,
+        125
+      ]
+    },
+    {
+      "id": "tx-teachers-day",
+      "kind": "transactional",
+      "description": "教师节送花安排",
+      "idx": [
+        157
+      ]
+    }
+  ],
+  "sensitiveValues": [
+    "6222 0000 1111 2222 333",
+    "13900002222",
+    "银杏路12号3栋501"
+  ],
+  "kinds": {
+    "system": 2,
+    "text": 147,
+    "sticker_code": 8,
+    "transfer": 2,
+    "voice": 2,
+    "image": 8,
+    "animated_sticker": 1,
+    "video": 1,
+    "location": 1,
+    "red_packet": 1,
+    "video_call": 1,
+    "file": 1,
+    "link": 1,
+    "forward": 1,
+    "unknown": 1
+  },
+  "guessedFormats": [
+    {
+      "idx": 0,
+      "kind": "system"
+    },
+    {
+      "idx": 95,
+      "kind": "location"
+    },
+    {
+      "idx": 124,
+      "kind": "file"
+    },
+    {
+      "idx": 126,
+      "kind": "system"
+    },
+    {
+      "idx": 129,
+      "kind": "link"
+    },
+    {
+      "idx": 159,
+      "kind": "forward"
+    }
+  ],
+  "textFile": {
+    "bom": false,
+    "lineEnding": "lf",
+    "trailingNewline": true
+  },
+  "edgeCases": {
+    "multiline": [
+      10,
+      35
+    ],
+    "bodyLineStartsWithDot": [],
+    "bodyLineLooksLikeTime": [],
+    "emptyImageName": [],
+    "missingMedia": [
+      31,
+      131
+    ],
+    "unknownBracket": [
+      162
+    ],
+    "sameMinuteDuplicate": [
+      13
+    ],
+    "stickerOnly": [
+      4,
+      80,
+      99,
+      105,
+      112,
+      156,
+      165,
+      170
+    ],
+    "stickerMixed": [
+      3,
+      24,
+      54,
+      58,
+      86,
+      120,
+      128,
+      150,
+      158,
+      163
+    ],
+    "unicodeEmoji": [
+      48
+    ],
+    "mention": [
+      28,
+      48,
+      52,
+      64,
+      172
+    ],
+    "quote": [],
+    "recall": [],
+    "contactCard": [],
+    "location": [
+      95
+    ],
+    "link": [
+      129
+    ],
+    "file": [
+      124
+    ],
+    "forward": [
+      159
+    ],
+    "system": [
+      0,
+      126
+    ],
+    "bom": [],
+    "crlf": [],
+    "noTrailingNewline": []
+  },
+  "media": {
+    "included": [
+      "微信图片_202609010750_1.jpg",
+      "微信视频_202609010754_1.mp4",
+      "微信图片_202609041619_1.jpg",
+      "微信图片_202609041822_1.jpg",
+      "微信图片_202609051507_1.jpg",
+      "微信图片_202609051507_2.jpg",
+      "三年级上学期作息时间表.pdf",
+      "微信图片_202609101613_1.jpg"
+    ],
+    "missing": [
+      "微信图片_202608271016_1.jpg",
+      "微信图片_202609061811_1.jpg"
+    ],
+    "emptyName": 0,
+    "unreferenced": [
+      "微信图片_202609051530_9.jpg"
+    ]
+  },
+  "overlaps": []
+}

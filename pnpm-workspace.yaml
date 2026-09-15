@@ -1,0 +1,15 @@
+# Single-package repo. pnpm >= 10 blocks dependency build scripts by default; allow the native/binary ones we need.
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - '@better-auth/core@1.7.5'
+  - better-auth@1.7.5
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp
+# ARCHITECTURE pins releases published within the last 24h (hono 4.13.8, wrangler 4.131.2, better-auth 1.7.5…);
+# pnpm 12's default minimumReleaseAge would reject the lockfile. Versions are pinned exactly, so the age gate is off.
+minimumReleaseAge: 0

@@ -1,0 +1,9 @@
+# Copied to .dev.vars by `pnpm dev:ensure` (gitignored). Values here are placeholders only.
+NEXTJS_ENV=development
+BETTER_AUTH_SECRET=generated-locally-by-dev-ensure
+BETTER_AUTH_URL=http://localhost:3000
+# DEEPSEEK_API_KEY is mirrored from .env.local by dev:ensure; never commit a real key.
+DEEPSEEK_API_KEY=
+# EXTRACT_MODEL=deepseek-flash
+# LLM_MODE=live
+APP_TZ=Asia/Shanghai

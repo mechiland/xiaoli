@@ -1,0 +1,823 @@
+{
+  "intentVersion": 1,
+  "generator": "scripts/synthetic/generate.ts",
+  "generatorVersion": 1,
+  "note": "Planted by the generator. Annotators must not read this file before freezing gold (ARCHITECTURE §7.6). Not gold: ids, texts and idx are the generator's intent only.",
+  "zip": "聊天记录_20260912_095501.zip",
+  "chatScript": "group-family",
+  "purpose": "群聊（家庭群）",
+  "chat": {
+    "title": "林家一家人",
+    "kind": "group"
+  },
+  "self": "小满",
+  "messageCount": 215,
+  "dateFrom": "2026-06-02 07:40",
+  "dateTo": "2026-09-12 08:43",
+  "senders": [
+    {
+      "name": "林建国",
+      "count": 59
+    },
+    {
+      "name": "春天的花",
+      "count": 50
+    },
+    {
+      "name": "林大海",
+      "count": 31
+    },
+    {
+      "name": "小满",
+      "count": 30
+    },
+    {
+      "name": "林子航",
+      "count": 24
+    },
+    {
+      "name": "静静",
+      "count": 21
+    }
+  ],
+  "members": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "displayName": "小满",
+      "note": "self"
+    },
+    {
+      "key": "jianguo",
+      "label": "林建国",
+      "displayName": "林建国",
+      "note": "self's father"
+    },
+    {
+      "key": "chuntian",
+      "label": "春天的花",
+      "displayName": "春天的花",
+      "note": "self's mother (WeChat nickname)"
+    },
+    {
+      "key": "dahai",
+      "label": "林大海",
+      "displayName": "林大海",
+      "note": "self's elder brother"
+    },
+    {
+      "key": "jingjing",
+      "label": "何静",
+      "displayName": "静静",
+      "note": "brother's wife; real name never appears"
+    },
+    {
+      "key": "zihang",
+      "label": "林子航",
+      "displayName": "林子航",
+      "note": "brother's son"
+    },
+    {
+      "key": "duoduo",
+      "label": "朵朵",
+      "note": "self's daughter; not a sender"
+    }
+  ],
+  "planted": [
+    {
+      "id": "rel-f-h",
+      "type": "relation",
+      "from": "jianguo",
+      "to": "dahai",
+      "relationType": "parent",
+      "text": "林建国是林大海的父亲（称呼“儿子”）",
+      "idx": [
+        2
+      ]
+    },
+    {
+      "id": "h-addr-erzi",
+      "type": "handle",
+      "person": "dahai",
+      "handleKind": "address_term",
+      "value": "儿子",
+      "text": "父亲称林大海为“儿子”",
+      "optional": true,
+      "idx": [
+        2
+      ]
+    },
+    {
+      "id": "m-mention-guinv",
+      "type": "handle",
+      "person": "xiaoman",
+      "handleKind": "mentioned",
+      "value": "闺女",
+      "text": "@小满 闺女",
+      "idx": [
+        4
+      ]
+    },
+    {
+      "id": "rel-mo-m",
+      "type": "relation",
+      "from": "chuntian",
+      "to": "xiaoman",
+      "relationType": "parent",
+      "text": "春天的花是小满的妈妈",
+      "idx": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": "mo-addr-ma",
+      "type": "handle",
+      "person": "chuntian",
+      "handleKind": "address_term",
+      "value": "妈",
+      "text": "小满称春天的花为“妈”",
+      "idx": [
+        5
+      ]
+    },
+    {
+      "id": "h-addr-laoba",
+      "type": "handle",
+      "person": "dahai",
+      "handleKind": "address_term",
+      "value": "老爸",
+      "text": "林子航称林大海为“老爸”",
+      "idx": [
+        16,
+        20,
+        189
+      ]
+    },
+    {
+      "id": "rel-h-n",
+      "type": "relation",
+      "from": "dahai",
+      "to": "zihang",
+      "relationType": "parent",
+      "text": "林大海是林子航的父亲",
+      "idx": [
+        16
+      ]
+    },
+    {
+      "id": "rel-j-n",
+      "type": "relation",
+      "from": "jingjing",
+      "to": "zihang",
+      "relationType": "parent",
+      "text": "静静是林子航的妈妈",
+      "optional": true,
+      "idx": [
+        22
+      ]
+    },
+    {
+      "id": "n-intern",
+      "type": "claim",
+      "person": "zihang",
+      "category": "work",
+      "text": "2026年暑假在南京一家机器人公司实习",
+      "idx": [
+        39,
+        41
+      ]
+    },
+    {
+      "id": "n-edu",
+      "type": "claim",
+      "person": "zihang",
+      "category": "education",
+      "text": "在东南大学读机械专业，大三",
+      "idx": [
+        40,
+        42,
+        43
+      ]
+    },
+    {
+      "id": "rel-mo-n",
+      "type": "relation",
+      "from": "chuntian",
+      "to": "zihang",
+      "relationType": "relative",
+      "label": "奶奶",
+      "text": "春天的花是林子航的奶奶",
+      "optional": true,
+      "idx": [
+        39
+      ]
+    },
+    {
+      "id": "mo-bday",
+      "type": "date",
+      "person": "chuntian",
+      "text": "生日农历七月初九",
+      "date": {
+        "kind": "birthday",
+        "month": 7,
+        "day": 9,
+        "calendar": "lunar"
+      },
+      "idx": [
+        120,
+        156
+      ]
+    },
+    {
+      "id": "h-work-old",
+      "type": "claim",
+      "person": "dahai",
+      "category": "work",
+      "text": "在顺达物流做了十年调度",
+      "idx": [
+        69,
+        70,
+        73
+      ]
+    },
+    {
+      "id": "h-work-new",
+      "type": "claim",
+      "person": "dahai",
+      "category": "work",
+      "text": "辞职后与朋友合伙开火锅店（大海老火锅）",
+      "validFrom": "2026-08",
+      "supersedes": "h-work-old",
+      "idx": [
+        70,
+        71,
+        138,
+        139
+      ]
+    },
+    {
+      "id": "h-open",
+      "type": "claim",
+      "person": "dahai",
+      "category": "life_event",
+      "text": "火锅店2026年8月18日开业",
+      "validFrom": "2026-08-18",
+      "optional": true,
+      "idx": [
+        138
+      ]
+    },
+    {
+      "id": "j-work",
+      "type": "claim",
+      "person": "jingjing",
+      "category": "work",
+      "text": "在云杉二小教数学，教了十二年",
+      "idx": [
+        106,
+        107
+      ]
+    },
+    {
+      "id": "rel-h-m",
+      "type": "relation",
+      "from": "dahai",
+      "to": "xiaoman",
+      "relationType": "sibling",
+      "label": "哥",
+      "text": "林大海是小满的哥哥",
+      "idx": [
+        125,
+        140
+      ]
+    },
+    {
+      "id": "h-mention-ge",
+      "type": "handle",
+      "person": "dahai",
+      "handleKind": "mentioned",
+      "value": "哥",
+      "text": "@林大海 哥",
+      "idx": [
+        125
+      ]
+    },
+    {
+      "id": "n-bday",
+      "type": "date",
+      "person": "zihang",
+      "text": "生日9月10日",
+      "date": {
+        "kind": "birthday",
+        "month": 9,
+        "day": 10,
+        "calendar": "solar"
+      },
+      "idx": [
+        185
+      ]
+    },
+    {
+      "id": "fmo-move",
+      "type": "claim",
+      "person": "jianguo",
+      "category": "location",
+      "text": "2026年10月起和妻子搬到大海家对面楼住，老房子出租",
+      "validFrom": "2026-10",
+      "idx": [
+        196,
+        199
+      ]
+    },
+    {
+      "id": "mo-move",
+      "type": "claim",
+      "person": "chuntian",
+      "category": "location",
+      "text": "2026年10月起搬到大海家对面楼住",
+      "validFrom": "2026-10",
+      "optional": true,
+      "idx": [
+        196,
+        197
+      ]
+    },
+    {
+      "id": "rel-f-mo",
+      "type": "relation",
+      "from": "jianguo",
+      "to": "chuntian",
+      "relationType": "spouse",
+      "text": "林建国与春天的花是夫妻",
+      "optional": true,
+      "idx": [
+        162,
+        196
+      ]
+    },
+    {
+      "id": "rel-j-h",
+      "type": "relation",
+      "from": "jingjing",
+      "to": "dahai",
+      "relationType": "spouse",
+      "text": "静静是林大海的妻子",
+      "optional": true,
+      "idx": [
+        3
+      ]
+    },
+    {
+      "id": "duoduo-grade",
+      "type": "claim",
+      "person": "duoduo",
+      "category": "education",
+      "text": "读三年级",
+      "optional": true,
+      "idx": [
+        83
+      ]
+    }
+  ],
+  "negatives": [
+    {
+      "id": "inv-transfer-c",
+      "kind": "invisible_content",
+      "description": "生活费转账，金额不可见",
+      "forbidden": "生活费金额",
+      "idx": [
+        18,
+        19
+      ]
+    },
+    {
+      "id": "trap-neighbor",
+      "kind": "inference_trap",
+      "description": "隔壁老王家儿子考上清华，与家人无关",
+      "forbidden": "林子航（或家里任何人）考上清华",
+      "idx": [
+        80
+      ]
+    },
+    {
+      "id": "trap-not-care",
+      "kind": "inference_trap",
+      "description": "“你们年轻人都不 care 这些”只是抱怨",
+      "forbidden": "据此推出任何关系或偏好",
+      "idx": [
+        84
+      ]
+    },
+    {
+      "id": "inv-redpacket-c",
+      "kind": "invisible_content",
+      "description": "开业红包、生日红包，金额不可见",
+      "forbidden": "红包金额",
+      "idx": [
+        141,
+        188
+      ]
+    },
+    {
+      "id": "inv-voice-c",
+      "kind": "invisible_content",
+      "description": "语音内容不可见",
+      "forbidden": "猜测语音内容",
+      "idx": [
+        142,
+        143
+      ]
+    },
+    {
+      "id": "sens-id",
+      "kind": "sensitive",
+      "description": "为买票发送身份证号",
+      "forbidden": "证件号进入正文",
+      "idx": [
+        174
+      ]
+    },
+    {
+      "id": "tx-agent",
+      "kind": "transactional",
+      "description": "中介名片、问租金",
+      "idx": [
+        200,
+        201
+      ]
+    },
+    {
+      "id": "coord-midautumn",
+      "kind": "coordination",
+      "description": "中秋在店里吃、安排包厢",
+      "idx": [
+        204,
+        205
+      ]
+    },
+    {
+      "id": "tx-box",
+      "kind": "transactional",
+      "description": "订生日包厢",
+      "idx": [
+        122
+      ]
+    }
+  ],
+  "sensitiveValues": [
+    "340000196612230016"
+  ],
+  "kinds": {
+    "text": 180,
+    "animated_sticker": 5,
+    "transfer": 2,
+    "sticker_code": 4,
+    "video": 3,
+    "voice": 3,
+    "image": 5,
+    "video_call": 2,
+    "channels": 1,
+    "location": 1,
+    "red_packet": 2,
+    "system": 1,
+    "recall": 1,
+    "link": 2,
+    "contact_card": 1,
+    "forward": 1,
+    "unknown": 1
+  },
+  "guessedFormats": [
+    {
+      "idx": 139,
+      "kind": "location"
+    },
+    {
+      "idx": 163,
+      "kind": "system"
+    },
+    {
+      "idx": 176,
+      "kind": "recall"
+    },
+    {
+      "idx": 193,
+      "kind": "link"
+    },
+    {
+      "idx": 200,
+      "kind": "contact_card"
+    },
+    {
+      "idx": 202,
+      "kind": "link"
+    },
+    {
+      "idx": 206,
+      "kind": "forward"
+    }
+  ],
+  "textFile": {
+    "bom": true,
+    "lineEnding": "crlf",
+    "trailingNewline": false
+  },
+  "edgeCases": {
+    "multiline": [],
+    "bodyLineStartsWithDot": [],
+    "bodyLineLooksLikeTime": [],
+    "emptyImageName": [],
+    "missingMedia": [],
+    "unknownBracket": [
+      209
+    ],
+    "sameMinuteDuplicate": [
+      214
+    ],
+    "stickerOnly": [
+      50,
+      92,
+      119,
+      207
+    ],
+    "stickerMixed": [
+      9,
+      20,
+      33,
+      81,
+      87,
+      144,
+      160,
+      184,
+      212
+    ],
+    "unicodeEmoji": [
+      156,
+      208
+    ],
+    "mention": [
+      4,
+      125
+    ],
+    "quote": [],
+    "recall": [
+      176
+    ],
+    "contactCard": [
+      200
+    ],
+    "location": [
+      139
+    ],
+    "link": [
+      193,
+      202
+    ],
+    "file": [],
+    "forward": [
+      206
+    ],
+    "system": [
+      163
+    ],
+    "bom": [
+      0
+    ],
+    "crlf": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160,
+      161,
+      162,
+      163,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      174,
+      175,
+      176,
+      177,
+      178,
+      179,
+      180,
+      181,
+      182,
+      183,
+      184,
+      185,
+      186,
+      187,
+      188,
+      189,
+      190,
+      191,
+      192,
+      193,
+      194,
+      195,
+      196,
+      197,
+      198,
+      199,
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207,
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214
+    ],
+    "noTrailingNewline": [
+      214
+    ]
+  },
+  "media": {
+    "included": [
+      "微信视频_202606281948_1.mp4",
+      "微信图片_202606292038_1.jpg",
+      "微信图片_202607280818_1.jpg",
+      "微信图片_202608101848_1.jpg",
+      "微信图片_202608181108_1.jpg",
+      "微信视频_202608211833_1.mp4",
+      "微信图片_202608220813_1.jpg",
+      "微信视频_202608302030_1.mp4"
+    ],
+    "missing": [],
+    "emptyName": 0,
+    "unreferenced": []
+  },
+  "overlaps": []
+}

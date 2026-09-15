@@ -1,0 +1,31 @@
+{
+  // Bootstrapped by core (wave 1); owned by deploy from wave 4. Secrets are never written here:
+  // local → .dev.vars (gitignored, created by `pnpm dev:ensure`); deployed → `wrangler secret put`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "xiaoli",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "xiaoli",
+      // Placeholder for local development; deploy replaces it with the id from `wrangler d1 create xiaoli`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "xiaoli-files"
+    }
+  ],
+  "vars": {
+    "APP_TZ": "Asia/Shanghai"
+  }
+}

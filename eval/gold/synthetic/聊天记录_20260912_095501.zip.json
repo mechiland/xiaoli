@@ -1,0 +1,862 @@
+{
+  "goldVersion": 1,
+  "zip": "聊天记录_20260912_095501.zip",
+  "annotator": "annotator",
+  "annotatedAt": "2026-09-15T10:24:41.248Z",
+  "notes": "Family group chat. Self = 小满 (recall notice \"你撤回了一条消息\" is on her line, idx 176). Spouse relations are optional: no address term states them directly. 朵朵 is a non-sender; her parentage is never stated (see negative). Birthday of ch is lunar; the 2026 solar equivalent is not a solar birthday.",
+  "parserVersion": "wechat-export@1",
+  "messageCount": 215,
+  "messagesSha256": "aaf382f9d87e27bc4f079482873675b7dd6836c5293ccd751c02a55d902017d9",
+  "anchors": [
+    {
+      "idx": 0,
+      "fingerprint": "0b791ed617765a44"
+    },
+    {
+      "idx": 50,
+      "fingerprint": "5001a7bfb62ecd2d"
+    },
+    {
+      "idx": 100,
+      "fingerprint": "e4c41b7e5b46580e"
+    },
+    {
+      "idx": 150,
+      "fingerprint": "e62428dae47ec18e"
+    },
+    {
+      "idx": 200,
+      "fingerprint": "855027b9538cd379"
+    },
+    {
+      "idx": 214,
+      "fingerprint": "f8db6be9b2e084c6"
+    }
+  ],
+  "mapping": {
+    "chat": {
+      "title": "林家家庭群",
+      "kind": "group"
+    },
+    "senders": [
+      {
+        "senderName": "林建国",
+        "person": "jg"
+      },
+      {
+        "senderName": "林子航",
+        "person": "zh"
+      },
+      {
+        "senderName": "林大海",
+        "person": "dh"
+      },
+      {
+        "senderName": "春天的花",
+        "person": "ch"
+      },
+      {
+        "senderName": "小满",
+        "person": "xm"
+      },
+      {
+        "senderName": "静静",
+        "person": "jj"
+      }
+    ],
+    "self": "xm"
+  },
+  "persons": [
+    {
+      "key": "jg",
+      "label": "林建国",
+      "aliases": [
+        "爷爷"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "ch",
+      "label": "春天的花",
+      "aliases": [
+        "奶奶"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "dh",
+      "label": "林大海",
+      "aliases": [
+        "大海"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "zh",
+      "label": "林子航",
+      "aliases": [
+        "子航"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "xm",
+      "label": "小满",
+      "inChat": true
+    },
+    {
+      "key": "jj",
+      "label": "静静",
+      "inChat": true
+    },
+    {
+      "key": "dd",
+      "label": "朵朵",
+      "inChat": false
+    }
+  ],
+  "handles": [
+    {
+      "id": "h1",
+      "person": "zh",
+      "kind": "mentioned",
+      "value": "子航",
+      "evidence": [
+        3,
+        38
+      ]
+    },
+    {
+      "id": "h2",
+      "person": "dh",
+      "kind": "mentioned",
+      "value": "大海",
+      "evidence": [
+        69,
+        196
+      ]
+    },
+    {
+      "id": "h3",
+      "person": "xm",
+      "kind": "address_term",
+      "value": "闺女",
+      "evidence": [
+        4
+      ]
+    },
+    {
+      "id": "h4",
+      "person": "dh",
+      "kind": "address_term",
+      "value": "哥",
+      "evidence": [
+        125,
+        140
+      ]
+    },
+    {
+      "id": "h5",
+      "person": "dh",
+      "kind": "address_term",
+      "value": "老爸",
+      "evidence": [
+        16,
+        20,
+        144,
+        189
+      ],
+      "optional": true
+    },
+    {
+      "id": "h6",
+      "person": "ch",
+      "kind": "address_term",
+      "value": "奶奶",
+      "evidence": [
+        39,
+        159
+      ],
+      "optional": true
+    },
+    {
+      "id": "h7",
+      "person": "jg",
+      "kind": "address_term",
+      "value": "爷爷",
+      "evidence": [
+        81
+      ],
+      "optional": true
+    },
+    {
+      "id": "h8",
+      "person": "ch",
+      "kind": "address_term",
+      "value": "妈",
+      "evidence": [
+        5,
+        70,
+        107
+      ],
+      "optional": true
+    },
+    {
+      "id": "h9",
+      "person": "jg",
+      "kind": "address_term",
+      "value": "爸",
+      "evidence": [
+        73,
+        74,
+        83
+      ],
+      "optional": true
+    },
+    {
+      "id": "h10",
+      "person": "jj",
+      "kind": "address_term",
+      "value": "妈",
+      "evidence": [
+        22
+      ],
+      "optional": true
+    },
+    {
+      "id": "h11",
+      "person": "dh",
+      "kind": "address_term",
+      "value": "儿子",
+      "evidence": [
+        2
+      ],
+      "optional": true
+    },
+    {
+      "id": "h12",
+      "person": "dd",
+      "kind": "mentioned",
+      "value": "朵朵",
+      "evidence": [
+        4,
+        83,
+        140
+      ],
+      "optional": true
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "from": "jg",
+      "to": "dh",
+      "type": "parent",
+      "label": "儿子",
+      "evidence": [
+        2,
+        73
+      ]
+    },
+    {
+      "id": "r2",
+      "from": "ch",
+      "to": "xm",
+      "type": "parent",
+      "label": "闺女",
+      "evidence": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": "r3",
+      "from": "ch",
+      "to": "dh",
+      "type": "parent",
+      "label": "妈",
+      "evidence": [
+        69,
+        70
+      ]
+    },
+    {
+      "id": "r4",
+      "from": "jg",
+      "to": "xm",
+      "type": "parent",
+      "label": "爸",
+      "evidence": [
+        83
+      ]
+    },
+    {
+      "id": "r5",
+      "from": "dh",
+      "to": "xm",
+      "type": "sibling",
+      "label": "哥",
+      "evidence": [
+        125,
+        140
+      ]
+    },
+    {
+      "id": "r6",
+      "from": "dh",
+      "to": "zh",
+      "type": "parent",
+      "label": "老爸",
+      "evidence": [
+        16,
+        17,
+        20,
+        189
+      ]
+    },
+    {
+      "id": "r7",
+      "from": "jj",
+      "to": "zh",
+      "type": "parent",
+      "label": "妈",
+      "evidence": [
+        21,
+        22
+      ]
+    },
+    {
+      "id": "r8",
+      "from": "ch",
+      "to": "zh",
+      "type": "relative",
+      "label": "奶奶",
+      "acceptTypes": [
+        "other"
+      ],
+      "evidence": [
+        38,
+        39,
+        159
+      ]
+    },
+    {
+      "id": "r9",
+      "from": "jg",
+      "to": "zh",
+      "type": "relative",
+      "label": "爷爷",
+      "acceptTypes": [
+        "other"
+      ],
+      "evidence": [
+        80,
+        81
+      ]
+    },
+    {
+      "id": "r10",
+      "from": "jj",
+      "to": "jg",
+      "type": "relative",
+      "label": "爸",
+      "acceptTypes": [
+        "child",
+        "other"
+      ],
+      "evidence": [
+        74
+      ]
+    },
+    {
+      "id": "r11",
+      "from": "jj",
+      "to": "ch",
+      "type": "relative",
+      "label": "妈",
+      "acceptTypes": [
+        "child",
+        "other"
+      ],
+      "evidence": [
+        106,
+        107
+      ]
+    },
+    {
+      "id": "r12",
+      "from": "jg",
+      "to": "ch",
+      "type": "spouse",
+      "evidence": [
+        124,
+        162,
+        196
+      ],
+      "optional": true
+    },
+    {
+      "id": "r13",
+      "from": "dh",
+      "to": "jj",
+      "type": "spouse",
+      "evidence": [
+        3,
+        74
+      ],
+      "optional": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "c1",
+      "person": "zh",
+      "statement": "在读大三",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        40,
+        81
+      ]
+    },
+    {
+      "id": "c2",
+      "person": "zh",
+      "statement": "在东南大学上学",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        43
+      ]
+    },
+    {
+      "id": "c3",
+      "person": "zh",
+      "statement": "学机械专业",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        41,
+        42,
+        43
+      ]
+    },
+    {
+      "id": "c4",
+      "person": "zh",
+      "statement": "暑假在南京一家做机器人的公司实习",
+      "category": "work",
+      "acceptCategories": [
+        "education"
+      ],
+      "sensitive": false,
+      "evidence": [
+        39,
+        41
+      ]
+    },
+    {
+      "id": "c5",
+      "person": "zh",
+      "statement": "2026年满21岁",
+      "category": "other",
+      "sensitive": false,
+      "evidence": [
+        185,
+        186
+      ],
+      "optional": true
+    },
+    {
+      "id": "c6",
+      "person": "dh",
+      "statement": "在顺达物流做了十年调度",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        69,
+        70,
+        73
+      ]
+    },
+    {
+      "id": "c7",
+      "person": "dh",
+      "statement": "2026年7月从顺达物流辞职",
+      "category": "life_event",
+      "acceptCategories": [
+        "work"
+      ],
+      "sensitive": false,
+      "evidence": [
+        70
+      ],
+      "optional": true
+    },
+    {
+      "id": "c8",
+      "person": "dh",
+      "statement": "与朋友合伙开火锅店",
+      "category": "work",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        71,
+        138
+      ],
+      "supersedes": "c6"
+    },
+    {
+      "id": "c9",
+      "person": "dh",
+      "statement": "火锅店叫大海老火锅，在老城区",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        74,
+        139
+      ],
+      "optional": true
+    },
+    {
+      "id": "c10",
+      "person": "jj",
+      "statement": "在云杉二小教数学，已十二年",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        105,
+        106,
+        107
+      ]
+    },
+    {
+      "id": "c11",
+      "person": "jg",
+      "statement": "提供过身份证号",
+      "category": "other",
+      "sensitive": true,
+      "evidence": [
+        173,
+        174
+      ]
+    },
+    {
+      "id": "c12",
+      "person": "jg",
+      "statement": "计划2026年10月搬到林大海家附近的小区住",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        196,
+        199
+      ]
+    },
+    {
+      "id": "c13",
+      "person": "ch",
+      "statement": "计划2026年10月搬到林大海家附近的小区住",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        196,
+        197,
+        199
+      ]
+    },
+    {
+      "id": "c14",
+      "person": "jg",
+      "statement": "搬家后老房子准备出租",
+      "category": "other",
+      "acceptCategories": [
+        "location"
+      ],
+      "sensitive": false,
+      "evidence": [
+        196
+      ],
+      "optional": true
+    },
+    {
+      "id": "c15",
+      "person": "dd",
+      "statement": "读三年级",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        83
+      ]
+    }
+  ],
+  "dates": [
+    {
+      "id": "d1",
+      "person": "ch",
+      "kind": "birthday",
+      "month": 7,
+      "day": 9,
+      "calendar": "lunar",
+      "evidence": [
+        120,
+        156
+      ]
+    },
+    {
+      "id": "d2",
+      "person": "zh",
+      "kind": "birthday",
+      "month": 9,
+      "day": 10,
+      "calendar": "solar",
+      "evidence": [
+        185
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "summary": "林大海的火锅店开业",
+      "participants": [
+        "dh"
+      ],
+      "evidence": [
+        137,
+        138,
+        139,
+        140
+      ]
+    },
+    {
+      "id": "e2",
+      "summary": "全家给春天的花过生日",
+      "participants": [
+        "ch",
+        "jg"
+      ],
+      "evidence": [
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162
+      ],
+      "optional": true
+    }
+  ],
+  "negatives": [
+    {
+      "id": "n1",
+      "kind": "sensitive",
+      "evidence": [
+        174
+      ],
+      "description": "发送身份证号用于买票",
+      "forbidden": "身份证号或由其推出的出生日期、籍贯进入任何输出文本或日期"
+    },
+    {
+      "id": "n2",
+      "kind": "inference_trap",
+      "evidence": [
+        120
+      ],
+      "description": "今年公历对应日期只是农历生日在2026年的换算",
+      "forbidden": "记为公历8月21日生日"
+    },
+    {
+      "id": "n3",
+      "kind": "inference_trap",
+      "evidence": [
+        84
+      ],
+      "description": "泛泛评论年轻人不 care",
+      "forbidden": "推出任何人物偏好或关系"
+    },
+    {
+      "id": "n4",
+      "kind": "inference_trap",
+      "evidence": [
+        80
+      ],
+      "description": "邻居家孩子考上清华",
+      "forbidden": "把考上清华记到群内任何人身上"
+    },
+    {
+      "id": "n5",
+      "kind": "inference_trap",
+      "evidence": [
+        4,
+        83,
+        140
+      ],
+      "description": "朵朵与谁是亲子关系原文未说",
+      "forbidden": "朵朵与小满或其他人的 parent/child 关系"
+    },
+    {
+      "id": "n6",
+      "kind": "invisible_content",
+      "evidence": [
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "description": "生活费转账",
+      "forbidden": "转账金额或生活费数额"
+    },
+    {
+      "id": "n7",
+      "kind": "invisible_content",
+      "evidence": [
+        141,
+        188
+      ],
+      "description": "开业和生日红包",
+      "forbidden": "红包金额"
+    },
+    {
+      "id": "n8",
+      "kind": "invisible_content",
+      "evidence": [
+        54,
+        142,
+        143
+      ],
+      "description": "语音消息",
+      "forbidden": "猜测语音内容"
+    },
+    {
+      "id": "n9",
+      "kind": "transactional",
+      "evidence": [
+        173,
+        175,
+        177
+      ],
+      "description": "国庆高铁票统一购买",
+      "forbidden": "买票安排进入 claim"
+    },
+    {
+      "id": "n10",
+      "kind": "transactional",
+      "evidence": [
+        200,
+        201
+      ],
+      "description": "中介名片与租金咨询",
+      "forbidden": "中介或租金进入 claim，或把中介建为人物"
+    },
+    {
+      "id": "n11",
+      "kind": "coordination",
+      "evidence": [
+        121,
+        122,
+        123
+      ],
+      "description": "生日聚餐订包厢还是在家吃",
+      "forbidden": "聚餐安排进入 claim"
+    },
+    {
+      "id": "n12",
+      "kind": "coordination",
+      "evidence": [
+        204,
+        205
+      ],
+      "description": "中秋在店里吃、安排包厢",
+      "forbidden": "中秋聚餐安排进入 claim"
+    },
+    {
+      "id": "n13",
+      "kind": "coordination",
+      "evidence": [
+        6,
+        125
+      ],
+      "description": "带荔枝、留荔枝",
+      "forbidden": "荔枝相关 claim"
+    },
+    {
+      "id": "n14",
+      "kind": "coordination",
+      "evidence": [
+        35,
+        36,
+        37,
+        146,
+        147,
+        148,
+        99,
+        101,
+        164,
+        166
+      ],
+      "description": "西瓜、桃子谁要谁来拿",
+      "forbidden": "取水果安排进入 claim"
+    },
+    {
+      "id": "n15",
+      "kind": "coordination",
+      "evidence": [
+        76,
+        77,
+        78,
+        126,
+        127,
+        128
+      ],
+      "description": "视频通话未接、在开车",
+      "forbidden": "开车等即时状态进入 claim"
+    },
+    {
+      "id": "n16",
+      "kind": "coordination",
+      "evidence": [
+        105
+      ],
+      "description": "暑假带暑托班这几天忙",
+      "forbidden": "短期忙碌状态作为长期 claim"
+    },
+    {
+      "id": "n17",
+      "kind": "coordination",
+      "evidence": [
+        168,
+        169,
+        170
+      ],
+      "description": "小区停水及来水时间",
+      "forbidden": "停水安排进入 claim"
+    },
+    {
+      "id": "n18",
+      "kind": "coordination",
+      "evidence": [
+        96,
+        155
+      ],
+      "description": "周末回去帮忙清手机",
+      "forbidden": "帮忙安排进入 claim"
+    },
+    {
+      "id": "n19",
+      "kind": "inference_trap",
+      "evidence": [
+        199
+      ],
+      "description": "新住处就在林大海家对面楼",
+      "forbidden": "具体楼栋位置写入 statement"
+    }
+  ],
+  "sensitiveValues": [
+    "340000196612230016",
+    "19661223"
+  ]
+}

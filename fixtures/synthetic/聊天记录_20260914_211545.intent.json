@@ -1,0 +1,369 @@
+{
+  "intentVersion": 1,
+  "generator": "scripts/synthetic/generate.ts",
+  "generatorVersion": 1,
+  "note": "Planted by the generator. Annotators must not read this file before freezing gold (ARCHITECTURE §7.6). Not gold: ids, texts and idx are the generator's intent only.",
+  "zip": "聊天记录_20260914_211545.zip",
+  "chatScript": "private-yizhou",
+  "purpose": "私聊，第二次导出",
+  "chat": {
+    "title": "一舟",
+    "kind": "private"
+  },
+  "self": "小满",
+  "messageCount": 204,
+  "dateFrom": "2026-03-22 10:05",
+  "dateTo": "2026-09-14 20:51",
+  "senders": [
+    {
+      "name": "一舟",
+      "count": 105
+    },
+    {
+      "name": "小满",
+      "count": 99
+    }
+  ],
+  "members": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "displayName": "小满",
+      "note": "self (the user)"
+    },
+    {
+      "key": "yizhou",
+      "label": "陈一舟",
+      "displayName": "一舟",
+      "note": "university friend; remark name in private chat"
+    },
+    {
+      "key": "susu",
+      "label": "苏苏",
+      "note": "not a sender"
+    },
+    {
+      "key": "yizhou_mom",
+      "label": "一舟的妈妈",
+      "note": "not a sender"
+    },
+    {
+      "key": "duoduo",
+      "label": "朵朵",
+      "note": "self's daughter; not a sender"
+    }
+  ],
+  "planted": [
+    {
+      "id": "y-work-new",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "work",
+      "text": "在深圳蓝鲸出行担任技术负责人",
+      "validFrom": "2026-05",
+      "supersedes": "y-work-old",
+      "idx": [
+        19
+      ]
+    },
+    {
+      "id": "y-worked-5y",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "work",
+      "text": "在星禾互娱工作了快五年",
+      "optional": true,
+      "idx": [
+        31
+      ]
+    },
+    {
+      "id": "y-loc-new",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "location",
+      "text": "住在深圳南山科技园附近",
+      "validFrom": "2026-04",
+      "supersedes": "y-loc-old",
+      "idx": [
+        37
+      ]
+    },
+    {
+      "id": "rel-y-susu-spouse",
+      "type": "relation",
+      "from": "susu",
+      "to": "yizhou",
+      "relationType": "spouse",
+      "text": "2026年5月20日领证，苏苏是一舟的妻子",
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "y-married",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "life_event",
+      "text": "2026年5月20日与苏苏领证结婚",
+      "validFrom": "2026-05-20",
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "ev-wedding",
+      "type": "event",
+      "text": "一舟和苏苏计划10月3日在九江办婚礼",
+      "optional": true,
+      "idx": [
+        66,
+        175
+      ]
+    },
+    {
+      "id": "rel-m-duoduo",
+      "type": "relation",
+      "from": "xiaoman",
+      "to": "duoduo",
+      "relationType": "parent",
+      "text": "朵朵是小满的女儿",
+      "idx": [
+        111
+      ]
+    },
+    {
+      "id": "susu-studio",
+      "type": "claim",
+      "person": "susu",
+      "category": "work",
+      "text": "在深圳南山开了插画工作室",
+      "supersedes": "susu-work",
+      "optional": true,
+      "idx": [
+        165
+      ]
+    }
+  ],
+  "negatives": [
+    {
+      "id": "tx-interview-schedule",
+      "kind": "transactional",
+      "description": "面试流程时间表",
+      "idx": [
+        1
+      ]
+    },
+    {
+      "id": "inv-redpacket-offer",
+      "kind": "invisible_content",
+      "description": "恭喜红包，金额不可见",
+      "forbidden": "红包金额",
+      "idx": [
+        21
+      ]
+    },
+    {
+      "id": "inv-voice",
+      "kind": "invisible_content",
+      "description": "语音内容不可见",
+      "forbidden": "猜测语音内容",
+      "idx": [
+        26,
+        27
+      ]
+    },
+    {
+      "id": "tx-venue",
+      "kind": "transactional",
+      "description": "婚礼酒店地址与时间",
+      "forbidden": "酒店详细地址进入正文",
+      "idx": [
+        176
+      ]
+    },
+    {
+      "id": "inv-gift-money",
+      "kind": "invisible_content",
+      "description": "份子钱转账，金额不可见",
+      "forbidden": "份子钱金额",
+      "idx": [
+        179,
+        181
+      ]
+    }
+  ],
+  "sensitiveValues": [
+    "滨江路188号"
+  ],
+  "kinds": {
+    "text": 163,
+    "sticker_code": 9,
+    "recall": 1,
+    "quote": 2,
+    "red_packet": 1,
+    "voice": 2,
+    "image": 7,
+    "animated_sticker": 8,
+    "location": 1,
+    "forward": 1,
+    "contact_card": 1,
+    "link": 1,
+    "file": 1,
+    "channels": 1,
+    "unknown": 1,
+    "mini_program": 2,
+    "video": 1,
+    "transfer": 1
+  },
+  "guessedFormats": [
+    {
+      "idx": 15,
+      "kind": "recall"
+    },
+    {
+      "idx": 16,
+      "kind": "quote"
+    },
+    {
+      "idx": 17,
+      "kind": "quote"
+    },
+    {
+      "idx": 38,
+      "kind": "location"
+    },
+    {
+      "idx": 42,
+      "kind": "forward"
+    },
+    {
+      "idx": 68,
+      "kind": "contact_card"
+    },
+    {
+      "idx": 91,
+      "kind": "link"
+    },
+    {
+      "idx": 94,
+      "kind": "file"
+    }
+  ],
+  "textFile": {
+    "bom": false,
+    "lineEnding": "lf",
+    "trailingNewline": true
+  },
+  "edgeCases": {
+    "multiline": [
+      1,
+      16,
+      17
+    ],
+    "bodyLineStartsWithDot": [
+      1
+    ],
+    "bodyLineLooksLikeTime": [
+      1
+    ],
+    "emptyImageName": [],
+    "missingMedia": [
+      166
+    ],
+    "unknownBracket": [
+      99
+    ],
+    "sameMinuteDuplicate": [
+      4
+    ],
+    "stickerOnly": [
+      7,
+      62,
+      80,
+      90,
+      110,
+      147,
+      153,
+      157,
+      202
+    ],
+    "stickerMixed": [
+      20,
+      83,
+      131,
+      149,
+      174,
+      188
+    ],
+    "unicodeEmoji": [
+      5,
+      57,
+      63,
+      196,
+      201
+    ],
+    "mention": [],
+    "quote": [
+      16,
+      17
+    ],
+    "recall": [
+      15
+    ],
+    "contactCard": [
+      68
+    ],
+    "location": [
+      38
+    ],
+    "link": [
+      91
+    ],
+    "file": [
+      94
+    ],
+    "forward": [
+      42
+    ],
+    "system": [],
+    "bom": [],
+    "crlf": [],
+    "noTrailingNewline": []
+  },
+  "media": {
+    "included": [
+      "微信图片_202604241152_1.jpg",
+      "微信图片_202605171315_1.jpg",
+      "微信图片_202606041905_1.jpg",
+      "婚礼流程v2.docx",
+      "微信图片_202607201849_1.jpg",
+      "微信图片_202608101838_1.jpg",
+      "微信视频_202608131317_1.mp4",
+      "微信图片_202609012102_1.jpg"
+    ],
+    "missing": [
+      "微信图片_202608181932_1.jpg"
+    ],
+    "emptyName": 0,
+    "unreferenced": []
+  },
+  "overlaps": [
+    {
+      "with": "聊天记录_20260405_223012.zip",
+      "messages": 32,
+      "sentAtRange": [
+        "2026-03-22 10:05",
+        "2026-04-05 21:45"
+      ],
+      "thisIdxRange": [
+        0,
+        31
+      ],
+      "otherIdxRange": [
+        175,
+        206
+      ]
+    }
+  ]
+}

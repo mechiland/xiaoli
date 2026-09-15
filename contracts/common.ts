@@ -1,0 +1,129 @@
+import { z } from 'zod'
+
+// Primitives (ARCHITECTURE §2.1). Each schema is exported under its short name (value + type share the name)
+// and as `<Name>Schema` for callers that prefer the suffix convention.
+
+export const Id = z.number().int().positive()
+export type Id = z.infer<typeof Id>
+export const IdSchema = Id
+
+export const IdParamSchema = z.object({ id: z.coerce.number().int().positive() })
+export type IdParam = z.infer<typeof IdParamSchema>
+
+export const IsoString = z.iso.datetime({ offset: true })
+export type IsoString = z.infer<typeof IsoString>
+export const IsoStringSchema = IsoString
+
+/** 'YYYY-MM-DD HH:MM' local wall time as in the export (no tz). */
+export const MsgTime = z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+export type MsgTime = z.infer<typeof MsgTime>
+export const MsgTimeSchema = MsgTime
+
+/** 'YYYY' | 'YYYY-MM' | 'YYYY-MM-DD' */
+export const PartialDate = z.string().regex(/^\d{4}(-\d{2}(-\d{2})?)?$/)
+export type PartialDate = z.infer<typeof PartialDate>
+export const PartialDateSchema = PartialDate
+
+/** 'YYYY-MM-DD' */
+export const DayString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+export type DayString = z.infer<typeof DayString>
+
+export const Status = z.enum(['proposed', 'confirmed', 'rejected', 'superseded'])
+export type Status = z.infer<typeof Status>
+export const StatusSchema = Status
+
+export const SourceKind = z.enum(['ai', 'manual'])
+export type SourceKind = z.infer<typeof SourceKind>
+export const SourceKindSchema = SourceKind
+
+export const Category = z.enum(['work', 'location', 'education', 'family', 'preference', 'life_event', 'other'])
+export type Category = z.infer<typeof Category>
+export const CategorySchema = Category
+
+export const TargetType = z.enum(['handle', 'relation', 'claim', 'event', 'date'])
+export type TargetType = z.infer<typeof TargetType>
+export const TargetTypeSchema = TargetType
+
+export const MessageKind = z.enum([
+  'text',
+  'sticker_code',
+  'image',
+  'video',
+  'voice',
+  'transfer',
+  'red_packet',
+  'mini_program',
+  'channels',
+  'animated_sticker',
+  'video_call',
+  'quote',
+  'recall',
+  'system',
+  'file',
+  'link',
+  'location',
+  'contact_card',
+  'forward',
+  'unknown',
+])
+export type MessageKind = z.infer<typeof MessageKind>
+export const MessageKindSchema = MessageKind
+
+export const HandleKind = z.enum(['display_private', 'display_group', 'mentioned', 'real_name', 'address_term'])
+export type HandleKind = z.infer<typeof HandleKind>
+export const HandleKindSchema = HandleKind
+
+export const ChatKind = z.enum(['private', 'group'])
+export type ChatKind = z.infer<typeof ChatKind>
+export const ChatKindSchema = ChatKind
+
+export const ImportStatus = z.enum(['parsed', 'mapping', 'extracting', 'reviewing', 'done', 'failed'])
+export type ImportStatus = z.infer<typeof ImportStatus>
+export const ImportStatusSchema = ImportStatus
+
+export const JobStatus = z.enum(['pending', 'running', 'done', 'failed'])
+export type JobStatus = z.infer<typeof JobStatus>
+export const JobStatusSchema = JobStatus
+
+export const ReviewAction = z.enum(['accept', 'reject', 'edit', 'merge', 'split', 'supersede', 'delete'])
+export type ReviewAction = z.infer<typeof ReviewAction>
+export const ReviewActionSchema = ReviewAction
+
+export const ExtractModel = z.enum(['deepseek-flash', 'deepseek-v4-pro'])
+export type ExtractModel = z.infer<typeof ExtractModel>
+export const ExtractModelSchema = ExtractModel
+
+export const ClaimStatusReason = z.enum(['superseded', 'outdated', 'edited'])
+export type ClaimStatusReason = z.infer<typeof ClaimStatusReason>
+
+export const ApiErrorCode = z.enum([
+  'unauthorized',
+  'forbidden',
+  'not_found',
+  'validation_failed',
+  'duplicate_import',
+  'conflict',
+  'payload_too_large',
+  'attachment_missing',
+  'not_implemented',
+  'llm_unavailable',
+  'budget_exceeded',
+  'internal',
+])
+export type ApiErrorCode = z.infer<typeof ApiErrorCode>
+
+export const ApiErrorBodySchema = z.object({
+  error: z.object({ code: z.string(), message: z.string(), details: z.unknown().optional() }),
+})
+export type ApiErrorBody = z.infer<typeof ApiErrorBodySchema>
+export const ApiErrorBody = ApiErrorBodySchema
+
+export const ProgressSchema = z.object({
+  total: z.number().int().nonnegative(),
+  done: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  running: z.number().int().nonnegative(),
+})
+export type Progress = z.infer<typeof ProgressSchema>
+export const Progress = ProgressSchema
