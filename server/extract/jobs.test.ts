@@ -234,6 +234,25 @@ describe('processNextJob', () => {
     expect(again).toMatchObject({ status: 'pending', attempts: 0, error: null })
   })
 
+  it('fails a window once on a config fault and reports the cause in progress.failures (no key / bad key / no balance)', async () => {
+    const s = await seedImport(SESSIONS)
+    await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 4 * 1024]])
+    const configErr: LlmError = { ok: false, code: 'no_api_key', message: 'DEEPSEEK_API_KEY is not configured', raw: null, retryable: false, latencyMs: 0 }
+    const llm = fakeLlm([() => configErr])
+
+    const first = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+    expect(first.processed).toMatchObject({ status: 'failed', code: 'llm_config' })
+    let last = first
+    for (let i = 0; i < 4 && last.processed; i++) last = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+
+    const jobs = await db.select().from(extractionJobs).where(eq(extractionJobs.ownerId, s.ownerId)).all()
+    // fatal: one attempt each, not MAX_ATTEMPTS, and the code survives in the row
+    expect(jobs.map((j) => [j.status, j.attempts])).toEqual(jobs.map(() => ['failed', 1]))
+    expect(jobs[0].error).toContain('llm_config')
+    expect(last.progress.failed).toBe(jobs.length)
+    expect(last.progress.failures).toEqual([{ code: 'llm_config', n: jobs.length }])
+  })
+
   it('fails immediately on budget_exceeded (fatal) and ends the import with nothing to review as reviewing', async () => {
     const s = await seedImport(SESSIONS.slice(0, 3))
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])

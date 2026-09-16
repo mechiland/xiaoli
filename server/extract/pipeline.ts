@@ -65,8 +65,14 @@ function mapLlmError(e: LlmError): { status: 'retryable_error' | 'fatal_error'; 
     case 'budget_exceeded':
     case 'cassette_miss':
       return { status: 'fatal_error', code: e.code }
+    // setup faults (no/invalid key, no balance): retrying burns attempts and hides the cause
+    case 'no_api_key':
+    case 'unauthorized':
+    case 'insufficient_balance':
+      return { status: 'fatal_error', code: 'llm_config' }
     default:
-      return { status: 'retryable_error', code: 'llm_error' }
+      // anything the adapter marked non-retryable is fatal too, so a window fails once instead of three times
+      return { status: e.retryable ? 'retryable_error' : 'fatal_error', code: 'llm_error' }
   }
 }
 

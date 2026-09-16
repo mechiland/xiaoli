@@ -136,7 +136,17 @@ export async function deepseekAttempt(
 
   if (status < 200 || status >= 300) {
     const detail = providerErrorMessage(text)
-    const code: LlmErrorCode = status === 429 ? 'rate_limited' : status >= 500 ? 'http_5xx' : 'http_4xx'
+    // 401/403 = bad or missing key, 402 = no balance: configuration faults, never worth retrying (DECISIONS ## llm L9).
+    const code: LlmErrorCode =
+      status === 429
+        ? 'rate_limited'
+        : status >= 500
+          ? 'http_5xx'
+          : status === 401 || status === 403
+            ? 'unauthorized'
+            : status === 402
+              ? 'insufficient_balance'
+              : 'http_4xx'
     return outcome({
       code,
       message: redactSecrets(`DeepSeek HTTP ${status}${detail ? `: ${detail}` : ''}`, key).slice(0, 300),

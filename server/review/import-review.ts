@@ -51,6 +51,22 @@ export async function importProgress(db: Db, ownerId: string, importId: number):
     p[r.status] = r.n
     p.total += r.n
   }
+  // The result page reads this response (not the detail one) once extraction has stopped, so the cause
+  // of failed windows has to travel with it too (DECISIONS ## import-result). `error` is `<code>: <message>`;
+  // only the code leaves the server.
+  if (p.failed > 0) {
+    const failedRows = await db
+      .select({ error: extractionJobs.error, n: count() })
+      .from(extractionJobs)
+      .where(owned(extractionJobs, ownerId, eq(extractionJobs.importId, importId), eq(extractionJobs.status, 'failed')))
+      .groupBy(extractionJobs.error)
+    const byCode = new Map<string, number>()
+    for (const r of failedRows) {
+      const code = (r.error ?? '').split(':')[0].trim() || 'llm_error'
+      byCode.set(code, (byCode.get(code) ?? 0) + r.n)
+    }
+    p.failures = [...byCode].map(([code, n]) => ({ code, n })).sort((a, b) => b.n - a.n)
+  }
   return p
 }
 

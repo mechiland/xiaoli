@@ -124,6 +124,8 @@ export const ProgressSchema = z.object({
   failed: z.number().int().nonnegative(),
   pending: z.number().int().nonnegative(),
   running: z.number().int().nonnegative(),
+  /** additive: why the failed windows failed, so the page can name the cause (WindowErrorCode, counted) */
+  failures: z.array(z.object({ code: z.string(), n: z.number().int().positive() })).optional(),
 })
 export type Progress = z.infer<typeof ProgressSchema>
 export const Progress = ProgressSchema

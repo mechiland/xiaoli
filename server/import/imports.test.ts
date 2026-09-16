@@ -173,6 +173,24 @@ describe('import routes', () => {
     expect((await json(dup)).error).toMatchObject({ code: 'duplicate_import', details: { importId: import1 } })
   })
 
+  it('GET detail: failed windows carry their cause as codes, never the provider message (user report 2026-09-16)', async () => {
+    const jobs = await db.select().from(extractionJobs).where(eq(extractionJobs.importId, import1)).orderBy(extractionJobs.id)
+    expect(jobs.length).toBeGreaterThanOrEqual(2)
+    await db.update(extractionJobs).set({ status: 'failed', error: 'llm_config: DEEPSEEK_API_KEY is not configured' }).where(eq(extractionJobs.id, jobs[0].id))
+    await db.update(extractionJobs).set({ status: 'failed', error: 'invalid_json: 模型返回的内容不是合法的 JSON' }).where(eq(extractionJobs.id, jobs[1].id))
+
+    const detail = await json(await call(asUserA, 'GET', `/api/imports/${import1}`))
+    expect(detail.progress.failed).toBe(2)
+    expect([...detail.progress.failures].sort((a: { code: string }, b: { code: string }) => a.code.localeCompare(b.code))).toEqual([
+      { code: 'invalid_json', n: 1 },
+      { code: 'llm_config', n: 1 },
+    ])
+    expect(JSON.stringify(detail.progress)).not.toContain('DEEPSEEK_API_KEY')
+
+    await db.update(extractionJobs).set({ status: 'pending', error: null }).where(eq(extractionJobs.id, jobs[0].id))
+    await db.update(extractionJobs).set({ status: 'pending', error: null }).where(eq(extractionJobs.id, jobs[1].id))
+  })
+
   it('GET detail + PUT attachments: pending names, upload, idempotent, unknown name 404', async () => {
     let detail = await json(await call(asUserA, 'GET', `/api/imports/${import1}`))
     const images = p1.media.filter((m) => m.kind === 'image').map((m) => m.name)

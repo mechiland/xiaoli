@@ -246,7 +246,7 @@ export function createLlmClient(opts: CreateLlmClientOptions): LlmClient {
       if (total >= budget.limit) {
         return failAndLog(req, key, mode, attempt, 'budget_exceeded', `token budget exhausted: ${total} of ${budget.limit} tokens used`, { latencyMs: 0 })
       }
-      if (!opts.env.DEEPSEEK_API_KEY) return failAndLog(req, key, mode, attempt, 'http_4xx', 'DEEPSEEK_API_KEY is not configured', { latencyMs: 0 })
+      if (!opts.env.DEEPSEEK_API_KEY) return failAndLog(req, key, mode, attempt, 'no_api_key', 'DEEPSEEK_API_KEY is not configured', { latencyMs: 0 })
 
       const out = await deepseekAttempt({ env: opts.env, fetch: doFetch, now }, req, { thinking, timeoutMs: cap.timeoutMs, capIsDeadline: cap.capIsDeadline })
       if (out.usage && (out.usage.inputTokens > 0 || out.usage.outputTokens > 0)) {

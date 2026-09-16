@@ -260,7 +260,7 @@ JobStatus = z.enum(['pending','running','done','failed'])
 ReviewAction = z.enum(['accept','reject','edit','merge','split','supersede','delete'])
 ExtractModel = z.enum(['deepseek-flash','deepseek-v4-pro'])
 ApiErrorBody = z.object({ error: z.object({ code: z.string(), message: z.string(), details: z.unknown().optional() }) })
-Progress = { total: number, done: number, failed: number, pending: number, running: number }
+Progress = { total: number, done: number, failed: number, pending: number, running: number, failures?: { code: string /* WindowErrorCode */, n: number }[] /* additive; present only when failed > 0, so the result page can name the cause (DECISIONS ## import-result) */ }
 ```
 
 ### 2.2 Entity DTOs — `contracts/entities.ts` (API-facing; `ownerId` never serialized)

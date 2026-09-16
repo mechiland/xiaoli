@@ -171,12 +171,39 @@ function ProgressLine({ progress, loop }: { progress: Progress; loop: ReturnType
   )
 }
 
+/** Why the windows failed, in the owner's words. Setup faults name the fix; transient ones invite a retry. */
+const FAILURE_TEXT: Record<string, string> = {
+  llm_config: '抽取服务没有配置好：DEEPSEEK_API_KEY 缺失、无效，或账户余额不足',
+  budget_exceeded: 'token 预算已经用完',
+  timeout: '读取超时',
+  deadline: '读取超时',
+  invalid_json: '模型返回的内容不是合法的 JSON',
+  truncated: '模型的回答被截断了',
+  validation_failed: '模型返回的内容不符合格式要求',
+  cassette_miss: '录制回放里没有这次请求',
+}
+
+export function failureReason(progress: Progress): string | null {
+  const failures = progress.failures ?? []
+  if (!failures.length) return null
+  const [top] = failures
+  const text = FAILURE_TEXT[top.code] ?? '抽取服务出错了'
+  return failures.length > 1 ? `${text}（还有其他原因）` : text
+}
+
 function FailedWindows({ importId, progress }: { importId: number; progress: Progress }) {
   const retry = useRetryFailed(importId)
   if (progress.failed === 0) return null
+  const reason = failureReason(progress)
   return (
     <p data-failed-windows className="mt-4 border-l border-line-strong pl-3 text-[13px] leading-6 text-ink-2" role="status">
       有 <Data>{progress.failed}</Data> 段对话没有读取成功
+      {reason && (
+        <>
+          <span className="px-1.5 text-ink-3">·</span>
+          <span className="text-ink-3">{reason}</span>
+        </>
+      )}
       <span className="px-1.5 text-ink-3">·</span>
       <button type="button" className="loam-text-button" disabled={retry.isPending} onClick={() => retry.mutate()}>
         {retry.isPending ? '正在重新读取…' : '重试'}

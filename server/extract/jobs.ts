@@ -31,7 +31,24 @@ export async function getProgress(db: Db, ownerId: string, importId: number): Pr
     p[r.status] += n
     p.total += n
   }
+  if (p.failed > 0) p.failures = await getFailureCodes(db, ownerId, importId)
   return p
+}
+
+/** `extraction_jobs.error` is stored as `<code>: <message>`; the page only ever shows the code. */
+async function getFailureCodes(db: Db, ownerId: string, importId: number): Promise<{ code: string; n: number }[]> {
+  const rows = await db
+    .select({ error: extractionJobs.error, n: sql<number>`count(*)` })
+    .from(extractionJobs)
+    .where(owned(extractionJobs, ownerId, eq(extractionJobs.importId, importId), eq(extractionJobs.status, 'failed')))
+    .groupBy(extractionJobs.error)
+    .all()
+  const byCode = new Map<string, number>()
+  for (const r of rows) {
+    const code = (r.error ?? '').split(':')[0].trim() || 'llm_error'
+    byCode.set(code, (byCode.get(code) ?? 0) + Number(r.n))
+  }
+  return [...byCode].map(([code, n]) => ({ code, n })).sort((a, b) => b.n - a.n)
 }
 
 export async function createJobsForImport(db: Db, ownerId: string, importId: number, focus: [number, number][]): Promise<number> {

@@ -106,7 +106,7 @@ export interface ExtractStore {
   createPerson(importId: number, label: string): Promise<number>
 }
 
-export type WindowErrorCode = 'invalid_json' | 'validation_failed' | 'truncated' | 'timeout' | 'deadline' | 'llm_error' | 'cassette_miss' | 'budget_exceeded'
+export type WindowErrorCode = 'invalid_json' | 'validation_failed' | 'truncated' | 'timeout' | 'deadline' | 'llm_error' | 'llm_config' | 'cassette_miss' | 'budget_exceeded'
 
 export interface WindowUsage {
   inputTokens: number

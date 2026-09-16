@@ -164,12 +164,24 @@ describe('createLlmClient — live', () => {
   it('does not retry 4xx and never leaks the key into errors or records', async () => {
     const t = setup([new Response(JSON.stringify({ error: { message: `Authentication Fails, Your api key: ${TEST_KEY} is invalid` } }), { status: 401 })])
     const e = asErr(await t.client.completeJson(req()))
-    expect(e.code).toBe('http_4xx')
+    // 401/403 is a setup fault, not a generic 4xx: extract turns it into a fatal window error naming the cause
+    expect(e.code).toBe('unauthorized')
     expect(e.retryable).toBe(false)
     expect(t.calls).toHaveLength(1)
     expect(JSON.stringify(e)).not.toContain(TEST_KEY)
     expect(JSON.stringify(t.logger.records)).not.toContain(TEST_KEY)
     expect(JSON.stringify(t.logger.records)).not.toContain('0123456789abcdef')
+  })
+
+  it('maps 402 to insufficient_balance and 400 to http_4xx, neither retried', async () => {
+    const broke = setup([new Response(JSON.stringify({ error: { message: 'Insufficient Balance' } }), { status: 402 })])
+    const e1 = asErr(await broke.client.completeJson(req()))
+    expect(e1).toMatchObject({ code: 'insufficient_balance', retryable: false })
+    expect(broke.calls).toHaveLength(1)
+
+    const bad = setup([new Response(JSON.stringify({ error: { message: 'Invalid request' } }), { status: 400 })])
+    const e2 = asErr(await bad.client.completeJson(req()))
+    expect(e2).toMatchObject({ code: 'http_4xx', retryable: false })
   })
 
   it('retries network errors and redacts their messages', async () => {
@@ -248,7 +260,8 @@ describe('createLlmClient — live', () => {
   it('returns http_4xx without calling out when the key is missing', async () => {
     const t = setup([completion('{}')], { env: { ...ENV, DEEPSEEK_API_KEY: undefined } })
     const e = asErr(await t.client.completeJson(req()))
-    expect(e.code).toBe('http_4xx')
+    expect(e.code).toBe('no_api_key')
+    expect(e.retryable).toBe(false)
     expect(e.message).toContain('DEEPSEEK_API_KEY')
     expect(t.calls).toHaveLength(0)
   })

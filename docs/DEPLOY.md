@@ -200,3 +200,11 @@ Other local checks: `pnpm tsx scripts/deploy/build.ts` (build + secret scan + si
 | build refused: "secret found in build output" | an env file with a secret got into the build dir. Build from the worktree (default), not `--in-place`. |
 | size check says `paid` or `too-large` | Workers Paid is needed above 3 MiB gzip; above 10 MiB, remove dependencies |
 | logs | `pnpm exec wrangler tail --env production` (observability is enabled in `env.production`) |
+
+## 排查：导入后每段对话都「没有读取成功」
+
+结果页现在会在失败计数后面写明原因。最常见的是配置问题：
+
+- **「抽取服务没有配置好：DEEPSEEK_API_KEY 缺失、无效，或账户余额不足」**：本地看 `.env.local`（仓库里没有这个文件，克隆后要自己建），线上用 `wrangler secret put DEEPSEEK_API_KEY`。自检：`pnpm llm:smoke --live`，它只打印错误码，不打印密钥。
+- **「token 预算已经用完」**：`pnpm llm:usage` 看用量，`pnpm llm:usage --reset` 开新一轮。
+- **「模型返回的内容不是合法的 JSON」/「读取超时」**：临时性故障，点「重试」即可；连续出现请看 `.dev/server.log`。

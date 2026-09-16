@@ -8,6 +8,7 @@ import {
   eventParticipants,
   events,
   evidence,
+  extractionJobs,
   handles,
   imports,
   owned,
@@ -17,7 +18,7 @@ import {
   withOwnerLink,
   type Db,
 } from '@/server/db'
-import { addEvent, applyReview, splitHandle } from '@/server/review'
+import { addEvent, applyReview, getImportReview, splitHandle } from '@/server/review'
 import { createTestDb, createTestUser } from '@/tests/helpers/test-db'
 import { client, seedWorld, type Json, type World } from './fixtures'
 
@@ -160,6 +161,27 @@ describe('review regressions (round 2)', () => {
     await expect(addEvent(db, uid, w.a.id, { summary: '聚餐', participantIds: [w.b.id] })).rejects.toThrow('forced')
 
     expect(await count()).toEqual(before)
+  })
+
+  it('import review: failed windows report their cause in progress.failures, codes only (user report 2026-09-16)', async () => {
+    const impId = w.imp.id
+    const now = new Date().toISOString()
+    // seedWorld already carries jobs for this import; start from a known set so the counts are exact
+    await db.delete(extractionJobs).where(owned(extractionJobs, uid, eq(extractionJobs.importId, impId)))
+    await db.insert(extractionJobs).values([
+      withOwner<typeof extractionJobs>(uid, { importId: impId, windowStartSeq: 0, windowEndSeq: 1024, focusStartSeq: 0, focusEndSeq: 1024, status: 'failed', attempts: 1, error: 'llm_config: DEEPSEEK_API_KEY is not configured' }, now),
+      withOwner<typeof extractionJobs>(uid, { importId: impId, windowStartSeq: 1024, windowEndSeq: 2048, focusStartSeq: 1024, focusEndSeq: 2048, status: 'failed', attempts: 1, error: 'llm_config: DEEPSEEK_API_KEY is not configured' }, now),
+      withOwner<typeof extractionJobs>(uid, { importId: impId, windowStartSeq: 2048, windowEndSeq: 3072, focusStartSeq: 2048, focusEndSeq: 3072, status: 'failed', attempts: 3, error: 'invalid_json: 模型返回的内容不是合法的 JSON' }, now),
+      withOwner<typeof extractionJobs>(uid, { importId: impId, windowStartSeq: 3072, windowEndSeq: 4096, focusStartSeq: 3072, focusEndSeq: 4096, status: 'done', attempts: 1 }, now),
+    ])
+    const { progress } = await getImportReview(db, uid, impId)
+    expect(progress).toMatchObject({ failed: 3, done: 1 })
+    expect(progress.failures).toEqual([
+      { code: 'llm_config', n: 2 },
+      { code: 'invalid_json', n: 1 },
+    ])
+    // the provider message never leaves the server
+    expect(JSON.stringify(progress)).not.toContain('DEEPSEEK_API_KEY')
   })
 
   it('import review: a proposed ai handle without a person does not keep allHandled false', async () => {

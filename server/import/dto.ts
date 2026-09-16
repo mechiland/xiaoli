@@ -72,6 +72,22 @@ export async function jobProgress(db: Db, ownerId: string, importId: number): Pr
     p[r.status] = Number(r.n)
     p.total += Number(r.n)
   }
+  // The result page prefers this progress over the review one, so the cause of failed windows has to be
+  // here too, or it shows a bare count (DECISIONS ## import-result). `error` is `<code>: <message>`;
+  // only the code leaves the server.
+  if (p.failed > 0) {
+    const failedRows = await db
+      .select({ error: extractionJobs.error, n: sql<number>`count(*)` })
+      .from(extractionJobs)
+      .where(owned(extractionJobs, ownerId, eq(extractionJobs.importId, importId), eq(extractionJobs.status, 'failed')))
+      .groupBy(extractionJobs.error)
+    const byCode = new Map<string, number>()
+    for (const r of failedRows) {
+      const code = (r.error ?? '').split(':')[0].trim() || 'llm_error'
+      byCode.set(code, (byCode.get(code) ?? 0) + Number(r.n))
+    }
+    p.failures = [...byCode].map(([code, n]) => ({ code, n })).sort((a, b) => b.n - a.n)
+  }
   return p
 }
 

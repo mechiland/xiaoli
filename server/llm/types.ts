@@ -121,6 +121,9 @@ export const RETRYABLE: Record<LlmErrorCode, boolean> = {
   cassette_miss: false,
   budget_exceeded: false,
   deadline: false,
+  no_api_key: false,
+  unauthorized: false,
+  insufficient_balance: false,
 }
 
 /** Codes the adapter itself retries (ARCHITECTURE §5 "Retries — ownership split"). */

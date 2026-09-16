@@ -15,6 +15,10 @@ export const LlmErrorCodeSchema = z.enum([
   'cassette_miss',
   'budget_exceeded',
   'deadline',
+  // configuration faults: the same request can never succeed until the owner fixes the setup
+  'no_api_key',
+  'unauthorized',
+  'insufficient_balance',
 ])
 export type LlmErrorCode = z.infer<typeof LlmErrorCodeSchema>
 

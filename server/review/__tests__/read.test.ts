@@ -60,7 +60,9 @@ describe('GET /api/evidence/:type/:id and GET /api/imports/:id/review', () => {
     const body = r.body
     expect(body.import).toMatchObject({ id: w.imp.id, status: 'reviewing' })
     expect(body.chat).toMatchObject({ id: w.group.id, title: '测试群x', messageCount: 10 })
-    expect(body.progress).toEqual({ total: 2, done: 1, failed: 1, pending: 0, running: 0 })
+    // failures travels with the review response so the page can name the cause; this fixture's failed job
+    // carries no error text, which is reported as the generic code (DECISIONS ## import-result IR-x2)
+    expect(body.progress).toEqual({ total: 2, done: 1, failed: 1, pending: 0, running: 0, failures: [{ code: 'llm_error', n: 1 }] })
     const sections = body.sections as Json[]
     expect(sections.map((s) => s.person.label)).toEqual(['陈嘉树', '周以宁'])
     const [b, a] = sections
