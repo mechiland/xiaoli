@@ -1,9 +1,9 @@
 {
-  "goldVersion": 1,
+  "goldVersion": 2,
   "zip": "聊天记录_20260910_183020.zip",
   "annotator": "annotator",
   "annotatedAt": "2026-09-15T10:44:52.000Z",
-  "notes": "self=小满: 系统消息里春燕老师与 Amy 均以引号名出现（自己会显示为『你』），其余发送者中小满最像个人微信名而非群昵称。chat.title 取群内改名后的群名（用户可见）。儿童（小宇、豆豆、乐乐、朵朵、果果）建为非群成员人物。班主任与孩子的关系类型词表无 teacher，记为 other 且 optional。",
+  "notes": "self=小满: 系统消息里春燕老师与 Amy 均以引号名出现（自己会显示为『你』），其余发送者中小满最像个人微信名而非群昵称。chat.title 取群内改名后的群名（用户可见）。儿童（小宇、豆豆、乐乐、朵朵、果果）建为非群成员人物。班主任与孩子的关系类型词表无 teacher，记为 other 且 optional。 goldVersion 2 (interaction pass): loops and conversations added; claims/handles/relations/dates/events/negatives unchanged. Loops follow SPEC §8.7 (a question someone later answers is not a loop) and are only recorded when they stay open past the conversation (window) in which they were opened, since a close can only be expressed against a loop carried in from an earlier window. Conversations cover the stretches with real content; pure small talk is left out so it does not skew topic coverage.",
   "parserVersion": "wechat-export@1",
   "messageCount": 178,
   "messagesSha256": "a89b0ac9f05c4a638e98846a3df46b8f1bf574f514ae7ff71753475cf037509a",
@@ -626,6 +626,169 @@
         173
       ],
       "optional": true
+    }
+  ],
+  "loops": [
+    {
+      "id": "k1",
+      "person": "chunyan",
+      "direction": "mine",
+      "kind": "plan",
+      "text": "把紧急联系人信息私发给老师",
+      "evidence": [
+        62
+      ],
+      "optional": true
+    },
+    {
+      "id": "k2",
+      "person": "amy",
+      "direction": "mine",
+      "kind": "question",
+      "text": "谁家有多余的二年级旧课本",
+      "evidence": [
+        51
+      ],
+      "optional": true
+    },
+    {
+      "id": "k3",
+      "person": "amy",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "周六下午三点在万象城给小宇办欢送会",
+      "dueAt": "2026-09-05",
+      "evidence": [
+        96
+      ],
+      "closedBy": 117,
+      "closedReason": "done"
+    },
+    {
+      "id": "k4",
+      "person": "amy",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "以后回云杉再约着见面",
+      "evidence": [
+        94
+      ],
+      "optional": true
+    },
+    {
+      "id": "k5",
+      "person": "amy",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "私下问老师换座位的事",
+      "evidence": [
+        177
+      ],
+      "optional": true
+    }
+  ],
+  "conversations": [
+    {
+      "id": "v1",
+      "startIdx": 0,
+      "endIdx": 5,
+      "topics": [
+        "入群",
+        "班主任"
+      ]
+    },
+    {
+      "id": "v2",
+      "startIdx": 9,
+      "endIdx": 17,
+      "topics": [
+        "班费"
+      ]
+    },
+    {
+      "id": "v3",
+      "startIdx": 34,
+      "endIdx": 38,
+      "topics": [
+        "编程班"
+      ]
+    },
+    {
+      "id": "v4",
+      "startIdx": 46,
+      "endIdx": 51,
+      "topics": [
+        "书单",
+        "旧课本"
+      ]
+    },
+    {
+      "id": "v5",
+      "startIdx": 52,
+      "endIdx": 55,
+      "topics": [
+        "牙疼"
+      ]
+    },
+    {
+      "id": "v6",
+      "startIdx": 59,
+      "endIdx": 65,
+      "topics": [
+        "校服",
+        "紧急联系人"
+      ]
+    },
+    {
+      "id": "v7",
+      "startIdx": 72,
+      "endIdx": 77,
+      "topics": [
+        "开学"
+      ]
+    },
+    {
+      "id": "v8",
+      "startIdx": 87,
+      "endIdx": 96,
+      "topics": [
+        "上海",
+        "欢送会"
+      ]
+    },
+    {
+      "id": "v9",
+      "startIdx": 113,
+      "endIdx": 123,
+      "topics": [
+        "欢送会"
+      ]
+    },
+    {
+      "id": "v10",
+      "startIdx": 124,
+      "endIdx": 130,
+      "topics": [
+        "作息",
+        "运动会"
+      ]
+    },
+    {
+      "id": "v11",
+      "startIdx": 151,
+      "endIdx": 162,
+      "topics": [
+        "教师节"
+      ]
+    },
+    {
+      "id": "v12",
+      "startIdx": 166,
+      "endIdx": 177,
+      "topics": [
+        "摔倒",
+        "换座位"
+      ]
     }
   ],
   "negatives": [

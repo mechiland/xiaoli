@@ -575,3 +575,22 @@ describe('validateOutput', () => {
     })
   })
 })
+
+// The split (DECISIONS I17, ## extract X40): `validateOutput` is back to exactly what it was for extract.v8. The
+// interaction keys are not in `ExtractionOutput` any more, so they fail the window like any other unknown key — and
+// that is what makes the extraction call's cassettes replay byte-identically to the run that passed the gates.
+describe('validateOutput: no interaction layer', () => {
+  it('a `segment` / `loops` / `closes` key fails the window (v8 behaviour, unknown top-level key)', () => {
+    for (const key of ['segment', 'loops', 'closes']) {
+      const r = validateOutput({ claims: [claim()], [key]: key === 'segment' ? null : [] }, input())
+      expect(r, key).toMatchObject({ error: 'validation_failed' })
+      if ('error' in r) expect(r.issues[0]).toContain(key)
+    }
+  })
+
+  it('takes no `interaction` option and produces the six extraction sections only', () => {
+    const r = validateOutput({ claims: [claim()] }, input(), { milestoneRules: true })
+    if ('error' in r) throw new Error('unexpected')
+    expect(Object.keys(r.output).sort()).toEqual(['claims', 'dates', 'events', 'handles', 'newPersons', 'relations'])
+  })
+})

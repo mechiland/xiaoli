@@ -6,7 +6,7 @@ import type { ScenarioContext } from '@/verify/lib'
 export type Review = ImportReviewResponse
 export type Detail = ImportDetailResponse
 type Section = Review['sections'][number]
-const GROUPS = ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events'] as const
+const GROUPS = ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events', 'loops'] as const
 
 export const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T
 export const itemsOf = (s: Section): ReviewItem[] => GROUPS.flatMap((g) => s[g])
@@ -109,4 +109,142 @@ export async function elementShot(ctx: ScenarioContext, name: string, selector: 
   } finally {
     await set(false)
   }
+}
+
+// ---- 未结事项 / 这次聊了什么 (wave 5) ------------------------------------------------------------------------------
+// The seed does not carry interaction data yet (extract writes loops and segments, the seed imports predate it), so
+// these fixtures are injected into the stubbed review / interaction answers. The page, its components and the route
+// shapes are the real ones.
+
+export const interactionUrl = (id: number) => new RegExp(`/api/imports/${id}/interaction$`)
+export const loopEvidenceUrl = /\/api\/evidence\/loop\/\d+$/
+
+type LoopItem = Extract<ReviewItem, { type: 'loop' }>
+type Loop = LoopItem['item']
+
+export function loopItem(id: number, personId: number, over: Partial<Loop> = {}): LoopItem {
+  return {
+    type: 'loop',
+    item: {
+      id,
+      personId,
+      direction: 'mine',
+      kind: 'promise',
+      text: '帮她看简历',
+      dueAt: null,
+      openedAt: '2026-09-13 21:04',
+      openedMessageId: null,
+      closedAt: null,
+      closedMessageId: null,
+      closedReason: null,
+      state: 'open',
+      expired: false,
+      daysOpen: 3,
+      status: 'proposed',
+      importId: null,
+      sourceKind: 'ai',
+      evidenceCount: 1,
+      createdAt: '2026-09-15T00:00:00.000Z',
+      ...over,
+    },
+  }
+}
+
+/** Loops in every state: the first section gets the three proposed kinds, the second the three handled ones. */
+export function withLoops(r0: Review): Review {
+  const r = clone(r0)
+  const a = r.sections[0]
+  const b = r.sections[1] ?? r.sections[0]
+  if (a) {
+    a.loops = [
+      loopItem(990_401, a.person.id, { kind: 'promise', direction: 'mine', text: '帮她看简历' }),
+      loopItem(990_402, a.person.id, { kind: 'question', direction: 'mine', text: '国庆有没有空', openedAt: '2026-09-14 10:12' }),
+      loopItem(990_403, a.person.id, { kind: 'plan', direction: 'mutual', text: '下个月去成都', dueAt: '2026-10-04', openedAt: '2026-09-15 19:30' }),
+    ]
+  }
+  if (b) {
+    b.loops = [
+      loopItem(990_411, b.person.id, { kind: 'promise', direction: 'theirs', text: '把装修合同发过来', status: 'confirmed', openedAt: '2026-09-11 08:40' }),
+      loopItem(990_412, b.person.id, { kind: 'question', direction: 'theirs', text: '周六几点出发', status: 'rejected', openedAt: '2026-09-12 12:02' }),
+      loopItem(990_413, b.person.id, {
+        kind: 'promise',
+        direction: 'mine',
+        text: '把露营装备清单发过去',
+        status: 'confirmed',
+        state: 'done',
+        closedReason: 'done',
+        closedAt: '2026-09-15T02:00:00.000Z',
+        closedMessageId: 4321,
+        openedAt: '2026-09-10 21:15',
+      }),
+    ]
+  }
+  for (const s of r.sections) s.newCount = itemsOf(s).length
+  return r
+}
+
+/** The answer of `POST /api/loops/:id/close`: closing is also confirming (DECISIONS I4). */
+export function closedLoopBody(it: LoopItem): { loop: Loop } {
+  return { loop: { ...clone(it.item), status: 'confirmed', state: 'done', closedReason: 'done', closedAt: '2026-09-16T02:00:00.000Z' } }
+}
+
+/** 「这次聊了什么」: this import's conversations, the shape `GET /api/imports/:id/interaction` returns. */
+export function importConversations(chatId: number, chatTitle: string): { conversations: unknown[] } {
+  const segment = (id: number, startedAt: string, endedAt: string, summary: string, topics: string[], messageCount: number) => ({
+    id,
+    chatId,
+    chatTitle,
+    startSeq: id * 10,
+    endSeq: id * 10 + messageCount,
+    startedAt,
+    endedAt,
+    messageCount,
+    summary,
+    topics,
+    hidden: false,
+    firstMessageId: null,
+    participants: [],
+    importId: null,
+    sourceKind: 'ai',
+    createdAt: '2026-09-15T00:00:00.000Z',
+  })
+  return {
+    conversations: [
+      {
+        chatId,
+        chatTitle,
+        chatKind: 'group',
+        startedAt: '2026-09-13 20:31',
+        endedAt: '2026-09-13 22:48',
+        messageCount: 42,
+        topics: ['搬家', '孩子择校'],
+        firstMessageId: null,
+        segments: [
+          segment(9_001, '2026-09-13 20:31', '2026-09-13 21:20', '聊了下个月搬家的日子，谁来搬、要不要请假', ['搬家'], 24),
+          segment(9_002, '2026-09-13 21:40', '2026-09-13 22:48', '说到孩子明年上小学，两个人都在打听对口的学校', ['孩子择校'], 18),
+        ],
+      },
+      {
+        chatId,
+        chatTitle,
+        chatKind: 'group',
+        startedAt: '2026-09-11 08:40',
+        endedAt: '2026-09-11 09:05',
+        messageCount: 11,
+        topics: ['装修'],
+        firstMessageId: null,
+        segments: [segment(9_003, '2026-09-11 08:40', '2026-09-11 09:05', '对了一下装修合同里的几处报价', ['装修'], 11)],
+      },
+    ],
+  }
+}
+
+/**
+ * The interaction endpoints the page now touches, answered deterministically: the seed has no segments or loops yet
+ * and `GET /api/imports/:id/interaction` is being written in parallel. Installed next to `guardJobs`, so no
+ * screenshot depends on whether that route is a 501 stub at the moment.
+ */
+export async function guardInteraction(page: Page, body: unknown = { conversations: [] }, evidence?: unknown): Promise<void> {
+  await page.route(/\/api\/imports\/\d+\/interaction$/, (route: Route) => fulfillJson(route, body))
+  if (evidence) await page.route(loopEvidenceUrl, (route: Route) => fulfillJson(route, evidence))
 }

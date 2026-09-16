@@ -1,13 +1,19 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
-import type { SearchResponse, SearchTypes } from '@/contracts'
+import type { InteractionSearchHit, SearchResponse, SearchTypes } from '@/contracts'
 import { sortKey } from '@/lib/pinyin'
 import { claims, handles, owned, persons, type Db } from '@/server/db'
+import { searchInteraction } from '@/server/interaction'
 import { highlightRanges, isLatinQuery, likeContains, normalize, normalizeQuery, pinyinKeys, splitTerms } from './text'
+
+/** `searchInteraction` from `@/server/interaction`; injectable so unit tests never touch the interaction module. */
+export type InteractionSearchFn = (db: Db, ownerId: string, q: string, limit: number) => Promise<InteractionSearchHit[]>
 
 export interface SearchOptions {
   /** per group, default 20 */
   limit?: number
   types?: SearchTypes
+  /** test seam for the 来往 group; defaults to `@/server/interaction`'s `searchInteraction` */
+  interaction?: InteractionSearchFn
 }
 
 type PersonRow = { id: number; label: string; labelSort: string; pinned: boolean; lastMessageAt: string | null }
@@ -170,24 +176,41 @@ async function searchClaims(db: Db, ownerId: string, terms: string[], limit: num
 }
 
 /**
+ * The 来往 group lives in the interaction module (ARCHITECTURE §1.17), which search only consumes. If it cannot answer,
+ * the overlay still shows 人物 and 信息 instead of failing whole (DECISIONS search S10).
+ */
+async function searchInteractionSafely(db: Db, ownerId: string, q: string, limit: number, fn: InteractionSearchFn): Promise<InteractionSearchHit[]> {
+  try {
+    return await fn(db, ownerId, q, limit)
+  } catch (e) {
+    console.log(JSON.stringify({ level: 'warn', msg: 'interaction search unavailable', error: e instanceof Error ? e.message.slice(0, 200) : 'unknown' }))
+    return []
+  }
+}
+
+/**
  * GET /api/search (ARCHITECTURE §1.8, §2.4): persons by label, pinyin (Latin queries) and every confirmed/proposed
- * handle (`matchedAlias` when only an alias matched); confirmed claims by statement with highlight ranges.
+ * handle (`matchedAlias` when only an alias matched); confirmed claims by statement with highlight ranges; 来往 hits
+ * (segment summaries and loop texts, SPEC §9.8) from `@/server/interaction`.
  * Merged persons and the self person are excluded from `people`; everything is owner-scoped.
  */
 export async function searchAll(db: Db, ownerId: string, q: string, opts: SearchOptions = {}): Promise<SearchResponse> {
   const limit = Math.max(1, Math.min(100, opts.limit ?? 20))
   const types = opts.types ?? 'all'
+  const wants = (group: Exclude<SearchTypes, 'all'>) => types === 'all' || types === group
   const qn = normalizeQuery(q)
-  if (!qn) return { q, people: [], claims: [] }
+  if (!qn) return { q, people: [], claims: [], interaction: [] }
 
-  const [people, claimHits] = await Promise.all([
-    types === 'claims' ? [] : searchPeople(db, ownerId, qn, limit),
-    types === 'people' ? [] : searchClaims(db, ownerId, splitTerms(qn), limit),
+  const [people, claimHits, interaction] = await Promise.all([
+    wants('people') ? searchPeople(db, ownerId, qn, limit) : [],
+    wants('claims') ? searchClaims(db, ownerId, splitTerms(qn), limit) : [],
+    wants('interaction') ? searchInteractionSafely(db, ownerId, q.trim(), limit, opts.interaction ?? searchInteraction) : [],
   ])
 
   return {
     q,
     people: people.map((p) => ({ person: { id: p.id, label: p.label }, matchedAlias: p.alias })),
     claims: claimHits,
+    interaction,
   }
 }

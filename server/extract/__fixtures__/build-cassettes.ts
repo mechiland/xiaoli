@@ -3,18 +3,24 @@
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { buildCassette, CASSETTE_DIR, FIXTURE_PROMPT_VERSION, SCENARIOS } from './cassette-scenarios'
+import { buildCassettes, CASSETTE_DIR, FIXTURE_VERSIONS, SCENARIOS } from './cassette-scenarios'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
 async function main() {
-  const dir = path.join(ROOT, CASSETTE_DIR, FIXTURE_PROMPT_VERSION)
-  mkdirSync(dir, { recursive: true })
-  for (const f of readdirSync(dir)) rmSync(path.join(dir, f))
+  // Each scenario now yields two cassettes (extraction + interaction), in different version directories.
+  for (const version of FIXTURE_VERSIONS()) {
+    const dir = path.join(ROOT, CASSETTE_DIR, version)
+    mkdirSync(dir, { recursive: true })
+    for (const f of readdirSync(dir)) rmSync(path.join(dir, f))
+  }
   for (const s of SCENARIOS) {
-    const c = await buildCassette(s)
-    writeFileSync(path.join(dir, `${c.key}.json`), `${JSON.stringify(c, null, 2)}\n`)
-    console.log(`${s.name}: ${c.key}`)
+    for (const c of await buildCassettes(s)) {
+      const dir = path.join(ROOT, CASSETTE_DIR, c.promptVersion)
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(path.join(dir, `${c.key}.json`), `${JSON.stringify(c, null, 2)}\n`)
+      console.log(`${c.promptVersion} ${s.name}: ${c.key}`)
+    }
   }
 }
 

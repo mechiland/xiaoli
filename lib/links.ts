@@ -1,6 +1,6 @@
 // The ONLY way modules build in-app URLs (ARCHITECTURE §1.1, §3).
 
-export type AnchorType = 'claim' | 'relation' | 'date' | 'event' | 'handle'
+export type AnchorType = 'claim' | 'relation' | 'date' | 'event' | 'handle' | 'loop' | 'segment'
 
 /** DOM id of an item row, e.g. 'claim-345'. */
 export function anchorId(type: AnchorType, id: number): string {

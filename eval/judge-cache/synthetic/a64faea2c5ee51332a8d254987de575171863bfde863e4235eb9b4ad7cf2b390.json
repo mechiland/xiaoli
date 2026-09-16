@@ -1,0 +1,18 @@
+{
+  "inputHash": "a64faea2c5ee51332a8d254987de575171863bfde863e4235eb9b4ad7cf2b390",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:13:20.752Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "offer入职时间属于事务性日程信息"
+      }
+    ]
+  }
+}

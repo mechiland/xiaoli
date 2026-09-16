@@ -2,7 +2,7 @@
 import { asc, eq, inArray, sql } from 'drizzle-orm'
 import type { ImportStatus, JobsNextResponse, JobStatus, Progress } from '@/contracts'
 import { nowIso } from '@/lib/time'
-import { claims, events, extractionJobs, getOwnedOr404, getUserSettings, handles, importantDates, imports, messages, owned, relations, withOwner, type Db } from '@/server/db'
+import { claims, events, extractionJobs, getOwnedOr404, getUserSettings, handles, importantDates, imports, loops, messages, owned, relations, withOwner, type Db } from '@/server/db'
 import type { ServerEnv } from '@/server/env'
 import { ApiError } from '@/server/errors'
 import type { LlmClient } from '@/server/llm'
@@ -86,14 +86,16 @@ export async function createJobsForImport(db: Db, ownerId: string, importId: num
 
 async function countProposed(db: Db, ownerId: string, importId: number): Promise<number> {
   const count = sql<number>`count(*)`
-  const [c, h, r, e, d] = await Promise.all([
+  const [c, h, r, e, d, l] = await Promise.all([
     db.select({ n: count }).from(claims).where(owned(claims, ownerId, eq(claims.importId, importId), eq(claims.status, 'proposed'))).get(),
     db.select({ n: count }).from(handles).where(owned(handles, ownerId, eq(handles.importId, importId), eq(handles.status, 'proposed'))).get(),
     db.select({ n: count }).from(relations).where(owned(relations, ownerId, eq(relations.importId, importId), eq(relations.status, 'proposed'))).get(),
     db.select({ n: count }).from(events).where(owned(events, ownerId, eq(events.importId, importId), eq(events.status, 'proposed'))).get(),
     db.select({ n: count }).from(importantDates).where(owned(importantDates, ownerId, eq(importantDates.importId, importId), eq(importantDates.status, 'proposed'))).get(),
+    // loops are proposed items too (SPEC §8.8); segments carry no status and are never reviewed one by one
+    db.select({ n: count }).from(loops).where(owned(loops, ownerId, eq(loops.importId, importId), eq(loops.status, 'proposed'))).get(),
   ])
-  return [c, h, r, e, d].reduce((s, x) => s + Number(x?.n ?? 0), 0)
+  return [c, h, r, e, d, l].reduce((s, x) => s + Number(x?.n ?? 0), 0)
 }
 
 /** extracting → reviewing (items to review or failed windows to retry) | done, once no job is pending or running. */
@@ -166,6 +168,10 @@ export async function processNextJob(
       itemsCreated = outcome.itemsCreated
       if (outcome.dedup === 'skipped_deadline') {
         console.log(JSON.stringify({ level: 'info', msg: 'dedup skipped (deadline)', importId, jobId: job.id }))
+      }
+      // The interaction call fails on its own (ARCHITECTURE §6): the window is still done and its claims still landed.
+      if (outcome.interaction === 'skipped_deadline' || outcome.interaction === 'failed') {
+        console.log(JSON.stringify({ level: 'info', msg: `interaction ${outcome.interaction}`, importId, jobId: job.id }))
       }
       // Schema-invalid items: paths and failing field names only, never values or message text (DECISIONS ## extract X31).
       const invalid = (outcome.dropped ?? []).filter((d) => d.reason === 'invalid_item' && d.fields?.length)

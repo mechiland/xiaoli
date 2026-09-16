@@ -3,7 +3,7 @@ import type { LlmError, LlmJsonRequest, LlmJsonResult } from '@/server/llm'
 import { fakeLlm } from '@/tests/helpers/test-db'
 import { CEREMONY, CEREMONY_MAPPING, parsedChat, SHIPPING_BLOCK, SHIPPING_BLOCK_MAPPING, TWO_SESSIONS, TWO_SESSIONS_MAPPING } from './__fixtures__/chats'
 import { extractOffline } from './offline'
-import { PROMPT_VERSION } from './prompt-version'
+import { INTERACTION_PROMPT_VERSION, PROMPT_VERSION } from './prompt-version'
 
 // Window packing (extract.v4+, DECISIONS ## extract X20) is switched off here so two short sessions stay two windows
 // and retry/failure isolation between windows stays testable; `feats.pack` turns it on for the packing cases.
@@ -19,7 +19,11 @@ afterEach(() => {
 const ok = (json: unknown, latencyMs = 1_000): LlmJsonResult => ({ ok: true, json, raw: JSON.stringify(json), usage: { inputTokens: 1_000, outputTokens: 100, cacheHitTokens: 0 }, latencyMs, model: 'deepseek-flash', finishReason: 'stop', fromCassette: false })
 const err = (code: LlmError['code'], latencyMs = 500): LlmError => ({ ok: false, code, message: code, raw: code === 'invalid_json' ? '{bad' : null, retryable: code !== 'budget_exceeded', latencyMs })
 const empty = { newPersons: [], handles: [], relations: [], claims: [], events: [], dates: [] }
+/** the interaction call's "nothing happened here" answer (SPEC §8.8); it is a separate call with its own output */
+const emptyInteraction = { segment: null, loops: [], closes: [] }
 const isWindow = (req: LlmJsonRequest, marker: string) => req.messages[1].content.includes(marker)
+/** Every window is now two calls in parallel; they are told apart by prompt version, never by arrival order. */
+const isInteraction = (req: LlmJsonRequest) => req.promptVersion.startsWith('interaction.')
 
 // Person ids inside the memory store: me = 1, ming = 2 (mapping order).
 const window0 = {
@@ -44,8 +48,10 @@ describe('extractOffline', () => {
     // The model output the critic observed, on invented data: a new person labelled with the recipient name whose only
     // item is that name as real_name, next to the sender's generic "提供过…" claims.
     const llm = fakeLlm([
-      () =>
-        ok({
+      (req) =>
+        isInteraction(req)
+          ? ok(emptyInteraction)
+          : ok({
           ...empty,
           newPersons: [{ tempId: 't1', label: '王小明', evidence: [2] }],
           handles: [{ person: { tempId: 't1' }, kind: 'real_name', value: '王小明', evidence: [2] }],
@@ -68,8 +74,10 @@ describe('extractOffline', () => {
   it('ceremony post + "返校": one education claim, not the generic status next to a school read off the post (overall critic r1 #3)', async () => {
     feats.pack = 40 // as in-app with extract.v4+: the two sessions share one window
     const llm = fakeLlm([
-      () =>
-        ok({
+      (req) =>
+        isInteraction(req)
+          ? ok(emptyInteraction)
+          : ok({
           ...empty,
           claims: [
             { person: { personId: 2 }, statement: '在上学，是学生', category: 'education', confidence: 0.9, sensitive: false, evidence: [1, 3] },
@@ -86,6 +94,7 @@ describe('extractOffline', () => {
     const llm = fakeLlm([
       (req) => {
         if (req.purpose === 'dedup') return ok({ duplicates: [] })
+        if (isInteraction(req)) return ok(emptyInteraction)
         return ok(
           isWindow(req, '周末去爬山吗')
             ? { ...empty, newPersons: [{ tempId: 't1', label: '小林', evidence: [2] }], claims: [{ person: { tempId: 't1' }, statement: '读研二', category: 'education', confidence: 0.9, sensitive: false, evidence: [3] }] }
@@ -114,6 +123,7 @@ describe('extractOffline', () => {
           const g = input.persons[0]
           return ok({ duplicates: [{ newIndex: g.new.find((n) => n.statement === '在读研二')!.index, existingClaimId: g.candidates[0].id }] })
         }
+        if (isInteraction(req)) return ok(emptyInteraction)
         return ok(isWindow(req, '周末去爬山吗') ? window0 : window1)
       },
     ])
@@ -144,13 +154,16 @@ describe('extractOffline', () => {
       const w = r.windows[item.windowIndex]
       for (const idx of item.evidence) expect(idx >= w.startIdx && idx <= w.endIdx).toBe(true)
     }
-    expect(r.usage).toEqual({ inputTokens: 3_000, outputTokens: 300, calls: 3 })
+    // 2 windows × (extract + interaction) + 1 dedup
+    expect(r.usage).toEqual({ inputTokens: 5_000, outputTokens: 500, calls: 5 })
     expect(r.promptVersion).toBe(PROMPT_VERSION)
-    expect(llm.calls.filter((c) => c.purpose === 'extract').every((c) => c.maxTransportRetries === 0 && (c.timeoutMs ?? 0) <= 20_000)).toBe(true)
+    expect(r.interactionPromptVersion).toBe(INTERACTION_PROMPT_VERSION)
+    expect(r.windows.map((w) => w.interaction)).toEqual(['ok', 'ok'])
+    expect(llm.calls.filter((c) => c.purpose === 'extract' || isInteraction(c)).every((c) => c.maxTransportRetries === 0 && (c.timeoutMs ?? 0) <= 20_000)).toBe(true)
   })
 
   it('retries a failing window up to 3 attempts, then fails it while other windows continue', async () => {
-    const llm = fakeLlm([(req) => (isWindow(req, '周末去爬山吗') ? err('invalid_json') : ok(empty))])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : isWindow(req, '周末去爬山吗') ? err('invalid_json') : ok(empty))])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm })
     expect(r.windows.map((w) => [w.outcome, w.code, w.attempts])).toEqual([
       ['retryable_error', 'invalid_json', 3],
@@ -161,7 +174,7 @@ describe('extractOffline', () => {
   })
 
   it('counts schema-invalid output as validation_failed and retries it', async () => {
-    const llm = fakeLlm([(req) => (isWindow(req, '周末去爬山吗') ? ok({ people: [] }) : ok(empty))])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : isWindow(req, '周末去爬山吗') ? ok({ people: [] }) : ok(empty))])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm })
     expect(r.windows[0]).toMatchObject({ outcome: 'retryable_error', code: 'validation_failed', attempts: 3 })
     expect(r.windows[1].outcome).toBe('done')
@@ -170,7 +183,8 @@ describe('extractOffline', () => {
   it('stops after budget_exceeded without retrying or calling for later windows', async () => {
     const llm = fakeLlm([err('budget_exceeded')])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm })
-    expect(llm.calls).toHaveLength(1)
+    // the two calls of window 0 went out together; nothing after that
+    expect(llm.calls).toHaveLength(2)
     expect(r.windows.map((w) => [w.outcome, w.code, w.attempts])).toEqual([
       ['fatal_error', 'budget_exceeded', 1],
       ['fatal_error', 'budget_exceeded', 0],
@@ -181,11 +195,13 @@ describe('extractOffline', () => {
     const llm = fakeLlm([
       (req) => {
         if (req.purpose === 'dedup') return ok({ duplicates: [] })
+        if (isInteraction(req)) return ok(emptyInteraction, 800)
         return isWindow(req, '周末去爬山吗') ? ok(window0) : ok(window1, 24_500)
       },
     ])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm, deadlinePolicy: 'app' })
     expect(r.windows[1].dedup).toBe('skipped_deadline')
+    // the pair is charged once, as max(24_500, 800), not as their sum — they ran at the same time
     expect(r.windows[1].attemptMs[0]).toBeGreaterThanOrEqual(24_500)
     expect(r.windows[1].attemptMs[0]).toBeLessThan(28_000)
     expect(llm.calls.some((c) => c.purpose === 'dedup')).toBe(false)
@@ -195,16 +211,101 @@ describe('extractOffline', () => {
 
   it('packs adjacent short sessions into one call and marks the session gap in the prompt', async () => {
     feats.pack = 40
-    const llm = fakeLlm([ok(empty)])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))])
     const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm })
     expect(r.windows.map((w) => [w.startIdx, w.endIdx, w.outcome])).toEqual([[0, 7, 'done']])
-    const user = llm.calls[0].messages[1].content
+    const user = llm.calls.filter((c) => c.purpose === 'extract')[0].messages[1].content
     expect(user).toMatch(/—— 间隔约\d+(小时|天)，以下是新的一段对话 ——/)
     expect(user.indexOf('周末去爬山吗')).toBeLessThan(user.indexOf('—— 间隔'))
   })
 
+  // ---- Interaction layer (SPEC §8.8): a second, parallel call with its own prompt (DECISIONS I17, X40) ---------
+  it('carries a window\'s loops into the next window\'s input and applies the close there', async () => {
+    const seg = (summary: string, ev: number[]) => ({ summary, topics: ['爬山'], speakers: [{ personId: 1 }, { personId: 2 }], evidence: ev })
+    const llm = fakeLlm([
+      (req) => {
+        if (!isInteraction(req)) return ok(empty)
+        return isWindow(req, '周末去爬山吗')
+          ? ok({
+              ...emptyInteraction,
+              segment: seg('约了周末去爬山，阿明会带同事', [1, 2]),
+              loops: [{ person: { personId: 2 }, direction: 'mutual', kind: 'plan', text: '周末一起去爬山', dueAt: '2026-05-03', evidence: [2] }],
+            })
+          : ok({ ...emptyInteraction, segment: seg('对了爬山当天要带的东西', [1, 2]), closes: [{ loopId: 1, reason: 'done', evidence: [1] }] })
+      },
+    ])
+    const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm, deadlinePolicy: 'app' })
+    expect(r.windows.map((w) => w.outcome)).toEqual(['done', 'done'])
+    expect(r.windows.map((w) => w.interaction)).toEqual(['ok', 'ok'])
+
+    // the second window's INTERACTION prompt shows the open loop with its id, which is what `closes` may name
+    const second = llm.calls.filter(isInteraction)[1].messages[1].content
+    expect(second).toContain('  未结事项：\n  - [loop 1] 约定·双方：周末一起去爬山（2026-05-01 起）')
+    expect(second).toContain('  上次来往：2026-05-01 约了周末去爬山，阿明会带同事')
+    // and the extraction prompt of the same window shows neither
+    const secondExtract = llm.calls.filter((c) => c.purpose === 'extract')[1].messages[1].content
+    expect(secondExtract).not.toContain('未结事项')
+
+    expect(r.segments.map((x) => [x.startIdx, x.endIdx, x.summary, x.messageCount])).toEqual([
+      [0, 3, '约了周末去爬山，阿明会带同事', 4],
+      [4, 7, '对了爬山当天要带的东西', 4],
+    ])
+    expect(r.segments[0].participants).toEqual([
+      { person: 'me', messageCount: 2 },
+      { person: 'ming', messageCount: 2 },
+    ])
+    expect(r.loops).toEqual([
+      { person: 'ming', direction: 'mutual', kind: 'plan', text: '周末一起去爬山', dueAt: '2026-05-03', openedAt: '2026-05-01 09:02', openedIdx: 1, closedIdx: 4, closedAt: '2026-05-01 14:10', closedReason: 'done', evidence: [1], windowIndex: 0 },
+    ])
+    expect(r.closes).toEqual([{ loopIndex: 0, reason: 'done', evidence: [4], windowIndex: 1 }])
+  })
+
+  it('loop dedup rides the one dedup call per window: same request, offset ids, no extra call', async () => {
+    const llm = fakeLlm([
+      (req) => {
+        if (req.purpose === 'dedup') {
+          const body = JSON.parse(req.messages[1].content.split('\n')[0]) as { persons: { candidates: { id: number; statement: string }[]; new: { index: number; statement: string }[] }[] }
+          const g = body.persons[0]
+          const loopNew = g.new.find((n) => n.statement === '把报价在周五之前发过来')!
+          const loopCandidate = g.candidates.find((c) => c.statement === '周五前把报价发过来')!
+          // the loop travels in the same group, above the offset; the claim below it
+          expect(loopNew.index).toBeGreaterThanOrEqual(1_000_000)
+          expect(loopCandidate.id).toBeGreaterThanOrEqual(1_000_000_000)
+          expect(g.new.some((n) => n.index < 1_000_000)).toBe(true)
+          return ok({ duplicates: [{ newIndex: loopNew.index, existingClaimId: loopCandidate.id }] })
+        }
+        if (isInteraction(req)) {
+          return isWindow(req, '周末去爬山吗')
+            ? ok({ ...emptyInteraction, loops: [{ person: { personId: 2 }, direction: 'theirs', kind: 'promise', text: '周五前把报价发过来', evidence: [2] }] })
+            : ok({ ...emptyInteraction, loops: [{ person: { personId: 2 }, direction: 'theirs', kind: 'promise', text: '把报价在周五之前发过来', evidence: [1] }] })
+        }
+        return isWindow(req, '周末去爬山吗')
+          ? ok({ ...empty, claims: [{ person: { personId: 2 }, statement: '在设计公司上班', category: 'work', confidence: 0.9, sensitive: false, evidence: [2] }] })
+          : ok({ ...empty, claims: [{ person: { personId: 2 }, statement: '在一家设计公司工作', category: 'work', confidence: 0.9, sensitive: false, evidence: [1] }] })
+      },
+    ])
+    const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm, deadlinePolicy: 'app' })
+    expect(r.windows.map((w) => w.outcome)).toEqual(['done', 'done'])
+    expect(llm.calls.filter((c) => c.purpose === 'dedup')).toHaveLength(1)
+    // merged into the first loop, not a second one; evidence outside its own window is not attached
+    expect(r.loops.map((l) => [l.text, l.evidence])).toEqual([['周五前把报价发过来', [1]]])
+  })
+
+  it('an exactly repeated loop merges without any model call', async () => {
+    const loop = { person: { personId: 2 }, direction: 'theirs', kind: 'promise', text: '周五前把报价发过来', evidence: [2] }
+    const llm = fakeLlm([
+      (req) => {
+        if (!isInteraction(req)) return ok(empty)
+        return isWindow(req, '周末去爬山吗') ? ok({ ...emptyInteraction, loops: [loop] }) : ok({ ...emptyInteraction, loops: [{ ...loop, evidence: [1] }] })
+      },
+    ])
+    const r = await extractOffline({ parsed: parsedChat(TWO_SESSIONS), mapping: TWO_SESSIONS_MAPPING, llm, deadlinePolicy: 'app' })
+    expect(llm.calls.filter((c) => c.purpose === 'dedup')).toHaveLength(0)
+    expect(r.loops).toHaveLength(1)
+  })
+
   it('handles an export with no messages and rejects unknown prompt versions', async () => {
-    const llm = fakeLlm([ok(empty)])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))])
     const parsed = parsedChat(TWO_SESSIONS)
     const r = await extractOffline({ parsed: { ...parsed, messages: [] }, mapping: TWO_SESSIONS_MAPPING, llm })
     expect(r.windows).toEqual([])

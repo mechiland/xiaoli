@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { ParsedExport, ParserApi } from './entries'
-import { parseGold, type GoldFile, type GoldLock } from './gold-schema'
+import { GOLD_VERSION, INTERACTION_GOLD_VERSION, parseGold, type GoldFile, type GoldLock } from './gold-schema'
 import { freezeGold, goldStatus, lockKeyFor, readLock, sha256Hex } from './lock'
 import { goldPathFor, SOURCES, zipBase, zipBaseOfGoldFile, type EvalPaths, type Source } from './paths'
 import { isGitIgnored } from './report'
@@ -57,7 +57,7 @@ export async function goldTemplate(args: { paths: EvalPaths; parser: ParserApi; 
   if (existsSync(file)) throw new Error(`refusing to overwrite existing gold file ${path.relative(args.paths.root, file)}`)
   assertIgnoredForReal(args.paths, args.source, file)
   const skeleton = {
-    goldVersion: 1,
+    goldVersion: GOLD_VERSION,
     zip: path.basename(args.zipPath),
     annotator: 'annotator',
     annotatedAt: (args.now ?? new Date()).toISOString(),
@@ -73,6 +73,8 @@ export async function goldTemplate(args: { paths: EvalPaths; parser: ParserApi; 
     claims: [],
     dates: [],
     events: [],
+    loops: [],
+    conversations: [],
     negatives: [],
     sensitiveValues: [],
   }
@@ -136,6 +138,29 @@ export function checkGold(gold: GoldFile, parsed: ParsedExport, digest: string, 
     item(e.id, 'event', e.evidence)
     for (const p of e.participants) needPerson(p, `event ${e.id}`)
   }
+  // ---- interaction (goldVersion 2, additive). Absent arrays are "not annotated", not "none" (§7.2).
+  if ((gold.loops !== undefined || gold.conversations !== undefined) && gold.goldVersion < INTERACTION_GOLD_VERSION) {
+    errors.push(`goldVersion ${gold.goldVersion} cannot carry loops/conversations; use goldVersion ${INTERACTION_GOLD_VERSION}`)
+  }
+  for (const l of gold.loops ?? []) {
+    item(l.id, 'loop', l.evidence)
+    needPerson(l.person, `loop ${l.id}`)
+    if (l.closedBy !== undefined) {
+      if (l.closedBy < 0 || l.closedBy >= n) errors.push(`loop ${l.id}: closedBy idx ${l.closedBy} out of range [0, ${n})`)
+      else if (l.closedBy <= Math.min(...l.evidence)) errors.push(`loop ${l.id}: closedBy idx ${l.closedBy} is not after the message that opens it`)
+    }
+    if (l.closedReason !== undefined && l.closedBy === undefined) errors.push(`loop ${l.id}: closedReason without closedBy`)
+  }
+  for (const c of gold.conversations ?? []) {
+    ids.set(c.id, (ids.get(c.id) ?? 0) + 1)
+    if (c.startIdx >= n) errors.push(`conversation ${c.id}: startIdx ${c.startIdx} out of range [0, ${n})`)
+    if (c.endIdx >= n) errors.push(`conversation ${c.id}: endIdx ${c.endIdx} out of range [0, ${n})`)
+    if (c.endIdx < c.startIdx) errors.push(`conversation ${c.id}: endIdx ${c.endIdx} < startIdx ${c.startIdx}`)
+  }
+  const convs = [...(gold.conversations ?? [])].sort((a, b) => a.startIdx - b.startIdx)
+  for (let i = 1; i < convs.length; i++) {
+    if (convs[i].startIdx <= convs[i - 1].endIdx) errors.push(`conversation ${convs[i].id} overlaps ${convs[i - 1].id} (a message belongs to one conversation)`)
+  }
   for (const x of gold.negatives) item(x.id, 'negative', x.evidence)
   for (const [id, count] of ids) if (count > 1) errors.push(`duplicate item id ${id}`)
 
@@ -165,8 +190,21 @@ export function intentDisagreements(gold: GoldFile, intent: { planted?: { id: st
   const out: string[] = []
   const overlaps = (a: number[], b: number[]) => a.some((x) => b.includes(x))
   const byType: Record<string, { evidence: number[] }[]> = { claim: gold.claims, handle: gold.handles, relation: gold.relations, date: gold.dates, event: gold.events }
+  // Interaction: a gold file that does not carry the array was not annotated for that type at all, so a planted
+  // loop/conversation is not a disagreement — the same "absent ≠ empty" rule the metrics use (§7.4).
+  if (gold.loops) byType.loop = gold.loops
+  if (gold.conversations) byType.conversation = gold.conversations.map((c) => ({ evidence: [c.startIdx, c.endIdx] }))
   for (const p of intent.planted ?? []) {
     if (p.optional) continue
+    if (p.type === 'loop' && !gold.loops) continue
+    if (p.type === 'conversation' && !gold.conversations) continue
+    if (p.type === 'conversation') {
+      const spans = gold.conversations ?? []
+      const lo = Math.min(...p.idx)
+      const hi = Math.max(...p.idx)
+      if (!spans.some((c) => c.startIdx <= hi && c.endIdx >= lo)) out.push(`intent conversation "${p.id}" has no gold conversation overlapping idx ${lo}..${hi}`)
+      continue
+    }
     if (!(byType[p.type] ?? []).some((g) => overlaps(g.evidence, p.idx))) out.push(`intent ${p.type} "${p.id}" has no gold ${p.type} with overlapping evidence`)
   }
   for (const x of intent.negatives ?? []) {

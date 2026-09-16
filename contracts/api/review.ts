@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Category, Id, IsoString, PartialDate, SourceKind, TargetType } from '../common'
+import { Category, Id, IsoString, LoopDirection, LoopKind, PartialDate, SourceKind, TargetType } from '../common'
 import {
   CalendarSchema,
   ClaimDTOSchema,
@@ -7,6 +7,7 @@ import {
   EvidenceItemDTOSchema,
   HandleDTOSchema,
   ImportantDateDTOSchema,
+  LoopDTOSchema,
   RelationDTOSchema,
 } from '../entities'
 
@@ -30,6 +31,12 @@ export const ReviewRequestSchema = z.object({
       day: z.number().int().min(1).max(31).optional(),
       year: z.number().int().optional(),
       calendar: CalendarSchema.optional(),
+      // loop (SPEC §7 交互层). `text` rather than `statement`: a loop is a thing to do, not an assertion.
+      text: z.string().trim().min(1).max(300).optional(),
+      /** null clears the due date */
+      dueAt: PartialDate.nullable().optional(),
+      kind: LoopKind.optional(),
+      direction: LoopDirection.optional(),
     })
     .optional(),
   /** supersede "现在的情况" */
@@ -38,7 +45,7 @@ export const ReviewRequestSchema = z.object({
 export type ReviewRequest = z.infer<typeof ReviewRequestSchema>
 
 export const ReviewResponseSchema = z.object({
-  item: z.union([ClaimDTOSchema, HandleDTOSchema, RelationDTOSchema, EventDTOSchema, ImportantDateDTOSchema]),
+  item: z.union([ClaimDTOSchema, HandleDTOSchema, RelationDTOSchema, EventDTOSchema, ImportantDateDTOSchema, LoopDTOSchema]),
   superseded: z.array(ClaimDTOSchema).optional(),
   created: ClaimDTOSchema.optional(),
 })

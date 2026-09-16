@@ -7,6 +7,7 @@ import {
   chats,
   claimMentions,
   claims,
+  conversationSegments,
   eventParticipants,
   events,
   evidence,
@@ -17,11 +18,13 @@ import {
   importMessages,
   imports,
   llmCalls,
+  loops,
   messages,
   owned,
   persons,
   relations,
   reviewLog,
+  segmentParticipants,
   userSettings,
   type Db,
 } from '@/server/db'
@@ -31,6 +34,9 @@ export const DELETE_ALL_TABLES = [
   'evidence',
   'claim_mentions',
   'event_participants',
+  'segment_participants',
+  'loops',
+  'conversation_segments',
   'claims',
   'events',
   'important_dates',
@@ -64,6 +70,9 @@ export const EXPORT_TABLE_KEYS = [
   'events',
   'eventParticipants',
   'importantDates',
+  'conversationSegments',
+  'segmentParticipants',
+  'loops',
   'evidence',
   'extractionJobs',
   'reviewLog',
@@ -112,6 +121,17 @@ export async function buildExportDump(db: Db, user: { id: string; email: string;
     eventParticipants: (l, s) =>
       db.select().from(eventParticipants).where(owned(eventParticipants, o)).orderBy(asc(eventParticipants.eventId), asc(eventParticipants.personId)).limit(l).offset(s),
     importantDates: (l, s) => db.select().from(importantDates).where(owned(importantDates, o)).orderBy(asc(importantDates.id)).limit(l).offset(s),
+    conversationSegments: (l, s) =>
+      db.select().from(conversationSegments).where(owned(conversationSegments, o)).orderBy(asc(conversationSegments.id)).limit(l).offset(s),
+    segmentParticipants: (l, s) =>
+      db
+        .select()
+        .from(segmentParticipants)
+        .where(owned(segmentParticipants, o))
+        .orderBy(asc(segmentParticipants.segmentId), asc(segmentParticipants.personId))
+        .limit(l)
+        .offset(s),
+    loops: (l, s) => db.select().from(loops).where(owned(loops, o)).orderBy(asc(loops.id)).limit(l).offset(s),
     evidence: (l, s) =>
       db.select().from(evidence).where(owned(evidence, o)).orderBy(asc(evidence.targetType), asc(evidence.targetId), asc(evidence.messageId)).limit(l).offset(s),
     extractionJobs: (l, s) => db.select().from(extractionJobs).where(owned(extractionJobs, o)).orderBy(asc(extractionJobs.id)).limit(l).offset(s),
@@ -167,6 +187,9 @@ export async function deleteAllData(db: Db, r2: R2Bucket | undefined, ownerId: s
     evidence: db.delete(evidence).where(owned(evidence, o)),
     claim_mentions: db.delete(claimMentions).where(owned(claimMentions, o)),
     event_participants: db.delete(eventParticipants).where(owned(eventParticipants, o)),
+    segment_participants: db.delete(segmentParticipants).where(owned(segmentParticipants, o)),
+    loops: db.delete(loops).where(owned(loops, o)),
+    conversation_segments: db.delete(conversationSegments).where(owned(conversationSegments, o)),
     claims: db.delete(claims).where(owned(claims, o)),
     events: db.delete(events).where(owned(events, o)),
     important_dates: db.delete(importantDates).where(owned(importantDates, o)),
@@ -191,6 +214,9 @@ export async function deleteAllData(db: Db, r2: R2Bucket | undefined, ownerId: s
     evidence: db.select({ n: c }).from(evidence).where(owned(evidence, o)),
     claim_mentions: db.select({ n: c }).from(claimMentions).where(owned(claimMentions, o)),
     event_participants: db.select({ n: c }).from(eventParticipants).where(owned(eventParticipants, o)),
+    segment_participants: db.select({ n: c }).from(segmentParticipants).where(owned(segmentParticipants, o)),
+    loops: db.select({ n: c }).from(loops).where(owned(loops, o)),
+    conversation_segments: db.select({ n: c }).from(conversationSegments).where(owned(conversationSegments, o)),
     claims: db.select({ n: c }).from(claims).where(owned(claims, o)),
     events: db.select({ n: c }).from(events).where(owned(events, o)),
     important_dates: db.select({ n: c }).from(importantDates).where(owned(importantDates, o)),
@@ -228,6 +254,9 @@ export async function countOwnerRows(db: Db, ownerId: string): Promise<Record<De
     evidence: await one(db.select({ n: c }).from(evidence).where(owned(evidence, o))),
     claim_mentions: await one(db.select({ n: c }).from(claimMentions).where(owned(claimMentions, o))),
     event_participants: await one(db.select({ n: c }).from(eventParticipants).where(owned(eventParticipants, o))),
+    segment_participants: await one(db.select({ n: c }).from(segmentParticipants).where(owned(segmentParticipants, o))),
+    loops: await one(db.select({ n: c }).from(loops).where(owned(loops, o))),
+    conversation_segments: await one(db.select({ n: c }).from(conversationSegments).where(owned(conversationSegments, o))),
     claims: await one(db.select({ n: c }).from(claims).where(owned(claims, o))),
     events: await one(db.select({ n: c }).from(events).where(owned(events, o))),
     important_dates: await one(db.select({ n: c }).from(importantDates).where(owned(importantDates, o))),

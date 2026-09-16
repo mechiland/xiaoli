@@ -126,6 +126,9 @@ export function basePred(over: Partial<OfflineExtractionResult> = {}): OfflineEx
     claims: [],
     events: [],
     dates: [],
+    segments: [],
+    loops: [],
+    closes: [],
     windows: [{ index: 0, startIdx: 0, endIdx: 19, outcome: 'done', attempts: 1, attemptMs: [100], latencyMs: 100, rawItemCount: 0, droppedInvalidEvidence: 0, rawOutputs: [] }],
     deadlinePolicy: 'app',
     usage: { inputTokens: 1000, outputTokens: 200, calls: 1 },
@@ -134,5 +137,60 @@ export function basePred(over: Partial<OfflineExtractionResult> = {}): OfflineEx
     ...over,
   }
 }
+
+/**
+ * Builders for extract's real interaction shape (`OfflineItems` in server/extract/memory-store.ts). The field names
+ * here are extract's, not the harness's — `eval/tests/offline-contract.test.ts` pins them against the real module.
+ */
+export const loop = (
+  person: string,
+  kind: 'promise' | 'question' | 'plan',
+  direction: 'mine' | 'theirs' | 'mutual',
+  text: string,
+  evidence: number[],
+  windowIndex = 0,
+  close?: { idx: number; reason?: 'done' | 'dropped' },
+): OfflineExtractionResult['loops'][number] => ({
+  person,
+  kind,
+  direction,
+  text,
+  openedAt: '2026-09-01 09:00',
+  openedIdx: evidence[0],
+  closedIdx: close ? close.idx : null,
+  closedAt: close ? '2026-09-01 20:00' : null,
+  closedReason: close ? close.reason ?? 'done' : null,
+  evidence,
+  windowIndex,
+})
+
+export const segment = (
+  startIdx: number,
+  endIdx: number,
+  summary: string,
+  topics: string[],
+  evidence: number[],
+  windowIndex = 0,
+  /** the run's own MsgTime span; omitted = the harness falls back to the messages */
+  times?: [string, string],
+): OfflineExtractionResult['segments'][number] => ({
+  startIdx,
+  endIdx,
+  startedAt: times?.[0] ?? '',
+  endedAt: times?.[1] ?? '',
+  messageCount: endIdx - startIdx + 1,
+  summary,
+  topics,
+  participants: [],
+  evidence,
+  windowIndex,
+})
+
+export const close = (loopIndex: number, evidence: number[], windowIndex = 0, reason: 'done' | 'dropped' = 'done'): OfflineExtractionResult['closes'][number] => ({
+  loopIndex,
+  reason,
+  evidence,
+  windowIndex,
+})
 
 export const claim = (person: string, statement: string, category: OfflineExtractionResult['claims'][number]['category'], evidence: number[], windowIndex = 0): OfflineExtractionResult['claims'][number] => ({ person, statement, category, confidence: 0.9, sensitive: false, evidence, windowIndex })

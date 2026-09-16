@@ -1,7 +1,7 @@
 // Deterministic sensitive guard (SPEC §3, §8.7; ARCHITECTURE §6). Pure.
 // Patterns are at least as strict as the eval harness detector (ARCHITECTURE §7.4), so a statement the harness
 // would flag never leaves the pipeline.
-import type { ExtractionOutput } from '@/contracts'
+import type { ExtractionOutput, InteractionOutput } from '@/contracts'
 
 export type SensitiveKind = 'phone' | 'id_card' | 'bank_card' | 'address'
 
@@ -60,6 +60,8 @@ export function neutraliseLabel(label: string): string | null {
  * Claims with sensitive content are rewritten to a generic statement and flagged; handles with sensitive values are
  * dropped; events with sensitive summaries are dropped and sensitive places removed; sensitive relation labels removed;
  * sensitive new-person labels are neutralised, or the person is dropped together with its items.
+ *
+ * The interaction layer has its own guard below: it is a separate model call with a separate output (X40).
  */
 export function applySensitiveGuard(input: ExtractionOutput): { output: ExtractionOutput; rewritten: number } {
   let rewritten = 0
@@ -121,4 +123,41 @@ export function applySensitiveGuard(input: ExtractionOutput): { output: Extracti
     return r
   })
   return { output: { ...out, claims, handles, events, relations }, rewritten }
+}
+
+/**
+ * Interaction layer (SPEC §8.8; eval gate `sensitiveInStatement` = 0 over loop text and segment summary/topics).
+ *
+ * Drop, not rewrite: a claim has a useful generic form ("提供过手机号" is still a fact about a person), an unfinished
+ * thing or a conversation topic does not. A loop whose `text` matches is dropped (like an event summary) and a
+ * segment whose `summary` matches is dropped whole; sensitive `topics` are cut from an otherwise clean segment.
+ * `softenDayNumbers` runs first, so "5号之前把合同签了" stays a date and is not read as a house number.
+ * `closes` carry no free text and pass through untouched. (DECISIONS ## extract X35.)
+ */
+export function applyInteractionSensitiveGuard(input: InteractionOutput): { output: InteractionOutput; rewritten: number } {
+  let rewritten = 0
+  const loops = input.loops.flatMap((l) => {
+    const text = softenDayNumbers(l.text)
+    if (detectSensitive(text)) {
+      rewritten++
+      return []
+    }
+    return [text === l.text ? l : { ...l, text }]
+  })
+  let segment = input.segment
+  if (segment) {
+    const summary = softenDayNumbers(segment.summary)
+    if (detectSensitive(summary)) {
+      rewritten++
+      segment = null
+    } else {
+      const topics = segment.topics.filter((t) => {
+        const bad = detectSensitive(softenDayNumbers(t)) !== null
+        if (bad) rewritten++
+        return !bad
+      })
+      segment = summary === segment.summary && topics.length === segment.topics.length ? segment : { ...segment, summary, topics }
+    }
+  }
+  return { output: { ...input, loops, segment }, rewritten }
 }

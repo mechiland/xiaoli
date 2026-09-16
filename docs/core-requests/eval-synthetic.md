@@ -45,3 +45,35 @@
 - workaround: implemented in eval/src/score.ts and documented in DECISIONS ## eval-synthetic E20; `eval/src/GOLD_FORMAT.md` mentions it for annotators.
 - blocking: no
 - Resolution (integrator, wave 4, 2026-09-16): Done (text only). ARCHITECTURE §7.2 person-mapping sentence has the requested duplicate-of-sender clause, worded exactly as asked. Checked against `eval/src/score.ts` (`duplicateOf` → FP `wrong_person`, `counts.duplicateSenderPersons`). No contract change.
+
+## #5 §6: spell out the interaction fields of `OfflineExtractionResult`
+
+**status: done** (integrator, 2026-09-16). ARCHITECTURE §6 now carries `memoryStore`'s real shape verbatim — `segments[].participants`, `loops[].openedIdx/closedIdx/closedAt/closedReason`, `closes[].loopIndex` — with a comment saying a rename here silently zeroes every interaction metric. The compile-time + end-to-end pin is `eval/tests/offline-contract.test.ts`. DECISIONS I14.
+- status: done (§6 now carries them; the names below were the ones extract actually shipped)
+- requested-by: eval-synthetic, wave 5, 2026-09-16
+- kind: contract
+- paths: ARCHITECTURE.md §6 (the `OfflineExtractionResult` code block); affects module **extract**
+- change: the §6 "Interaction extraction" paragraph says the harness consumes segments and loops from the offline result, but the `OfflineExtractionResult` block still lists only the six round-1 arrays. Add the two the harness reads (both optional, so an extract build or a cassette replay without interaction output keeps type-checking and scores exactly as before):
+```ts
+segments?: { startIdx: number; endIdx: number; summary: string; topics: string[]; speakers: string[] /* gold person keys */; evidence: number[] /* parsed-export idx */; windowIndex: number }[]
+loops?:    { person: string /* gold person key */; direction: LoopDirection; kind: LoopKind; text: string; dueAt?: string;
+             evidence: number[]; windowIndex: number;
+             /* set when a LATER window closed this loop (SPEC §8.8 `closes`), resolved by extractOffline itself */
+             closedByIdx?: number; closedReason?: LoopCloseReason; closedWindowIndex?: number }[]
+```
+- why: §7.3/§7.4 need (a) idx spans for `groupSegments` + the ≥ 50 % conversation overlap, (b) a per-loop close **idx** for `loopCloseRecall` / `loopFalseClose`. A separate `closes[]` array would not do: `closes` reference loop **ids**, which only exist in D1, so offline the close has to be resolved onto the loop that the same run produced (`memoryStore` already fills `openLoops` from the run's own output, §6).
+- workaround: `eval/src/entries.ts` already mirrors exactly the shape above (the mirror is what the harness reads, per the file's TODO); `eval/tests/interaction.test.ts` scores against it. If extract lands a different shape, the harness reports 0 segments / 0 loops rather than failing — silently, which is the reason to pin it in §6.
+- blocking: no (interaction metrics stay null until extract emits the fields)
+- Resolution (eval-synthetic, wave 5 follow-up, 2026-09-16): the shape the request guessed was **wrong in two places** — extract emits `segments[].participants` (`{ person, messageCount }[]`, not `speakers: string[]`) and `loops[].closedIdx` (not `closedByIdx`), plus a separate `closes[] { loopIndex, reason, evidence, windowIndex }`. ARCHITECTURE §6 now documents the real `OfflineItems`. The harness reads the real names, and `eval/tests/offline-contract.test.ts` pins them at compile time and end to end so the next rename fails a test instead of silently zeroing the interaction metrics (DECISIONS ## eval-synthetic E21).
+
+## #6 §7.4 still describes the old `loopFalseClose`, which contradicts DECISIONS I13
+
+**status: done** (integrator, 2026-09-16). Correct — my earlier edit to that bullet aborted mid-script and never wrote, so the two documents really did disagree. §7.4 now spells out the three mechanically-impossible cases, says which array each close metric reads and why, and states that a close of a gold-open loop costs loop precision instead. Thank you for checking the document rather than assuming the instruction had landed.
+- status: open
+- requested-by: eval-synthetic, wave 5 follow-up, 2026-09-16
+- kind: other (wording of a binding section)
+- paths: ARCHITECTURE.md §7.4, the `loopCloseRecall` / `loopFalseClose` bullet (currently: "`loopFalseClose` = predicted closes with no gold `closedBy` on the matched loop")
+- change: replace that sentence with the I13 definition, e.g. "`loopFalseClose` = predicted closes that are mechanically impossible: the `loopIndex` is not a loop of this run, the closing window is earlier than the window that first produced the loop (it was never shown that loop), or the closing evidence is not strictly after the opening message. All three are already dropped by `validateOutput`, so a survivor is a pipeline or harness bug. **Gated = 0.** A close of a loop gold leaves open is a model mistake and counts as a loop false positive against the 0.80 precision gate, not here."
+- why: the orchestrator fixed the definition in DECISIONS I13 (the literal §7.4 reading would fail a whole source on one honest model misjudgement) and the harness now implements I13, but §7.4 still carries the old sentence. Two binding documents disagreeing about a gate is how the first wrong implementation happened.
+- workaround: implemented to I13; `eval/tests/interaction.test.ts` ("loopFalseClose counts ONLY mechanically impossible closes") is the executable version of the rule.
+- blocking: no

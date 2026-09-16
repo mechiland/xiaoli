@@ -22,7 +22,7 @@ export const LlmErrorCodeSchema = z.enum([
 ])
 export type LlmErrorCode = z.infer<typeof LlmErrorCodeSchema>
 
-export const LlmPurposeSchema = z.enum(['extract', 'dedup', 'judge', 'other'])
+export const LlmPurposeSchema = z.enum(['extract', 'interaction', 'dedup', 'judge', 'other'])
 export type LlmPurpose = z.infer<typeof LlmPurposeSchema>
 
 export const LlmModeSchema = z.enum(['live', 'record', 'replay'])

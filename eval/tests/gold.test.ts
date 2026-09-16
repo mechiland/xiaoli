@@ -128,7 +128,7 @@ describe('annotation tools', () => {
     const { file } = await goldTemplate({ paths, parser: fakeParser, zipPath, source: 'synthetic', now: new Date('2026-09-15T00:00:00Z') })
     expect(path.basename(file)).toBe('聊天记录_20260101_000000.zip.json')
     const t = JSON.parse(readFileSync(file, 'utf8'))
-    expect(t).toMatchObject({ goldVersion: 1, zip: ZIP, messageCount: 12, messagesSha256: digest, mapping: { chat: { kind: 'group' }, self: '' } })
+    expect(t).toMatchObject({ goldVersion: 2, zip: ZIP, messageCount: 12, messagesSha256: digest, mapping: { chat: { kind: 'group' }, self: '' }, loops: [], conversations: [] })
     expect(t.anchors.map((a: { idx: number }) => a.idx)).toEqual([0, 11])
     expect(t.mapping.senders.map((s: { person: string }) => s.person)).toEqual(['', '', ''])
     await expect(goldTemplate({ paths, parser: fakeParser, zipPath, source: 'synthetic' })).rejects.toThrow(/overwrite/)

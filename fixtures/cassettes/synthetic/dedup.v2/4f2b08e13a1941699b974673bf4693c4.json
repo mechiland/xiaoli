@@ -1,6 +1,6 @@
 {
   "key": "4f2b08e13a1941699b974673bf4693c4",
-  "recordedAt": "2026-09-15T18:06:15.473Z",
+  "recordedAt": "2026-09-16T08:08:19.187Z",
   "model": "deepseek-flash",
   "promptVersion": "dedup.v2",
   "purpose": "dedup",
@@ -27,7 +27,7 @@
       "outputTokens": 39,
       "cacheHitTokens": 256
     },
-    "latencyMs": 495
+    "latencyMs": 838
   },
   "error": null
 }

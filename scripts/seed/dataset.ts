@@ -3,12 +3,14 @@
 // Every person has a persona (persona.ts): claims, relations, events and dates derive from it, so a profile reads as one life.
 import { createHash } from 'node:crypto'
 import { LunarYear, Solar } from 'lunar-typescript'
-import type { Category, ChatKind, HandleKind, ImportStats, ImportStatus, MessageKind, MessageMeta, Status, TargetType } from '@/contracts'
+import { MIN_RHYTHM_CONVERSATIONS, SESSION_GAP_HOURS, type Category, type ChatKind, type HandleKind, type ImportStats, type ImportStatus, type LoopDirection, type LoopKind, type MessageKind, type MessageMeta, type Status, type TargetType } from '@/contracts'
 import { lunarLabel } from '@/lib/lunar'
+import { minutesBetween } from '@/lib/time'
 import { sortKey } from '@/lib/pinyin'
 import type * as schema from '@/server/db/schema'
 import type { ManifestRef } from './manifest'
 import { EVENT_KINDS, REJECTED_CLAIMS, SENSITIVE_CLAIMS, makeFiller, type EventKind, type FillerMessage } from './content'
+import { BADMINTON_SCRIPTS, COLLEGE_SCRIPTS, LONG_SCRIPTS, OWNERS_SCRIPTS, PRIVATE_SCRIPTS, type ConvScript } from './conversations'
 import { SPECIAL_LABELS, TAGGED_LABELS, generateChineseLabels, givenName, nameEra, nameGender, surnameOf } from './names'
 import { Clock, addressTermFor, changeFactFor, factsOf, jobPhrase, makePersona, type Chain, type Fact, type Gender, type Job, type Persona, type PersonaSpec, type School, type YM } from './persona'
 import { tinyPng } from './png'
@@ -17,7 +19,7 @@ import { createRng, SEED_RNG, type Rng } from './rng'
 
 type Ins<T extends { $inferInsert: unknown }> = T['$inferInsert']
 
-export const ENTITY_TABLES = ['chats', 'imports', 'messages', 'attachments', 'persons', 'handles', 'relations', 'claims', 'events', 'importantDates', 'extractionJobs', 'reviewLog', 'llmCalls'] as const
+export const ENTITY_TABLES = ['chats', 'imports', 'messages', 'attachments', 'persons', 'handles', 'relations', 'claims', 'events', 'importantDates', 'conversationSegments', 'loops', 'extractionJobs', 'reviewLog', 'llmCalls'] as const
 export type EntityTableName = (typeof ENTITY_TABLES)[number]
 export interface IdAllocator {
   next(t: EntityTableName): number
@@ -41,13 +43,16 @@ export interface SeedTables {
   eventParticipants: Ins<typeof schema.eventParticipants>[]
   importantDates: Ins<typeof schema.importantDates>[]
   relations: Ins<typeof schema.relations>[]
+  conversationSegments: Ins<typeof schema.conversationSegments>[]
+  segmentParticipants: Ins<typeof schema.segmentParticipants>[]
+  loops: Ins<typeof schema.loops>[]
   evidence: Ins<typeof schema.evidence>[]
   extractionJobs: Ins<typeof schema.extractionJobs>[]
   reviewLog: Ins<typeof schema.reviewLog>[]
   llmCalls: Ins<typeof schema.llmCalls>[]
   userSettings: Ins<typeof schema.userSettings>[]
 }
-export const INSERT_ORDER: (keyof SeedTables)[] = ['chats', 'imports', 'persons', 'handles', 'messages', 'importMessages', 'attachments', 'claims', 'claimMentions', 'events', 'eventParticipants', 'importantDates', 'relations', 'evidence', 'extractionJobs', 'reviewLog', 'llmCalls', 'userSettings']
+export const INSERT_ORDER: (keyof SeedTables)[] = ['chats', 'imports', 'persons', 'handles', 'messages', 'importMessages', 'attachments', 'claims', 'claimMentions', 'events', 'eventParticipants', 'importantDates', 'relations', 'conversationSegments', 'segmentParticipants', 'loops', 'evidence', 'extractionJobs', 'reviewLog', 'llmCalls', 'userSettings']
 
 export interface R2Put {
   key: string
@@ -58,7 +63,7 @@ export interface R2Put {
 export interface AccountDataset {
   tables: SeedTables
   r2: R2Put[]
-  refs: { persons: Record<string, ManifestRef>; imports: Record<string, ManifestRef>; chats: Record<string, ManifestRef>; claims: Record<string, ManifestRef> }
+  refs: { persons: Record<string, ManifestRef>; imports: Record<string, ManifestRef>; chats: Record<string, ManifestRef>; claims: Record<string, ManifestRef>; segments: Record<string, ManifestRef>; loops: Record<string, ManifestRef> }
   counts: Record<string, number>
 }
 
@@ -82,7 +87,7 @@ function addDays(today: string, k: number): { y: number; m: number; d: number } 
 }
 
 export function emptyTables(): SeedTables {
-  return { chats: [], imports: [], persons: [], handles: [], messages: [], importMessages: [], attachments: [], claims: [], claimMentions: [], events: [], eventParticipants: [], importantDates: [], relations: [], evidence: [], extractionJobs: [], reviewLog: [], llmCalls: [], userSettings: [] }
+  return { chats: [], imports: [], persons: [], handles: [], messages: [], importMessages: [], attachments: [], claims: [], claimMentions: [], events: [], eventParticipants: [], importantDates: [], relations: [], conversationSegments: [], segmentParticipants: [], loops: [], evidence: [], extractionJobs: [], reviewLog: [], llmCalls: [], userSettings: [] }
 }
 
 interface P {
@@ -141,6 +146,39 @@ interface EvRef {
   extra: number
 }
 
+/**
+ * One 段落 (SPEC §7 交互层): the span is resolved from real message seqs in `finalize`, so `startSeq`/`endSeq`,
+ * `startedAt`/`endedAt` and `messageCount` always agree with the messages actually sitting in that span — including
+ * any unrelated message that happened to land inside it.
+ */
+interface SegPlan {
+  id: number
+  chat: C
+  imp: S
+  first: Draft
+  last: Draft
+  summary: string
+  topics: string[]
+  hidden: boolean
+  sourceKind: 'ai' | 'manual'
+}
+
+/** One 未结事项 (SPEC §7 交互层). `opened`/`closed` are real messages; the close is always the later one. */
+interface LoopPlan {
+  id: number
+  person: P
+  imp: S
+  direction: LoopDirection
+  kind: LoopKind
+  text: string
+  dueAt: string | null
+  opened: Draft
+  closed: Draft | null
+  closedReason: 'done' | 'dropped' | null
+  status: Status
+  evidence: Draft[]
+}
+
 type ClaimRow = Ins<typeof schema.claims>
 type Window = [number, number]
 /** What a claim needs to be said in chat and stored. */
@@ -186,6 +224,10 @@ class Builder {
   readonly chats: C[] = []
   readonly segs: S[] = []
   readonly evRefs: EvRef[] = []
+  readonly segPlans: SegPlan[] = []
+  readonly loopPlans: LoopPlan[] = []
+  /** import id → how many messages its planted conversations already contributed (filler is reduced by this) */
+  readonly convMsgs = new Map<number, number>()
   readonly handleKeys = new Set<string>()
   readonly r2: R2Put[] = []
   /** `${chatTitle}|${personId}` → fixed group display name */
@@ -564,6 +606,67 @@ class Builder {
     }
   }
 
+  /**
+   * Plants one real conversation (SPEC §7 交互层): the script's lines land on `day` starting around `hour`, a few
+   * minutes apart, so the whole burst sits well inside one SESSION_GAP_HOURS session.
+   */
+  conv(s: S, o: { day: number; hour: number; script: ConvScript; a: P; b?: P }): { drafts: Draft[]; mark: Record<string, Draft> } {
+    const c = s.chat
+    if (!c) throw new Error(`import ${s.tag ?? s.id} has no chat`)
+    if (o.day > s.fromDay || o.day < s.toDay) throw new Error(`conversation ${o.script.key} on day ${o.day} is outside import ${s.tag ?? s.id} (${s.fromDay}..${s.toDay})`)
+    let t = this.wallToday - o.day * DAY + (o.hour * 60 + this.r.int(0, 40)) * 60_000
+    const drafts: Draft[] = []
+    const mark: Record<string, Draft> = {}
+    for (const line of o.script.lines) {
+      const sender = line.who === 'self' ? this.self : line.who === 'b' ? (o.b ?? o.a) : o.a
+      const body = line.text.replace(/\{a\}/g, this.nameIn(c, o.a)).replace(/\{b\}/g, o.b ? this.nameIn(c, o.b) : '')
+      const d = this.say(s, sender, body, { t })
+      drafts.push(d)
+      if (line.mark) mark[line.mark] = d
+      t += this.r.int(1, 6) * 60_000
+    }
+    this.convMsgs.set(s.id, (this.convMsgs.get(s.id) ?? 0) + drafts.length)
+    return { drafts, mark }
+  }
+
+  segment(o: { imp: S; drafts: Draft[]; summary: string; topics: string[]; hidden?: boolean; sourceKind?: 'ai' | 'manual' }): SegPlan {
+    if (!o.drafts.length) throw new Error(`segment "${o.summary}" has no messages`)
+    const plan: SegPlan = {
+      id: this.ids.next('conversationSegments'),
+      chat: o.imp.chat!,
+      imp: o.imp,
+      first: o.drafts[0],
+      last: o.drafts[o.drafts.length - 1],
+      summary: o.summary,
+      topics: o.topics,
+      hidden: Boolean(o.hidden),
+      sourceKind: o.sourceKind ?? 'ai',
+    }
+    this.segPlans.push(plan)
+    return plan
+  }
+
+  loop(o: { person: P; imp: S; direction: LoopDirection; kind: LoopKind; text: string; opened: Draft; dueAt?: string; closed?: Draft; closedReason?: 'done' | 'dropped'; status?: Status; evidence?: Draft[] }): LoopPlan {
+    const plan: LoopPlan = {
+      id: this.ids.next('loops'),
+      person: o.person,
+      imp: o.imp,
+      direction: o.direction,
+      kind: o.kind,
+      text: o.text,
+      dueAt: o.dueAt ?? null,
+      opened: o.opened,
+      closed: o.closed ?? null,
+      closedReason: o.closedReason ?? null,
+      status: o.status ?? 'confirmed',
+      evidence: o.evidence ?? [o.opened],
+    }
+    if (plan.closed && plan.closed.seg.chat!.id !== plan.opened.seg.chat!.id) throw new Error(`loop "${plan.text}" closes in another chat`)
+    if (plan.closed && !plan.closedReason) throw new Error(`loop "${plan.text}" has a closing message but no reason`)
+    this.loopPlans.push(plan)
+    return plan
+  }
+
   filler(s: S, n: number): void {
     const c = s.chat!
     for (let i = 0; i < n; i++) {
@@ -746,6 +849,77 @@ class Builder {
       }
     }
 
+    // ---- interaction layer (SPEC §7 交互层): segments over the real spans, participants, loops ----
+    const evKey = (t: TargetType, id: number, m: number) => `${t}:${id}:${m}`
+    for (const p of this.segPlans) {
+      const list = chatDrafts.get(p.chat.id)!
+      const span = list.slice(p.first.index!, p.last.index! + 1)
+      const at = this.iso(p.imp.createdDay, 5 * 60_000)
+      const startedAt = span[0].sentAt!
+      const endedAt = span[span.length - 1].sentAt!
+      if (minutesBetween(startedAt, endedAt) > SESSION_GAP_HOURS * 60) throw new Error(`segment "${p.summary}" spans more than ${SESSION_GAP_HOURS}h`)
+      this.t.conversationSegments.push({
+        id: p.id,
+        ownerId: this.owner,
+        createdAt: at,
+        updatedAt: at,
+        chatId: p.chat.id,
+        startSeq: span[0].seq!,
+        endSeq: span[span.length - 1].seq!,
+        startedAt,
+        endedAt,
+        messageCount: span.length,
+        summary: p.summary,
+        summaryNorm: norm(p.summary),
+        topics: JSON.stringify(p.topics),
+        hidden: p.hidden,
+        importId: p.imp.id,
+        jobId: null,
+        sourceKind: p.sourceKind,
+      })
+      const byPerson = new Map<number, number>()
+      for (const d of span) byPerson.set(d.sender.id, (byPerson.get(d.sender.id) ?? 0) + 1)
+      for (const [personId, n] of byPerson) this.t.segmentParticipants.push({ ownerId: this.owner, createdAt: at, segmentId: p.id, personId, messageCount: n })
+      const picks = span.length <= 3 ? span : [span[0], span[Math.floor(span.length / 2)], span[span.length - 1]]
+      for (const d of picks) {
+        if (evKeys.has(evKey('segment', p.id, d.id))) continue
+        evKeys.add(evKey('segment', p.id, d.id))
+        this.t.evidence.push({ ownerId: this.owner, createdAt: at, targetType: 'segment', targetId: p.id, messageId: d.id })
+      }
+    }
+
+    for (const p of this.loopPlans) {
+      if (p.closed && p.closed.seq! <= p.opened.seq!) throw new Error(`loop "${p.text}" closes at or before it opens`)
+      const at = this.iso(p.imp.createdDay, 6 * 60_000)
+      const closedSeg = p.closed?.seg
+      this.t.loops.push({
+        id: p.id,
+        ownerId: this.owner,
+        createdAt: at,
+        updatedAt: closedSeg ? this.iso(closedSeg.createdDay, 6 * 60_000) : at,
+        personId: p.person.id,
+        direction: p.direction,
+        kind: p.kind,
+        text: p.text,
+        textNorm: norm(p.text),
+        dueAt: p.dueAt,
+        openedMessageId: p.opened.id,
+        openedAt: p.opened.sentAt!,
+        closedMessageId: p.closed?.id ?? null,
+        closedAt: p.closed?.sentAt ?? null,
+        closedReason: p.closedReason,
+        status: p.status,
+        importId: p.imp.id,
+        jobId: null,
+        sourceKind: 'ai',
+      })
+      for (const d of [...p.evidence, ...(p.closed ? [p.closed] : [])]) {
+        if (evKeys.has(evKey('loop', p.id, d.id))) continue
+        evKeys.add(evKey('loop', p.id, d.id))
+        this.t.evidence.push({ ownerId: this.owner, createdAt: at, targetType: 'loop', targetId: p.id, messageId: d.id })
+      }
+    }
+
     // review log: accepts in reviewing imports and the two most recent done imports, rejects, supersedes, edits
     const recentDone = this.segs.filter((s) => s.status === 'done').sort((a, b) => a.createdDay - b.createdDay).slice(0, 2).map((s) => s.id)
     const log = (targetType: TargetType, targetId: number, action: Ins<typeof schema.reviewLog>['action'], before: unknown, after: unknown, at: string) =>
@@ -822,7 +996,7 @@ export function buildMainAccount(owner: string, ids: IdAllocator, o: BuildOption
   const r = b.r
   const clk = b.clk
   const T = TAGGED_LABELS
-  const refs: AccountDataset['refs'] = { persons: {}, imports: {}, chats: {}, claims: {} }
+  const refs: AccountDataset['refs'] = { persons: {}, imports: {}, chats: {}, claims: {}, segments: {}, loops: {} }
   const tagP = (tag: string, p: P) => (refs.persons[tag] = { id: p.id, label: p.label })
 
   // import ids needed before persons created by those imports
@@ -1563,12 +1737,146 @@ export function buildMainAccount(owner: string, ids: IdAllocator, o: BuildOption
     }
   })
 
+  // ---- 交互层：会话段落与未结事项 (SPEC §7 交互层, §9.5, §9.9) ----
+  // Conversations are planted last so the claim/event/date RNG stream above is untouched; the filler below is
+  // reduced by however many messages they added, keeping the account at its documented message volume.
+  const tagSeg = (tag: string, s: SegPlan) => (refs.segments[tag] = { id: s.id, chatId: s.chat.id, title: s.summary })
+  const tagLoop = (tag: string, l: LoopPlan) => (refs.loops[tag] = { id: l.id, personId: l.person.id, text: l.text })
+  const LS = LONG_SCRIPTS
+  const CS = COLLEGE_SCRIPTS
+  const OS = OWNERS_SCRIPTS
+  const BS = BADMINTON_SCRIPTS
+  const PS = PRIVATE_SCRIPTS
+  const plainSeg = (imp: S, c: { drafts: Draft[] }, script: ConvScript) => b.segment({ imp, drafts: c.drafts, summary: script.summary, topics: script.topics })
+
+  // 私聊 · 林知夏 (pl1 500..150, pl2 148..25) — the well-connected person: 13 conversations, rhythm renders
+  const cMove = b.conv(pl1, { day: 400, hour: 20, script: LS.move, a: long })
+  plainSeg(pl1, cMove, LS.move)
+  const cJob = b.conv(pl1, { day: 390, hour: 12, script: LS.job, a: long })
+  plainSeg(pl1, cJob, LS.job)
+  const cBook = b.conv(pl1, { day: 300, hour: 21, script: LS.book, a: long })
+  plainSeg(pl1, cBook, LS.book)
+  const cNewYear = b.conv(pl1, { day: 260, hour: 19, script: LS.newYear, a: long })
+  plainSeg(pl1, cNewYear, LS.newYear)
+  const cSmall = b.conv(pl1, { day: 220, hour: 18, script: LS.smalltalk, a: long })
+  // hidden: a throwaway exchange the user hid from the timeline (SPEC §9.9 "隐藏某一段")
+  tagSeg('hidden', b.segment({ imp: pl1, drafts: cSmall.drafts, summary: LS.smalltalk.summary, topics: LS.smalltalk.topics, hidden: true }))
+  const cAskKg = b.conv(pl1, { day: 180, hour: 15, script: LS.askKindergarten, a: long })
+  plainSeg(pl1, cAskKg, LS.askKindergarten)
+
+  // one window boundary inside a single conversation: two segments minutes apart must regroup into ONE conversation
+  const cProject = b.conv(pl2, { day: 140, hour: 10, script: LS.project, a: long })
+  tagSeg('split-a', b.segment({ imp: pl2, drafts: cProject.drafts.slice(0, 5), summary: '聊了她新工作接手的第一个项目', topics: ['新工作', '动画短片', '排期'] }))
+  tagSeg('split-b', b.segment({ imp: pl2, drafts: cProject.drafts.slice(5), summary: '接着聊了预算被砍和加班', topics: ['预算', '加班'] }))
+  const cKgDone = b.conv(pl2, { day: 120, hour: 19, script: LS.kindergartenDone, a: long })
+  plainSeg(pl2, cKgDone, LS.kindergartenDone)
+  // same day, eleven hours apart: two conversations, not one
+  const cMorning = b.conv(pl2, { day: 92, hour: 8, script: LS.morning, a: long })
+  tagSeg('same-day-morning', plainSeg(pl2, cMorning, LS.morning))
+  const cEvening = b.conv(pl2, { day: 92, hour: 20, script: LS.evening, a: long })
+  tagSeg('same-day-evening', plainSeg(pl2, cEvening, LS.evening))
+  const cHoliday = b.conv(pl2, { day: 45, hour: 21, script: LS.holiday, a: long })
+  plainSeg(pl2, cHoliday, LS.holiday)
+  const cResume = b.conv(pl2, { day: 28, hour: 11, script: LS.resume, a: long })
+  plainSeg(pl2, cResume, LS.resume)
+  const cExhibition = b.conv(pl2, { day: 27, hour: 20, script: LS.exhibition, a: long })
+  plainSeg(pl2, cExhibition, LS.exhibition)
+
+  // 大学同学群
+  const cReunion = b.conv(gb1, { day: 260, hour: 21, script: CS.reunion, a: long, b: gbReg[0] })
+  plainSeg(gb1, cReunion, CS.reunion)
+  const cKids = b.conv(gb1, { day: 230, hour: 20, script: CS.kids, a: gbReg[0], b: leap })
+  plainSeg(gb1, cKids, CS.kids)
+  const cPhoto = b.conv(gb2, { day: 150, hour: 21, script: CS.groupPhoto, a: leap, b: gbReg[1] })
+  plainSeg(gb2, cPhoto, CS.groupPhoto)
+  const cNational = b.conv(gb2, { day: 100, hour: 12, script: CS.nationalDay, a: gbReg[0], b: long })
+  // a summary the user rewrote by hand (SPEC §9.9 "摘要可以原地改写")
+  tagSeg('manual', b.segment({ imp: gb2, drafts: cNational.drafts, summary: CS.nationalDay.summary, topics: CS.nationalDay.topics, sourceKind: 'manual' }))
+  const cPhotos = b.conv(reviewMixed, { day: 9, hour: 21, script: CS.photos, a: long, b: gbReg[1] })
+  plainSeg(reviewMixed, cPhotos, CS.photos)
+  const cBorrow = b.conv(reviewMixed, { day: 6, hour: 20, script: CS.borrow, a: heavy, b: reviewNew })
+  plainSeg(reviewMixed, cBorrow, CS.borrow)
+
+  // 小区业主群 — 邓一帆 (sparse-profile) speaks in exactly three of them: the "样本不足" rhythm
+  const cReno = b.conv(ow1, { day: 300, hour: 9, script: OS.renovation, a: owOthers[0], b: sparse })
+  plainSeg(ow1, cReno, OS.renovation)
+  const cParcel = b.conv(ow1, { day: 250, hour: 18, script: OS.parcel, a: sparse, b: owOthers[1] })
+  plainSeg(ow1, cParcel, OS.parcel)
+  const cMarket = b.conv(ow1, { day: 200, hour: 16, script: OS.market, a: owOthers[2], b: sparse })
+  plainSeg(ow1, cMarket, OS.market)
+  const cWater = b.conv(ow1, { day: 160, hour: 11, script: OS.water, a: long, b: owOthers[1] })
+  plainSeg(ow1, cWater, OS.water)
+
+  // 周末羽毛球
+  const cBooking = b.conv(bd1, { day: 250, hour: 20, script: BS.booking, a: longLabel, b: alice })
+  plainSeg(bd1, cBooking, BS.booking)
+  const cRacket = b.conv(bd1, { day: 180, hour: 21, script: BS.racket, a: alice, b: bdReg[0] })
+  plainSeg(bd1, cRacket, BS.racket)
+  const cDinner = b.conv(bd1, { day: 120, hour: 17, script: BS.dinner, a: longLabel, b: long })
+  plainSeg(bd1, cDinner, BS.dinner)
+
+  // 其他私聊
+  const cHouseAsk = b.conv(hi1, { day: 300, hour: 20, script: PS.houseAsk, a: history })
+  plainSeg(hi1, cHouseAsk, PS.houseAsk)
+  const cHiWork = b.conv(hi1, { day: 200, hour: 22, script: PS.work, a: history })
+  plainSeg(hi1, cHiWork, PS.work)
+  const cHouseDrop = b.conv(hi1, { day: 60, hour: 19, script: PS.houseDrop, a: history })
+  plainSeg(hi1, cHouseDrop, PS.houseDrop)
+  for (const [day, hour, script] of [[180, 20, PS.weekend], [120, 21, PS.kid], [70, 19, PS.health]] as const) plainSeg(hv1, b.conv(hv1, { day, hour, script, a: heavy }), script)
+  for (const [day, hour, script] of [[40, 20, PS.trip], [20, 21, PS.work]] as const) plainSeg(inProgress, b.conv(inProgress, { day, hour, script, a: lunarSoon }), script)
+  const cPlanMeal = b.conv(inProgress, { day: 5, hour: 12, script: PS.planMeal, a: lunarSoon })
+  plainSeg(inProgress, cPlanMeal, PS.planMeal)
+  for (const [day, hour, script] of [[80, 21, PS.pet], [50, 19, PS.weekend]] as const) plainSeg(failedWin, b.conv(failedWin, { day, hour, script, a: alice }), script)
+  const cAskCard = b.conv(failedWin, { day: 20, hour: 12, script: PS.askCard, a: alice })
+  plainSeg(failedWin, cAskCard, PS.askCard)
+  for (const [day, hour, script] of [[28, 20, PS.work], [22, 13, PS.weekend]] as const) plainSeg(delSeg, b.conv(delSeg, { day, hour, script, a: deleteMe }), script)
+
+  // ---- 未结事项 ----
+  const dueIn = (k: number) => {
+    const d = addDays(o.today, k)
+    return `${d.y}-${pad(d.m)}-${pad(d.d)}`
+  }
+  // `loops.text` is a bare fragment with no subject and no full stop, exactly as prompts/extract.v9.md line 92
+  // requires; `loopSentence` (lib/loop-text.ts) composes the sentence from `direction` + `kind` at render time.
+  // `direction` = whose move is next: `mine` = the user owes it, `theirs` = the other person owes it.
+  tagLoop('promise-mine-open', b.loop({ person: long, imp: pl2, direction: 'mine', kind: 'promise', text: '帮她表妹看简历', opened: cResume.mark.open, evidence: [cResume.mark.open, cResume.drafts[2]] }))
+  tagLoop('question-mine-open', b.loop({ person: long, imp: pl2, direction: 'mine', kind: 'question', text: '国庆有没有空', opened: cHoliday.mark.open, evidence: [cHoliday.mark.open, cHoliday.drafts[5]] }))
+  tagLoop('question-theirs-open', b.loop({ person: alice, imp: failedWin, direction: 'theirs', kind: 'question', text: '体育馆的年卡在哪儿办', opened: cAskCard.mark.open, evidence: [cAskCard.mark.open, cAskCard.drafts[3]] }))
+  tagLoop('plan-upcoming', b.loop({ person: long, imp: pl2, direction: 'mutual', kind: 'plan', text: '下个月一起去看动画展', dueAt: dueIn(18), opened: cExhibition.mark.open, evidence: [cExhibition.drafts[1], cExhibition.mark.open] }))
+  tagLoop('closed-done', b.loop({ person: long, imp: pl1, direction: 'mine', kind: 'promise', text: '帮她打听杭州的幼儿园', opened: cAskKg.mark.open, closed: cKgDone.mark.close, closedReason: 'done', evidence: [cAskKg.mark.open] }))
+  tagLoop('expired', b.loop({ person: long, imp: pl1, direction: 'mine', kind: 'question', text: '那本讲纪录片拍摄的书叫什么', opened: cBook.mark.open, evidence: [cBook.drafts[0], cBook.mark.open] }))
+  tagLoop('proposed', b.loop({ person: long, imp: reviewMixed, direction: 'mine', kind: 'promise', text: '把上次聚会的照片整理好发给她', opened: cPhotos.mark.open, status: 'proposed', evidence: [cPhotos.drafts[0], cPhotos.mark.open] }))
+  tagLoop('group-only', b.loop({ person: leap, imp: gb2, direction: 'theirs', kind: 'promise', text: '把毕业合影的原图发过来', opened: cPhoto.mark.open, evidence: [cPhoto.drafts[0], cPhoto.mark.open] }))
+  tagLoop('plan-upcoming-proposed', b.loop({ person: lunarSoon, imp: inProgress, direction: 'mutual', kind: 'plan', text: '下下周六一起吃饭', dueAt: dueIn(9), opened: cPlanMeal.mark.open, status: 'proposed', evidence: [cPlanMeal.drafts[0], cPlanMeal.mark.open] }))
+  tagLoop('closed-dropped', b.loop({ person: history, imp: hi1, direction: 'mine', kind: 'promise', text: '帮他整理苏州的房源信息', opened: cHouseAsk.mark.open, closed: cHouseDrop.mark.close, closedReason: 'dropped', evidence: [cHouseAsk.mark.open] }))
+  tagLoop('proposed-promise-theirs', b.loop({ person: heavy, imp: reviewMixed, direction: 'theirs', kind: 'promise', text: '下次见面把书还给你', opened: cBorrow.mark['open-book'], status: 'proposed' }))
+  tagLoop('proposed-question-mine', b.loop({ person: reviewNew, imp: reviewMixed, direction: 'mine', kind: 'question', text: '认不认识靠谱的钢琴老师', opened: cBorrow.mark['open-piano'], status: 'proposed' }))
+  tagP('rhythm-small', sparse)
+  tagP('group-only', leap)
+
   // ---- conversational filler across segments ----
   const fillerPlan: [S, number][] = [[gb1, 70], [gb2, 55], [reviewMixed, 35], [ow1, 55], [reviewEmpty, 25], [bd1, 45], [pl1, 55], [pl2, 45], [hi1, 35], [hv1, 35], [inProgress, 220], [failedWin, 150]]
-  for (const [s, n] of fillerPlan) b.filler(s, n)
+  for (const [s, n] of fillerPlan) b.filler(s, Math.max(0, n - (b.convMsgs.get(s.id) ?? 0)))
   b.filler(delSeg, 40 - delSeg.drafts.length)
 
   b.finalize({ ownerId: owner, selfDisplayNames: ['我是小丽'], extractModel: null, highConfidenceThreshold: 0.8, onboardedAt: b.iso(520), updatedAt: b.iso(520) }, 10)
+
+  // ---- interaction self-checks: the states the person/home/import pages have to render must actually exist ----
+  const kindOf = new Map(b.chats.map((c) => [c.id, c.kind]))
+  const convs = conversationsByPerson(b.t, kindOf)
+  const longConvs = convs.get(long.id)
+  if (!longConvs || longConvs.total < MIN_RHYTHM_CONVERSATIONS) throw new Error(`seed: long-profile has ${longConvs?.total ?? 0} conversations, needs ≥ ${MIN_RHYTHM_CONVERSATIONS}`)
+  if (longConvs.private < 2) throw new Error('seed: long-profile needs private conversations for 谁先开口')
+  const smallConvs = convs.get(sparse.id)
+  if (!smallConvs || smallConvs.total < 2 || smallConvs.total >= MIN_RHYTHM_CONVERSATIONS) throw new Error(`seed: rhythm-small person has ${smallConvs?.total ?? 0} conversations, needs 2..${MIN_RHYTHM_CONVERSATIONS - 1}`)
+  const groupOnly = convs.get(leap.id)
+  if (!groupOnly || groupOnly.private !== 0 || groupOnly.group < 1) throw new Error(`seed: group-only person has ${groupOnly?.private ?? 0} private conversations, needs 0`)
+  const allGroups = groupSeedSegments(b.t.conversationSegments.map((x) => ({ chatId: x.chatId, startedAt: x.startedAt, endedAt: x.endedAt, startSeq: x.startSeq, id: x.id! })))
+  const split = [refs.segments['split-a'].id, refs.segments['split-b'].id]
+  if (!allGroups.some((g) => split.every((id) => g.segments.some((x) => x.id === id)))) throw new Error('seed: the two window-boundary segments must fall in ONE conversation')
+  const sameDay = [refs.segments['same-day-morning'].id, refs.segments['same-day-evening'].id]
+  if (allGroups.filter((g) => g.segments.some((x) => sameDay.includes(x.id))).length !== 2) throw new Error('seed: the same-day pair must be two conversations')
+  for (const c of b.chats) if (!b.t.conversationSegments.some((x) => x.chatId === c.id)) throw new Error(`seed: chat ${c.title} has no conversation segment`)
 
   return { tables: b.t, r2: b.r2, refs, counts: countTables(b.t) }
 }
@@ -1577,7 +1885,7 @@ export function buildMainAccount(owner: string, ids: IdAllocator, o: BuildOption
 export function buildIsolationAccount(owner: string, ids: IdAllocator, o: BuildOptions): AccountDataset {
   const b = new Builder(owner, ids, o.today, o.now, '隔离测试', (o.seed ?? SEED_RNG) + 2)
   const r = b.r
-  const refs: AccountDataset['refs'] = { persons: {}, imports: {}, chats: {}, claims: {} }
+  const refs: AccountDataset['refs'] = { persons: {}, imports: {}, chats: {}, claims: {}, segments: {}, loops: {} }
   const self = b.person('我', { isSelf: true, createdDay: 100, gender: 'f' })
   const overlap = generateChineseLabels(createRng((o.seed ?? SEED_RNG) + 1), 181, [...Object.values(TAGGED_LABELS), ...SPECIAL_LABELS]).filter((l) => ['mid', 'mid70'].includes(nameEra(l))).slice(0, 9)
   const people = [b.person(TAGGED_LABELS.longProfile, { gender: 'f' }), ...overlap.map((l) => b.person(l))]
@@ -1597,12 +1905,68 @@ export function buildIsolationAccount(owner: string, ids: IdAllocator, o: BuildO
     }
     if (n < 3) throw new Error(`seed2: ${p.label} has too few facts`)
   }
-  b.filler(seg, 40)
+  // interaction layer: its own segments and an open loop whose wording overlaps seed's (search/isolation checks)
+  const c1 = b.conv(seg, { day: 80, hour: 20, script: PRIVATE_SCRIPTS.weekend, a: people[0], b: people[1] })
+  b.segment({ imp: seg, drafts: c1.drafts, summary: PRIVATE_SCRIPTS.weekend.summary, topics: PRIVATE_SCRIPTS.weekend.topics })
+  const c2 = b.conv(seg, { day: 40, hour: 21, script: PRIVATE_SCRIPTS.houseAsk, a: people[0], b: people[1] })
+  b.segment({ imp: seg, drafts: c2.drafts, summary: PRIVATE_SCRIPTS.houseAsk.summary, topics: PRIVATE_SCRIPTS.houseAsk.topics })
+  b.loop({ person: people[0], imp: seg, direction: 'mine', kind: 'promise', text: '帮他整理苏州的房源信息', opened: c2.mark.open })
+  b.filler(seg, Math.max(0, 40 - (b.convMsgs.get(seg.id) ?? 0)))
   b.finalize({ ownerId: owner, selfDisplayNames: ['隔离测试'], extractModel: null, highConfidenceThreshold: 0.8, onboardedAt: b.iso(100), updatedAt: b.iso(100) }, 0)
   refs.persons['overlap-long-profile'] = { id: people[0].id, label: people[0].label }
   refs.chats.group = { id: chat.id, title: chat.title }
   refs.imports.done = { id: seg.id, title: chat.title }
   return { tables: b.t, r2: b.r2, refs, counts: countTables(b.t) }
+}
+
+/**
+ * Conversation grouping for the seed's own self-check (same SESSION_GAP_HOURS rule as `groupSegments`, which lives in
+ * the wave-5 interaction module — the seed keeps its own copy rather than depending on a later wave).
+ */
+type GroupableSeg = { chatId: number; startedAt: string; endedAt: string; startSeq: number }
+export function groupSeedSegments<T extends GroupableSeg>(rows: T[]): { chatId: number; segments: T[] }[] {
+  const byChat = new Map<number, T[]>()
+  for (const s of rows) {
+    const list = byChat.get(s.chatId)
+    if (list) list.push(s)
+    else byChat.set(s.chatId, [s])
+  }
+  const out: { chatId: number; segments: T[]; endedAt: string }[] = []
+  for (const [chatId, list] of byChat) {
+    list.sort((a, b) => a.startedAt.localeCompare(b.startedAt) || a.startSeq - b.startSeq)
+    let cur: { chatId: number; segments: T[]; endedAt: string } | null = null
+    for (const s of list) {
+      if (cur && minutesBetween(cur.endedAt, s.startedAt) <= SESSION_GAP_HOURS * 60) {
+        cur.segments.push(s)
+        if (s.endedAt > cur.endedAt) cur.endedAt = s.endedAt
+      } else {
+        cur = { chatId, segments: [s], endedAt: s.endedAt }
+        out.push(cur)
+      }
+    }
+  }
+  return out.map(({ chatId, segments }) => ({ chatId, segments }))
+}
+
+/** personId → the conversations they took part in, split by chat kind. */
+export function conversationsByPerson(t: SeedTables, kindOf: Map<number, ChatKind>): Map<number, { total: number; private: number; group: number }> {
+  const segById = new Map(t.conversationSegments.map((s) => [s.id!, s]))
+  const perPerson = new Map<number, GroupableSeg[]>()
+  for (const link of t.segmentParticipants) {
+    const seg = segById.get(link.segmentId)
+    if (!seg) continue
+    const row = { chatId: seg.chatId, startedAt: seg.startedAt, endedAt: seg.endedAt, startSeq: seg.startSeq }
+    const list = perPerson.get(link.personId)
+    if (list) list.push(row)
+    else perPerson.set(link.personId, [row])
+  }
+  const out = new Map<number, { total: number; private: number; group: number }>()
+  for (const [personId, rows] of perPerson) {
+    const groups = groupSeedSegments(rows)
+    const priv = groups.filter((g) => kindOf.get(g.chatId) === 'private').length
+    out.set(personId, { total: groups.length, private: priv, group: groups.length - priv })
+  }
+  return out
 }
 
 export function countTables(t: SeedTables): Record<string, number> {

@@ -10,6 +10,7 @@ import { ApiClientError } from '@/lib/api-client'
 import { homeHref, personHref } from '@/lib/links'
 import { personQueryOptions } from './api'
 import { useAnchorHighlight, type AnchorTarget } from './anchor'
+import { InteractionSection } from '@/components/interaction'
 import { BodySections, EventsSection, HistorySection, RelationsSection } from './Body'
 import { PersonHeader } from './Header'
 import { Infobox } from './Infobox'
@@ -17,8 +18,19 @@ import { PersonSkeleton } from './PersonSkeleton'
 
 type MarkType = 'claim' | 'relation' | 'date' | 'event' | 'handle'
 
-/** Page-scoped footnote numbers, in reading order: infobox, body, relations, events, history, aliases. */
-export function numberMarks(p: ProfileResponse): (type: MarkType, id: number) => number {
+/** A page-scoped footnote numberer; `count` is how many numbers it handed out. */
+export type MarkFn = ((type: MarkType, id: number) => number) & { count: number }
+
+/**
+ * Page-scoped footnote numbers, in reading order: infobox, body, relations, events, history, aliases.
+ *
+ * `count` lets a section that loads its own data continue the sequence instead of restarting at ¹ — the 「来往」
+ * section (SPEC §9.5) fetches separately, so it gets `markStart = markOf.count + 1` and its loops are numbered
+ * after everything the profile knows about. That puts loop numbers after 历史 and 别名 rather than strictly where
+ * the section sits on the page, which is the same pragmatic order this function already uses for 别名 (rendered in
+ * the header, numbered last). Core-request interaction#3.
+ */
+export function numberMarks(p: ProfileResponse): MarkFn {
   const m = new Map<string, number>()
   let n = 0
   const add = (type: MarkType, id: number) => {
@@ -35,8 +47,12 @@ export function numberMarks(p: ProfileResponse): (type: MarkType, id: number) =>
   for (const e of p.events) add('event', e.id)
   for (const c of p.history) add('claim', c.id)
   for (const g of p.aliases) for (const h of g.items) add('handle', h.id)
-  return (type, id) => m.get(`${type}:${id}`) ?? 0
+  const fn = ((type: MarkType, id: number) => m.get(`${type}:${id}`) ?? 0) as MarkFn
+  fn.count = n
+  return fn
 }
+
+const NO_MARKS: MarkFn = Object.assign(() => 0, { count: 0 })
 
 function BlockFallback({ title }: { title: string }) {
   return (retry: () => void) => <BlockError onRetry={retry} message={`${title}没有显示出来`} />
@@ -68,7 +84,7 @@ export function PersonView({ id, selfId }: { id: number; selfId: number | null }
   )
   useAnchorHighlight(expand, profile !== null)
 
-  const markOf = useMemo(() => (profile ? numberMarks(profile) : () => 0), [profile])
+  const markOf = useMemo(() => (profile ? numberMarks(profile) : NO_MARKS), [profile])
 
   if (q.isPending || redirectTo != null) {
     return (
@@ -121,6 +137,10 @@ export function PersonView({ id, selfId }: { id: number; selfId: number | null }
             </BlockBoundary>
             <BlockBoundary fallback={BlockFallback({ title: '经历' })}>
               <EventsSection profile={p} markOf={markOf} />
+            </BlockBoundary>
+            {/* SPEC §9.5「来往」 — interaction module; it fetches its own data and renders nothing when empty. */}
+            <BlockBoundary fallback={BlockFallback({ title: '来往' })}>
+              <InteractionSection personId={p.person.id} personLabel={p.person.label} markStart={markOf.count + 1} />
             </BlockBoundary>
             <BlockBoundary fallback={BlockFallback({ title: '历史' })}>
               <HistorySection profile={p} markOf={markOf} selfId={selfId} open={historyOpen} onOpenChange={setHistoryOpen} />

@@ -7,6 +7,7 @@ import {
   chats,
   claimMentions,
   claims,
+  conversationSegments,
   eventParticipants,
   events,
   evidence,
@@ -16,10 +17,12 @@ import {
   importMessages,
   imports,
   llmCalls,
+  loops,
   messages,
   persons,
   relations,
   reviewLog,
+  segmentParticipants,
   updateUserSettings,
   withOwner,
   withOwnerLink,
@@ -74,6 +77,56 @@ async function world(db: Db, r2: R2Bucket, ownerId: string, tag: string) {
   await db
     .insert(extractionJobs)
     .values(withOwner<typeof extractionJobs>(ownerId, { importId: imp.id, windowStartSeq: 0, windowEndSeq: 1024, focusStartSeq: 0, focusEndSeq: 1024, status: 'done', attempts: 1, lockedAt: null, model: 'deepseek-flash', promptVersion: 'extract.v5', rawOutput: '{"claims":[]}', error: null, itemsCreated: 1 }))
+  // interaction layer (SPEC §7 交互层): a segment with its participant, and one open loop on the same message
+  const seg = await one(
+    db
+      .insert(conversationSegments)
+      .values(
+        withOwner<typeof conversationSegments>(ownerId, {
+          chatId: chat.id,
+          startSeq: 0,
+          endSeq: 1024,
+          startedAt: '2026-09-01 10:00',
+          endedAt: '2026-09-01 10:00',
+          messageCount: 1,
+          summary: `聊了高中的事${tag}`,
+          summaryNorm: 'x',
+          topics: '["高中"]',
+          hidden: false,
+          importId: imp.id,
+          jobId: null,
+          sourceKind: 'ai',
+        }),
+      )
+      .returning(),
+  )
+  await db.insert(segmentParticipants).values(withOwnerLink<typeof segmentParticipants>(ownerId, { segmentId: seg.id, personId: p.id, messageCount: 1 }))
+  const lp = await one(
+    db
+      .insert(loops)
+      .values(
+        withOwner<typeof loops>(ownerId, {
+          personId: p.id,
+          direction: 'mine',
+          kind: 'promise',
+          text: `答应把照片发过去${tag}`,
+          textNorm: 'x',
+          dueAt: null,
+          openedMessageId: m.id,
+          openedAt: '2026-09-01 10:00',
+          closedMessageId: null,
+          closedAt: null,
+          closedReason: null,
+          status: 'proposed',
+          importId: imp.id,
+          jobId: null,
+          sourceKind: 'ai',
+        }),
+      )
+      .returning(),
+  )
+  await db.insert(evidence).values(withOwnerLink<typeof evidence>(ownerId, { targetType: 'segment', targetId: seg.id, messageId: m.id }))
+  await db.insert(evidence).values(withOwnerLink<typeof evidence>(ownerId, { targetType: 'loop', targetId: lp.id, messageId: m.id }))
   await db.insert(reviewLog).values(withOwner<typeof reviewLog>(ownerId, { targetType: 'claim', targetId: c1.id, action: 'accept', before: { status: 'proposed' }, after: { status: 'confirmed' } }))
   await db.insert(llmCalls).values({ ownerId, provider: 'deepseek', model: 'deepseek-flash', promptVersion: 'extract.v5', purpose: 'extract', importId: imp.id, jobId: null, evalRunId: null, inputTokens: 10, outputTokens: 5, cacheHitTokens: 0, latencyMs: 100, attempt: 1, mode: 'replay', cassetteKey: null, rawOutput: '{"claims":[]}', finishReason: 'stop', errorCode: null, errorMessage: null, createdAt: NOW })
   await updateUserSettings(db, ownerId, { selfDisplayNames: [`小丽${tag}`], extractModel: 'deepseek-v4-pro', highConfidenceThreshold: 0.9, onboarded: true })
@@ -187,7 +240,7 @@ describe('settings data routes: export + delete all', () => {
     expect(r.status).toBe(200)
     const body = r.json as { deleted: Record<string, number>; r2Objects: number }
     expect(Object.keys(body.deleted)).toEqual([...DELETE_ALL_TABLES])
-    expect(body.deleted).toMatchObject({ persons: 3, messages: 1, claims: 1, llm_calls: 1, user_settings: 1, evidence: 1, import_messages: 1 })
+    expect(body.deleted).toMatchObject({ persons: 3, messages: 1, claims: 1, llm_calls: 1, user_settings: 1, evidence: 3 /* claim + segment + loop */, import_messages: 1, conversation_segments: 1, segment_participants: 1, loops: 1 })
     expect(body.r2Objects).toBe(2)
 
     const after = await countOwnerRows(db, userA.id)

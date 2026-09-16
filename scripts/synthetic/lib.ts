@@ -107,6 +107,11 @@ export interface LineOpts {
   p?: string[]
   /** negative (must-not-record) ids this message belongs to */
   n?: string[]
+  /**
+   * planted loop ids this message **closes** (SPEC §7 交互层: 未结事项 are closed by a later message, not by a
+   * field). Tagging only changes the intent file; the exported text is byte-identical either way.
+   */
+  c?: string[]
 }
 export type Line = [speaker: string, body: string, opts?: LineOpts]
 export const L = (speaker: string, body: string, opts?: LineOpts): Line => [speaker, body, opts]
@@ -143,6 +148,8 @@ export interface TextFormat {
 }
 
 export type Category = 'work' | 'location' | 'education' | 'family' | 'preference' | 'life_event' | 'other'
+export type LoopKind = 'promise' | 'question' | 'plan'
+export type LoopDirection = 'mine' | 'theirs' | 'mutual'
 export interface MemberDef {
   key: string
   label: string
@@ -152,7 +159,8 @@ export interface MemberDef {
 }
 export interface PlantedDef {
   id: string
-  type: 'claim' | 'handle' | 'relation' | 'date' | 'event'
+  /** `loop` and `conversation` are the interaction layer (SPEC §7 交互层, §8.8); gold for them is goldVersion 2 */
+  type: 'claim' | 'handle' | 'relation' | 'date' | 'event' | 'loop' | 'conversation'
   person?: string
   text: string
   category?: Category
@@ -163,6 +171,13 @@ export interface PlantedDef {
   relationType?: string
   label?: string
   date?: { kind: string; month?: number; day?: number; year?: number; calendar: 'solar' | 'lunar' }
+  /** type 'loop' */
+  loopKind?: LoopKind
+  direction?: LoopDirection
+  dueAt?: string
+  closedReason?: 'done' | 'dropped'
+  /** type 'conversation': the topics a summary of this stretch must cover */
+  topics?: string[]
   validFrom?: string
   supersedes?: string
   optional?: boolean
@@ -237,6 +252,8 @@ export interface LaidMessage {
   guess: boolean
   p: string[]
   n: string[]
+  /** planted loop ids this message closes */
+  c: string[]
   media: MediaRef | null
   origin: 'script' | 'filler' | 'perf'
 }
@@ -269,10 +286,10 @@ export function resolveBody(body: string, sentAt: string, counter: MediaCounter)
   return { body, media: null }
 }
 
-export function laidMessage(sender: string, sentAt: string, rawBody: string, counter: MediaCounter, origin: LaidMessage['origin'], p: string[] = [], n: string[] = []): LaidMessage {
+export function laidMessage(sender: string, sentAt: string, rawBody: string, counter: MediaCounter, origin: LaidMessage['origin'], p: string[] = [], n: string[] = [], c: string[] = []): LaidMessage {
   const { body, media } = resolveBody(rawBody, sentAt, counter)
   const { kind, guess } = declaredKind(body)
-  return { sender, sentAt, body, kind, guess, p, n, media, origin }
+  return { sender, sentAt, body, kind, guess, p, n, c, media, origin }
 }
 
 // ---------------------------------------------------------------- layout
@@ -280,6 +297,7 @@ export function layoutChat(script: ChatScript): LaidMessage[] {
   const rng = new Rng(script.filler.seed)
   const counter = new MediaCounter()
   const planted = new Set(script.planted.map((x) => x.id))
+  const loopIds = new Set(script.planted.filter((x) => x.type === 'loop').map((x) => x.id))
   const negatives = new Set(script.negatives.map((x) => x.id))
   const used = new Set<string>()
   const speakerName = (code: string) => {
@@ -364,7 +382,10 @@ export function layoutChat(script: ChatScript): LaidMessage[] {
         if (!negatives.has(id)) throw new Error(`${script.id}: undefined negative id ${id}`)
         used.add(id)
       }
-      out.push(laidMessage(speakerName(ln.code), fromMin(t), ln.body, counter, sc.origin, ln.opts?.p ?? [], ln.opts?.n ?? []))
+      for (const id of ln.opts?.c ?? []) {
+        if (!loopIds.has(id)) throw new Error(`${script.id}: close tag ${id} is not a planted loop`)
+      }
+      out.push(laidMessage(speakerName(ln.code), fromMin(t), ln.body, counter, sc.origin, ln.opts?.p ?? [], ln.opts?.n ?? [], ln.opts?.c ?? []))
     })
     prevEnd = t + 1
   }
@@ -503,10 +524,24 @@ export function buildExports(script: ChatScript): GeneratedExport[] {
     if (fmt.bom) edges.bom = [0]
     if (fmt.crlf) edges.crlf = msgs.map((_, i) => i)
     if (fmt.trailingNewline === false) edges.noTrailingNewline = [msgs.length - 1]
-    const idsIn = (field: 'p' | 'n', id: string) => msgs.flatMap((m, i) => (m[field].includes(id) ? [i] : []))
-    const fullCount = (field: 'p' | 'n', id: string) => all.filter((m) => m[field].includes(id)).length
+    const idsIn = (field: 'p' | 'n' | 'c', id: string) => msgs.flatMap((m, i) => (m[field].includes(id) ? [i] : []))
+    const fullCount = (field: 'p' | 'n' | 'c', id: string) => all.filter((m) => m[field].includes(id)).length
     const planted = script.planted
-      .map((d) => ({ ...d, idx: idsIn('p', d.id), ...(idsIn('p', d.id).length < fullCount('p', d.id) ? { partial: true } : {}) }))
+      .map((d) => {
+        const idx = idsIn('p', d.id)
+        const base = { ...d, idx, ...(idx.length < fullCount('p', d.id) ? { partial: true } : {}) }
+        if (d.type === 'loop') {
+          // the close is an event in the same export, or not in it at all — then the loop is simply open at the
+          // end of this export and `closedReason` (which describes the whole script) must not be carried over.
+          const closes = idsIn('c', d.id)
+          const { closedReason, ...rest } = base
+          return closes.length ? { ...rest, closedBy: closes[0], ...(closedReason ? { closedReason } : {}), closedInExport: true } : { ...rest, closedInExport: false }
+        }
+        if (d.type === 'conversation') {
+          return { ...base, ...(idx.length ? { startIdx: idx[0], endIdx: idx[idx.length - 1] } : {}) }
+        }
+        return base
+      })
       .filter((d) => d.idx.length > 0)
     const negatives = script.negatives
       .map((d) => ({ ...d, idx: idsIn('n', d.id), ...(idsIn('n', d.id).length < fullCount('n', d.id) ? { partial: true } : {}) }))

@@ -8,6 +8,7 @@ import {
   HandleDTOSchema,
   ImportantDateDTOSchema,
   ImportDTOSchema,
+  LoopDTOSchema,
   PersonRefDTOSchema,
   RelationDTOSchema,
 } from '../entities'
@@ -122,6 +123,7 @@ export const ReviewItemSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('relation'), item: RelationDTOSchema }),
   z.object({ type: z.literal('date'), item: ImportantDateDTOSchema }),
   z.object({ type: z.literal('event'), item: EventDTOSchema }),
+  z.object({ type: z.literal('loop'), item: LoopDTOSchema }),
 ])
 export type ReviewItem = z.infer<typeof ReviewItemSchema>
 
@@ -133,6 +135,8 @@ export const ImportReviewSectionSchema = z.object({
   aliasesAndRelations: z.array(ReviewItemSchema),
   dates: z.array(ReviewItemSchema),
   events: z.array(ReviewItemSchema),
+  /** SPEC §9.9 未结事项. Counted in newCount/allHandled, never in highConfidence (a loop has no confidence). */
+  loops: z.array(ReviewItemSchema),
 })
 export type ImportReviewSection = z.infer<typeof ImportReviewSectionSchema>
 

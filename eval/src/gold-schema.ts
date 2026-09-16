@@ -1,8 +1,17 @@
 // Gold file + LOCK schemas (ARCHITECTURE §7.2, §7.6). Human documentation: eval/src/GOLD_FORMAT.md.
 import { z } from 'zod'
-import { Category, ChatKind, IsoString } from '@/contracts'
+import { Category, ChatKind, IsoString, LoopCloseReason, LoopDirection, LoopKind, PartialDate } from '@/contracts'
 
-export const GOLD_VERSION = 1
+/**
+ * Version written by `eval:gold-template`. Version 2 adds the optional interaction arrays (`loops`,
+ * `conversations`, ARCHITECTURE §7.2). It is purely additive: a version-1 file stays valid and scores exactly as
+ * before, and a file without a `loops` / `conversations` key contributes nothing to the interaction metrics
+ * (§7.4) instead of scoring 0 (DECISIONS eval-synthetic E21).
+ */
+export const GOLD_VERSION = 2
+export const SUPPORTED_GOLD_VERSIONS = [1, 2] as const
+/** Gold version required for a file that carries `loops` or `conversations`. */
+export const INTERACTION_GOLD_VERSION = 2
 
 const Idx = z.number().int().nonnegative()
 const Evidence = z.array(Idx).min(1)
@@ -77,6 +86,39 @@ export const GoldEventSchema = z
   })
   .strict()
 
+/**
+ * 未结事项 (SPEC §7 交互层, §8.8). `evidence` is the message that opens it; `closedBy` the idx of the message that
+ * closes it, when the export contains one. goldVersion 2.
+ */
+export const GoldLoopSchema = z
+  .object({
+    id: ItemId,
+    person: PersonKey,
+    direction: LoopDirection,
+    kind: LoopKind,
+    text: z.string().min(2).max(200),
+    dueAt: PartialDate.optional(),
+    /** the message(s) that open it */
+    evidence: Evidence,
+    /** idx of the message that closes it, if any */
+    closedBy: Idx.optional(),
+    closedReason: LoopCloseReason.optional(),
+    optional: z.boolean().optional(),
+  })
+  .strict()
+
+/** A conversation = segments of one chat less than SESSION_GAP_HOURS apart (SPEC §7 交互层). goldVersion 2. */
+export const GoldConversationSchema = z
+  .object({
+    id: ItemId,
+    startIdx: Idx,
+    endIdx: Idx,
+    /** the topics a summary of this conversation must cover */
+    topics: z.array(z.string().min(1).max(30)).min(1),
+    optional: z.boolean().optional(),
+  })
+  .strict()
+
 export const GoldNegativeSchema = z
   .object({
     id: ItemId,
@@ -98,7 +140,7 @@ export const GoldPersonSchema = z
 
 export const GoldFileSchema = z
   .object({
-    goldVersion: z.literal(GOLD_VERSION),
+    goldVersion: z.union([z.literal(1), z.literal(2)]),
     /** ZIP file name including `.zip` (no directory) */
     zip: z.string().min(1),
     /** agent role id, never a real name */
@@ -123,6 +165,10 @@ export const GoldFileSchema = z
     claims: z.array(GoldClaimSchema),
     dates: z.array(GoldDateSchema),
     events: z.array(GoldEventSchema),
+    // ---- interaction (goldVersion 2, additive). Absent ≠ empty: a file without the key is not annotated for that
+    // type and is left out of the interaction metrics entirely (§7.4, DECISIONS eval-synthetic E21).
+    loops: z.array(GoldLoopSchema).optional(),
+    conversations: z.array(GoldConversationSchema).optional(),
     negatives: z.array(GoldNegativeSchema),
     sensitiveValues: z.array(z.string().min(1)),
   })
@@ -134,6 +180,8 @@ export type GoldHandle = z.infer<typeof GoldHandleSchema>
 export type GoldRelation = z.infer<typeof GoldRelationSchema>
 export type GoldDate = z.infer<typeof GoldDateSchema>
 export type GoldEvent = z.infer<typeof GoldEventSchema>
+export type GoldLoop = z.infer<typeof GoldLoopSchema>
+export type GoldConversation = z.infer<typeof GoldConversationSchema>
 export type GoldNegative = z.infer<typeof GoldNegativeSchema>
 
 export const GoldLockVersionSchema = z

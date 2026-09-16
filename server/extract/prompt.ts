@@ -1,9 +1,9 @@
 // Prompt rendering (SPEC §8.6 input format; ARCHITECTURE §6). Pure.
-import type { Category, HandleKind } from '@/contracts'
+import type { Category, HandleKind, LoopDirection, LoopKind } from '@/contracts'
 import { minutesBetween } from '@/lib/time'
 import type { LlmMessage } from '@/server/llm'
 import { fillTemplate, type PromptFile } from './prompt-file'
-import { DEDUP_PROMPT_VERSION, PROMPT_VERSION, promptFeatures } from './prompt-version'
+import { DEDUP_PROMPT_VERSION, INTERACTION_PROMPT_VERSION, PROMPT_VERSION, promptFeatures } from './prompt-version'
 import { PROMPTS } from './prompts.generated'
 import type { WindowInput, WindowMessage } from './types'
 
@@ -14,6 +14,10 @@ const HANDLE_KIND_LABEL: Record<HandleKind, string> = {
   real_name: '真名',
   address_term: '称呼',
 }
+
+/** Interaction input side (SPEC §8.8): the open loops a window's known persons carry. `interaction.*` only. */
+const LOOP_KIND_LABEL: Record<LoopKind, string> = { promise: '承诺', question: '提问', plan: '约定' }
+const LOOP_DIRECTION_LABEL: Record<LoopDirection, string> = { mine: '该我', theirs: '该对方', mutual: '双方' }
 
 const CATEGORY_LABEL: Record<Category, string> = {
   work: '工作',
@@ -35,6 +39,11 @@ export function listPromptVersions(prefix = 'extract.'): string[] {
   return Object.keys(PROMPTS).filter((v) => v.startsWith(prefix))
 }
 
+/**
+ * Known-person block of the EXTRACTION prompt: label, aliases and confirmed claims. It never renders `lastContact`
+ * or `openLoops` — the extraction call does not know the interaction layer exists any more (DECISIONS ## extract X40),
+ * so every recorded cassette of extract.v1–v9 replays byte-identically whether or not the store filled those fields.
+ */
 function renderKnown(input: WindowInput): string {
   if (!input.known.length) return '（无）'
   const lines: string[] = []
@@ -44,6 +53,26 @@ function renderKnown(input: WindowInput): string {
     if (p.claims.length) {
       lines.push('  已确认信息：')
       for (const c of p.claims) lines.push(`  - [claim ${c.id}] ${c.statement}（${CATEGORY_LABEL[c.category]}）`)
+    }
+  }
+  return lines.join('\n')
+}
+
+/**
+ * Known-person block of the INTERACTION prompt. Deliberately smaller than the extraction one (SPEC §8.8,
+ * ARCHITECTURE §6): person id + label, `lastContact`, `openLoops`. **No confirmed `claims` and no aliases** — the
+ * interaction call has no use for the archive, and the claims list is the bulk of the extraction prompt's input
+ * tokens, so leaving it out keeps the added cost of the second call well under a doubling.
+ */
+function renderInteractionKnown(input: WindowInput): string {
+  if (!input.known.length) return '（无）'
+  const lines: string[] = []
+  for (const p of input.known) {
+    lines.push(`- person_id ${p.personId}：${p.label}${p.personId === input.selfPersonId ? '（用户本人）' : ''}`)
+    if (p.lastContact) lines.push(`  上次来往：${p.lastContact.at.slice(0, 10)} ${p.lastContact.summary}`)
+    if (p.openLoops?.length) {
+      lines.push('  未结事项：')
+      for (const l of p.openLoops) lines.push(`  - [loop ${l.id}] ${LOOP_KIND_LABEL[l.kind]}·${LOOP_DIRECTION_LABEL[l.direction]}：${l.text}（${l.openedAt.slice(0, 10)} 起）`)
     }
   }
   return lines.join('\n')
@@ -82,13 +111,35 @@ export function renderMessages(messages: WindowMessage[], gapMarkers: boolean): 
 
 export function renderExtractPrompt(input: WindowInput, version: string = PROMPT_VERSION): LlmMessage[] {
   const p = getPrompt(version)
+  const features = promptFeatures(version)
   const system = fillTemplate(p.system, { example_json: p.exampleJson })
   const user = fillTemplate(p.userTemplate, {
     chat_title: input.chat.title,
     chat_kind: input.chat.kind === 'group' ? '群聊' : '私聊',
     self_person_id: String(input.selfPersonId),
     known: renderKnown(input),
-    messages: renderMessages(input.messages, promptFeatures(version).gapMarkers),
+    messages: renderMessages(input.messages, features.gapMarkers),
+  })
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
+/**
+ * Interaction prompt (SPEC §8.8, ARCHITECTURE §6): the second, independent call over the same window. Same user
+ * template shape as the extraction prompt so the message rendering is identical, but the known-person block is the
+ * smaller one and session gap markers are always on (this prompt has no pre-v4 cassettes to keep byte-identical).
+ */
+export function renderInteractionPrompt(input: WindowInput, version: string = INTERACTION_PROMPT_VERSION): LlmMessage[] {
+  const p = getPrompt(version)
+  const system = fillTemplate(p.system, { example_json: p.exampleJson })
+  const user = fillTemplate(p.userTemplate, {
+    chat_title: input.chat.title,
+    chat_kind: input.chat.kind === 'group' ? '群聊' : '私聊',
+    self_person_id: String(input.selfPersonId),
+    known: renderInteractionKnown(input),
+    messages: renderMessages(input.messages, true),
   })
   return [
     { role: 'system', content: system },

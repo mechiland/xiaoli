@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-16T04:38:47+08:00",
+  "updatedAt": "2026-09-16T16:20:00+08:00",
   "modules": {
     "architecture": {
       "round": 3,
@@ -30,18 +30,18 @@
       "lastArtifacts": "artifacts/critic/llm/"
     },
     "verify-seed": {
-      "round": 1,
-      "score": null,
-      "passed": true,
-      "openIssues": [],
-      "lastArtifacts": "artifacts/person__showcase/20260915-234608/, artifacts/e2e__blind-shots/"
-    },
-    "eval-synthetic": {
       "round": 2,
       "score": null,
       "passed": true,
       "openIssues": [],
-      "lastArtifacts": "artifacts/critic/"
+      "lastArtifacts": "artifacts/_smoke__perf-budgets/"
+    },
+    "eval-synthetic": {
+      "round": 3,
+      "score": null,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "eval/tests/offline-contract.test.ts"
     },
     "import": {
       "round": 2,
@@ -54,51 +54,50 @@
       "lastArtifacts": "artifacts/import__showcase/20260915-223715/, artifacts/import__flow/20260915-223627/, artifacts/import__upload-resume/20260915-223641/, artifacts/import__abandon-step2/20260915-223243/, artifacts/critic/import/"
     },
     "extract": {
-      "round": 3,
+      "round": 7,
       "score": null,
-      "passed": true,
+      "passed": false,
       "openIssues": [
-        "overall r4: real chats still produce no events, so no person page shows 经历 (extract.v7/v8 recorded; PROMPT_VERSION stays extract.v5)",
-        "overall r4: a term of address after @<display name> is stored as `mentioned`, shown as 被@的名字 and grouped under 群内显示名"
+        "DONE: the split + tightened interaction.v2 fully restored the original extraction quality — claims P 0.90 / R 0.77 and relations 0.92, identical to the v8-alone baseline; handles 1.00, transactional 0.02. Every pre-existing gate passes (DECISIONS I22).",
+        "OPEN: loops precisionLenient 0.625 vs the 0.80 gate (up from 0.556), recall 0.588 (down from 0.706), 9 should_ignore FPs left. Several of the 9 are judgement calls rather than clear errors (周末回家吃饭 / 订生日包厢 / 婚礼发请帖), so the remaining gap is partly an unsettled definition of what counts as a 未结事项.",
+        "OPEN (DECISIONS I23): the mechanical momentary rule also drops 2 gold-required loops (k6 晚上看转过来的租房文章, k7 回头把在追的剧名发过去). No word list separates them from 晚上过去拿西瓜. The blind annotator and the new third threshold genuinely disagree, so loops recall has a ceiling neither prompt nor validator can lift while gold is frozen. Gold was NOT touched."
       ],
       "lastArtifacts": "eval/reports/20260915-123434.json, eval/reports/synthetic/20260915-123434.json, artifacts/critic/extract/"
     },
     "review": {
-      "round": 2,
+      "round": 3,
       "score": 8.8,
       "passed": true,
       "openIssues": [],
       "lastArtifacts": "artifacts/review__evidence-showcase/20260915-204349/, artifacts/critic/review/"
     },
     "search": {
-      "round": 1,
-      "score": 8.6,
-      "passed": true,
-      "openIssues": [],
-      "lastArtifacts": "artifacts/search__showcase/20260915-204408/, artifacts/search__person-picker/20260915-204436/, artifacts/critic/search/"
-    },
-    "person": {
       "round": 2,
       "score": 8.6,
       "passed": true,
-      "openIssues": [
-        "overall r4: relation rows on other people's pages name the user by the self label while the same row's note says 我"
-      ],
-      "lastArtifacts": "artifacts/person__showcase/20260915-222125/, artifacts/person__actions/20260915-223328/, artifacts/critic/person/r2/"
+      "openIssues": [],
+      "lastArtifacts": "artifacts/search__showcase/"
+    },
+    "person": {
+      "round": 3,
+      "score": 8.6,
+      "passed": true,
+      "openIssues": [],
+      "lastArtifacts": "artifacts/person__showcase/20260916-115203/"
     },
     "import-result": {
-      "round": 1,
+      "round": 2,
       "score": 8.6,
       "passed": true,
       "openIssues": [],
-      "lastArtifacts": "artifacts/import-result__showcase/20260915-222419/, artifacts/import-result__actions/20260915-222619/, artifacts/import-result__delete-import/20260915-223420/, artifacts/critic/import-result/"
+      "lastArtifacts": "artifacts/import-result__showcase/"
     },
     "home": {
-      "round": 1,
+      "round": 2,
       "score": 8.6,
       "passed": true,
       "openIssues": [],
-      "lastArtifacts": "artifacts/home__showcase/20260915-222221/, artifacts/home__empty/20260915-222946/, artifacts/home__onboarding/20260915-223040/, artifacts/home__small-account/20260915-222941/, artifacts/critic/home/"
+      "lastArtifacts": "artifacts/home__showcase/"
     },
     "chat": {
       "round": 3,
@@ -134,18 +133,39 @@
         "Relation rows on other people's pages name the user by the self label while the same row's note says 我"
       ],
       "lastArtifacts": "artifacts/critic/overall/r4/ (real-data run; rounds r1–r3 under artifacts/critic/overall/)"
+    },
+    "interaction": {
+      "round": 1,
+      "score": null,
+      "passed": false,
+      "openIssues": [
+        "built and self-verified (verify interaction/showcase: 204 checks, 37 screenshots, 0 console errors); scenario drives real seed rows incl. boundary drift on private-long-2. NOT yet reviewed by an independent critic."
+      ],
+      "lastArtifacts": "artifacts/interaction__showcase/"
     }
   },
   "eval": {
-    "latestReport": "eval/reports/20260915-203752.json",
-    "passed": true
+    "latestReport": "eval/reports/20260916-080732.json",
+    "passed": false,
+    "note": "extract.v8 + interaction.v2 live on synthetic. All pre-existing gates PASS (claims 0.90/0.77, handles 1.00, relations 0.92, transactional 0.02) — the split achieved its purpose. Only loops precision fails: 0.625 vs 0.80, on the new capability. Interaction metrics: loops R 0.588, conversationCoverage 0.40, topicCoverage 0.83.",
+    "baselines": {
+      "extract.v8 alone": "eval/reports/20260916-071221.json",
+      "extract.v9 combined": "eval/reports/20260916-070918.json",
+      "v8 + interaction.v1": "eval/reports/20260916-074900.json",
+      "v8 + interaction.v2": "eval/reports/20260916-080732.json"
+    }
   },
   "llmUsage": {
-    "inputTokens": 2711938,
-    "outputTokens": 108612
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "loop": "loop2-interaction",
+    "note": "loop 1 closed at 2,880,757 / 3,000,000; counter reset for loop 2 (交互层) per PLAN 规则 模型调用成本"
   },
   "blockers": [
-    "SPEC §11 M6 online acceptance not executed: a full import + review on the deployed Cloudflare URL needs the owner's Cloudflare credentials (and live DeepSeek tokens); every setup.ts --apply path, wrangler r2/secret list output parsing and smoke.ts --extract are also unverified. Checklist: docs/DEPLOY.md §7."
+    "SPEC §11 M6 online acceptance not executed: a full import + review on the deployed Cloudflare URL needs the owner's Cloudflare credentials (and live DeepSeek tokens); every setup.ts --apply path, wrangler r2/secret list output parsing and smoke.ts --extract are also unverified. Checklist: docs/DEPLOY.md §7.",
+    "SPEC M7 反序导入不收敛（DECISIONS I12）：先导晚的记录再导早的，了结那句话不会被重读，事项停在未结；用户可手工关闭。自动收敛需要在每次新建 loop 后重跑其后所有已读窗口，v1 不做。tests/integration/m7-interaction.test.ts 第三个用例记录真实行为。",
+    "METHODOLOGY: the extract gates are decided on samples too small for one live run to resolve. relations n=27 means a single item moves precision 3.6 points; the same byte-identical prompt scored 0.92 and 0.857 on two runs. Until gate runs are repeated (median of N) or the corpus grows, only large regressions are detectable and near-threshold results must not be read as signal. DECISIONS I20.",
+    "Loop precision 0.625 is below its 0.80 gate after two rounds (0.556 → 0.625). Next round is NOT a wording change: 9 remaining false positives include genuine judgement calls, and the mechanical rule already costs 2 gold-required loops, so what is needed is a settled definition of 未结事项 agreed between SPEC, the blind gold and the prompt. DECISIONS I22, I23."
   ],
   "blindComparison": {
     "valid": true,

@@ -1,9 +1,9 @@
 {
-  "goldVersion": 1,
+  "goldVersion": 2,
   "zip": "聊天记录_20260405_223012.zip",
   "annotator": "annotator",
   "annotatedAt": "2026-09-15T10:43:34.064Z",
-  "notes": "self=小满 (the facts are mostly about the other party; 小满 gives their own shipping address). Title = the other sender name. Classmate relation from shared university/department reunion and \"大学四年\". Girlfriend relation typed other with label; spouse accepted.",
+  "notes": "self=小满 (the facts are mostly about the other party; 小满 gives their own shipping address). Title = the other sender name. Classmate relation from shared university/department reunion and \"大学四年\". Girlfriend relation typed other with label; spouse accepted. goldVersion 2 (interaction pass): loops and conversations added; claims/handles/relations/dates/events/negatives unchanged. Loops follow SPEC §8.7 (a question someone later answers is not a loop) and are only recorded when they stay open past the conversation (window) in which they were opened, since a close can only be expressed against a loop carried in from an earlier window. Conversations cover the stretches with real content; pure small talk is left out so it does not skew topic coverage.",
   "parserVersion": "wechat-export@1",
   "messageCount": 207,
   "messagesSha256": "22ea55369b391b612b7fb89e61b10757766162cc365d3cd1e33435a6c67f6b5a",
@@ -535,6 +535,274 @@
         204
       ],
       "optional": true
+    }
+  ],
+  "loops": [
+    {
+      "id": "k1",
+      "person": "yizhou",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "下周四在云杉一起吃饭",
+      "dueAt": "2025-11-06",
+      "evidence": [
+        7,
+        13,
+        14
+      ],
+      "closedBy": 22,
+      "closedReason": "done"
+    },
+    {
+      "id": "k2",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "定吃饭的地方",
+      "evidence": [
+        14
+      ],
+      "closedBy": 25,
+      "closedReason": "done",
+      "optional": true
+    },
+    {
+      "id": "k3",
+      "person": "yizhou",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "12月回武汉参加武大计算机系同学聚会",
+      "dueAt": "2025-12",
+      "evidence": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "id": "k4",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "过年带苏苏来云杉见面",
+      "evidence": [
+        49
+      ]
+    },
+    {
+      "id": "k5",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "寄龙井茶过来",
+      "dueAt": "2025-12",
+      "evidence": [
+        62,
+        64
+      ]
+    },
+    {
+      "id": "k6",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "question",
+      "text": "副歌是啦啦啦的那首歌叫什么名字",
+      "evidence": [
+        99,
+        100
+      ],
+      "optional": true
+    },
+    {
+      "id": "k7",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "把最近在追的剧名发过去",
+      "evidence": [
+        114
+      ]
+    },
+    {
+      "id": "k8",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "下次见面请喝奶茶",
+      "evidence": [
+        151
+      ]
+    },
+    {
+      "id": "k9",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "回头细说",
+      "evidence": [
+        181
+      ],
+      "optional": true
+    },
+    {
+      "id": "k10",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "plan",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "evidence": [
+        198,
+        200
+      ]
+    }
+  ],
+  "conversations": [
+    {
+      "id": "v1",
+      "startIdx": 4,
+      "endIdx": 14,
+      "topics": [
+        "出差",
+        "吃饭"
+      ]
+    },
+    {
+      "id": "v2",
+      "startIdx": 15,
+      "endIdx": 21,
+      "topics": [
+        "生日"
+      ]
+    },
+    {
+      "id": "v3",
+      "startIdx": 22,
+      "endIdx": 30,
+      "topics": [
+        "吃饭",
+        "香菜"
+      ]
+    },
+    {
+      "id": "v4",
+      "startIdx": 31,
+      "endIdx": 35,
+      "topics": [
+        "聚会"
+      ]
+    },
+    {
+      "id": "v5",
+      "startIdx": 43,
+      "endIdx": 49,
+      "topics": [
+        "苏苏",
+        "在一起"
+      ]
+    },
+    {
+      "id": "v6",
+      "startIdx": 62,
+      "endIdx": 70,
+      "topics": [
+        "龙井",
+        "地址"
+      ]
+    },
+    {
+      "id": "v7",
+      "startIdx": 81,
+      "endIdx": 86,
+      "topics": [
+        "平安夜",
+        "圣诞树"
+      ]
+    },
+    {
+      "id": "v8",
+      "startIdx": 112,
+      "endIdx": 115,
+      "topics": [
+        "追剧"
+      ],
+      "optional": true
+    },
+    {
+      "id": "v9",
+      "startIdx": 122,
+      "endIdx": 128,
+      "topics": [
+        "生日",
+        "按摩仪"
+      ]
+    },
+    {
+      "id": "v10",
+      "startIdx": 132,
+      "endIdx": 138,
+      "topics": [
+        "过年",
+        "苏苏"
+      ]
+    },
+    {
+      "id": "v11",
+      "startIdx": 148,
+      "endIdx": 151,
+      "topics": [
+        "奶茶"
+      ]
+    },
+    {
+      "id": "v12",
+      "startIdx": 152,
+      "endIdx": 156,
+      "topics": [
+        "马拉松"
+      ]
+    },
+    {
+      "id": "v13",
+      "startIdx": 169,
+      "endIdx": 174,
+      "topics": [
+        "工作",
+        "蓝鲸出行"
+      ]
+    },
+    {
+      "id": "v14",
+      "startIdx": 175,
+      "endIdx": 181,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v15",
+      "startIdx": 189,
+      "endIdx": 192,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v16",
+      "startIdx": 193,
+      "endIdx": 200,
+      "topics": [
+        "offer",
+        "深圳"
+      ]
+    },
+    {
+      "id": "v17",
+      "startIdx": 201,
+      "endIdx": 206,
+      "topics": [
+        "离职"
+      ]
     }
   ],
   "negatives": [

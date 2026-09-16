@@ -12,6 +12,7 @@ import {
   handles,
   importantDates,
   imports,
+  loops,
   messages,
   owned,
   persons,
@@ -22,16 +23,19 @@ import {
 } from '@/server/db'
 import { ApiError, errors } from '@/server/errors'
 import {
+  assertReviewable,
   claimDTOs,
   itemDTO,
   loadRow,
   loadRows,
+  REVIEWABLE,
   TABLES,
   type ClaimRow,
   type DateRow,
   type EventRow,
   type HandleRow,
   type ItemRow,
+  type LoopRow,
   type RelationRow,
 } from './dto'
 import { chunk, EVIDENCE_ROWS, IN_CHUNK, LINK_ROWS, logStatements, norm, runBatch, runBatchOrUndo, uniq, type LogEntry } from './util'
@@ -166,7 +170,7 @@ export async function syncImportStatus(db: Db, ownerId: string, importIds: (numb
   for (const imp of rows) {
     if (imp.status !== 'reviewing' && imp.status !== 'done') continue
     let proposed = 0
-    for (const t of Object.values(TABLES) as (typeof relations)[]) {
+    for (const t of Object.values(REVIEWABLE) as (typeof relations)[]) {
       const [r] = await db.select({ n: count() }).from(t).where(owned(t, ownerId, eq(t.importId, imp.id), eq(t.status, 'proposed')))
       proposed += r?.n ?? 0
       if (proposed > 0) break
@@ -204,6 +208,10 @@ export async function applyReview(
   patch?: ReviewPatch,
   opts: { replacement?: { statement: string } } = {},
 ): Promise<ReviewResponse> {
+  // A 段落摘要 is a log of what was said that day, not an assertion about a person, so it has no 确认/不对 at all
+  // (SPEC §9.9). Failing loudly here keeps a stray `POST /api/review/segment/:id` from looking like it worked;
+  // editing or hiding a segment is `PATCH /api/segments/:id` (interaction).
+  assertReviewable(target.type)
   const row = await loadRow(db, ownerId, target.type, target.id)
   if (!row) throw errors.notFound()
   const now = nowIso()
@@ -274,6 +282,27 @@ async function editItem(db: Db, ownerId: string, type: TargetType, row: ItemRow,
       ]
       return finishSimpleEdit(db, ownerId, type, row, stmts, { summary: e.summary, happenedAt: e.happenedAt, place: e.place, status: e.status }, { ...set, status: 'confirmed' }, now)
     }
+    case 'loop': {
+      const l = row as LoopRow
+      if (!has(patch.text) && !has(patch.dueAt) && !has(patch.kind) && !has(patch.direction)) {
+        throw errors.validation('没有要修改的内容')
+      }
+      const text = patch.text?.trim() || l.text
+      const set = {
+        text,
+        textNorm: norm(text),
+        dueAt: has(patch.dueAt) ? (patch.dueAt ?? null) : l.dueAt,
+        kind: patch.kind ?? l.kind,
+        direction: patch.direction ?? l.direction,
+      }
+      const stmts: Stmt[] = [
+        db.update(loops).set({ ...set, status: 'confirmed', updatedAt: now }).where(owned(loops, ownerId, eq(loops.id, l.id))),
+      ]
+      const before = { text: l.text, dueAt: l.dueAt, kind: l.kind, direction: l.direction, status: l.status }
+      return finishSimpleEdit(db, ownerId, type, row, stmts, before, { ...set, status: 'confirmed' }, now)
+    }
+    case 'segment':
+      throw errors.validation('段落摘要不需要确认，可以直接改写或隐藏')
     case 'date': {
       const d = row as DateRow
       if (!has(patch.month) && !has(patch.day) && !has(patch.year) && !has(patch.calendar) && !has(patch.label)) {
@@ -500,6 +529,11 @@ export async function bulkReview(db: Db, ownerId: string, items: ReviewTarget[],
     const key = `${it.type}:${it.id}`
     if (seen.has(key)) continue
     seen.add(key)
+    // segments are not reviewable (SPEC §9.9); report them instead of silently counting them as updated
+    if (it.type === 'segment') {
+      failed.push({ type: it.type, id: it.id, code: 'validation_failed' })
+      continue
+    }
     byType.set(it.type, [...(byType.get(it.type) ?? []), it.id])
   }
   for (const [type, ids] of byType) {

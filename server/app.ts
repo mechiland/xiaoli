@@ -13,6 +13,7 @@ import exportRoute from './routes/export'
 import homeRoute from './routes/home'
 import importsRoute from './routes/imports'
 import importsReviewRoute from './routes/imports-review'
+import interactionRoute from './routes/interaction'
 import meRoute from './routes/me'
 import peopleRoute from './routes/people'
 import peopleActionsRoute from './routes/people-actions'
@@ -42,6 +43,7 @@ export function buildApp(deps: AppDeps = {}) {
     .route('/', peopleActionsRoute)
     .route('/', peopleIndexRoute)
     .route('/', evidenceRoute)
+    .route('/', interactionRoute)
     .route('/', peopleRoute)
     .route('/', chatsRoute)
     .route('/', homeRoute)

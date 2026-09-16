@@ -44,6 +44,19 @@ export const privateYizhou: ChatScript = {
     { id: 'rel-m-duoduo', type: 'relation', from: 'xiaoman', to: 'duoduo', relationType: 'parent', text: '朵朵是小满的女儿' },
     { id: 'susu-studio', type: 'claim', person: 'susu', category: 'work', text: '在深圳南山开了插画工作室', supersedes: 'susu-work', optional: true },
     { id: 'm-edu', type: 'claim', person: 'xiaoman', category: 'education', text: '武汉大学计算机系毕业（与一舟同系）', optional: true },
+    // ---- 交互层（SPEC §7 交互层 / §8.8）。loop 的 person 是对方（这段关系属于谁）；text 不带主语，只写事情本身；
+    // direction 是「下一步该谁动」：mine = 该我做/该我回答，theirs = 该对方动，mutual = 两个人一起的约定。
+    { id: 'loop-dinner-plan', type: 'loop', person: 'yizhou', loopKind: 'plan', direction: 'mutual', text: '下周四晚上一起吃饭', dueAt: '2025-11-06', closedReason: 'done', note: '2025-10-28 约定，2025-11-06 见面兑现；同一批消息也是 negative coord-dinner-plan —— 按 §8.8 分流，不进 claim，进 loop' },
+    { id: 'loop-pick-place', type: 'loop', person: 'yizhou', loopKind: 'promise', direction: 'mine', text: '订吃饭的地方', dueAt: '2025-11-06', closedReason: 'done', note: '承诺 2025-10-28 说出口，9 天后 2025-11-06 报出订好的桌号才算了结' },
+    { id: 'loop-tea-ship', type: 'loop', person: 'yizhou', loopKind: 'promise', direction: 'theirs', text: '寄龙井茶过来', note: '两次导出里都没有寄到的确认，始终未结' },
+    { id: 'loop-interview-later', type: 'loop', person: 'yizhou', loopKind: 'promise', direction: 'mine', text: '回头细说面试安排的看法', note: '在两次导出的重叠区间里' },
+    { id: 'loop-move-shenzhen', type: 'loop', person: 'yizhou', loopKind: 'plan', direction: 'theirs', text: '四月底搬去深圳', dueAt: '2026-04', closedReason: 'done', note: '第一次导出结束时仍未结；第二次导出里 2026-04-28「到深圳了」了结' },
+    { id: 'loop-photo-question', type: 'loop', person: 'yizhou', loopKind: 'question', direction: 'mine', text: '婚纱照在哪拍的', note: '对方问了我而我没回，所以 direction 是 mine（欠回答的是我）' },
+    { id: 'loop-wedding-plan', type: 'loop', person: 'yizhou', loopKind: 'plan', direction: 'mutual', text: '10月3日中午去九江参加婚礼', dueAt: '2026-10-03', note: '婚期在导出结束之后，未结' },
+    { id: 'conv-susu', type: 'conversation', text: '一舟说他和苏苏在一起了', topics: ['苏苏', '女朋友', '插画'], note: '会话边界由标注者判定，这里记的是剧本场景的首尾' },
+    { id: 'conv-job-change', type: 'conversation', text: '一舟在看新机会', topics: ['换工作', '蓝鲸出行', '深圳'] },
+    { id: 'conv-shenzhen', type: 'conversation', text: '一舟到深圳安顿下来', topics: ['深圳', '南山'] },
+    { id: 'conv-wedding-date', type: 'conversation', text: '婚礼日期和地点定下来', topics: ['婚礼', '九江', '份子钱'] },
   ],
   negatives: [
     { id: 'coord-dinner-plan', kind: 'coordination', description: '约下周四晚上吃饭' },
@@ -74,8 +87,8 @@ export const privateYizhou: ChatScript = {
         L(Y, '对，还在星禾互娱写前端，天天加班[流泪]', { p: ['y-work-old'] }),
         L(M, '杭州房租是不是又涨了'),
         L(Y, '涨了，我现在住滨江，通勤半小时', { p: ['y-loc-old'] }),
-        L(M, '行，那下周四晚上？', { n: ['coord-dinner-plan'] }),
-        L(Y, '可以，你定地方', { n: ['coord-dinner-plan'] }),
+        L(M, '行，那下周四晚上？', { n: ['coord-dinner-plan'], p: ['loop-dinner-plan'] }),
+        L(Y, '可以，你定地方', { n: ['coord-dinner-plan'], p: ['loop-dinner-plan', 'loop-pick-place'] }),
       ],
     },
     {
@@ -93,10 +106,10 @@ export const privateYizhou: ChatScript = {
     {
       at: '2025-11-06 18:52',
       lines: [
-        L(Y, '我到了', { n: ['coord-at-door'] }),
+        L(Y, '我到了', { n: ['coord-at-door'], c: ['loop-dinner-plan'] }),
         L(Y, '我在门口', { n: ['coord-at-door'] }),
         L(M, '马上，你先进去坐，报我名字', { n: ['coord-at-door'] }),
-        L(M, '订的是 6 号桌', { n: ['tx-table'] }),
+        L(M, '订的是 6 号桌', { n: ['tx-table'], c: ['loop-pick-place'] }),
         L(Y, '好'),
         L(Y, '{{img}}'),
         L(Y, '这个酸汤鱼看着不错'),
@@ -117,13 +130,13 @@ export const privateYizhou: ChatScript = {
     {
       at: '2025-11-20 21:05',
       lines: [
-        L(Y, '跟你说个事'),
+        L(Y, '跟你说个事', { p: ['conv-susu'] }),
         L(Y, '我和苏苏在一起了', { p: ['rel-y-susu-partner'] }),
         L(M, '？？？苏苏是谁'),
         L(Y, '之前公司楼下咖啡店认识的，她是做插画的', { p: ['susu-work', 'rel-y-susu-partner'] }),
         L(M, '可以啊，恭喜恭喜'),
         L(M, '[动画表情] 鼓掌'),
-        L(Y, '过年带她来云杉见见你们'),
+        L(Y, '过年带她来云杉见见你们', { p: ['conv-susu'] }),
       ],
     },
     {
@@ -131,7 +144,7 @@ export const privateYizhou: ChatScript = {
       lines: [
         L(Y, '你家地址再发我一下，给你寄点龙井'),
         L(M, '云杉市青禾区梧桐路88号7栋2单元1502室，林小满，17700001111', { n: ['sens-self-address'], p: ['m-realname'] }),
-        L(Y, '好，这周就寄'),
+        L(Y, '好，这周就寄', { p: ['loop-tea-ship'] }),
         L(M, '谢啦[抱拳]'),
         L(Y, '[转账]', { n: ['inv-transfer'] }),
         L(M, '你干嘛转钱'),
@@ -188,12 +201,12 @@ export const privateYizhou: ChatScript = {
     {
       at: '2026-03-12 22:15',
       lines: [
-        L(Y, '最近在看机会'),
+        L(Y, '最近在看机会', { p: ['conv-job-change'] }),
         L(Y, '星禾今年项目砍了一半，组里走了好多人'),
         L(M, '有方向了吗'),
         L(Y, '深圳有家做出行的在聊，蓝鲸出行，岗位是技术负责人', { n: ['trap-interviewing'] }),
         L(M, '深圳啊，那苏苏怎么办'),
-        L(Y, '她是自由插画师，在哪都能接活', { p: ['susu-work'] }),
+        L(Y, '她是自由插画师，在哪都能接活', { p: ['susu-work', 'conv-job-change'] }),
       ],
     },
     // ---- overlap region of the two exports starts 2026-03-20
@@ -206,7 +219,7 @@ export const privateYizhou: ChatScript = {
         L(M, '嗯'),
         L(M, '嗯', { dt: 0 }),
         L(Y, '😂 你嗯什么'),
-        L(M, '在开会，回头细说'),
+        L(M, '在开会，回头细说', { p: ['loop-interview-later'] }),
       ],
     },
     {
@@ -226,9 +239,9 @@ export const privateYizhou: ChatScript = {
         L(M, '恭喜恭喜！！[烟花]'),
         L(M, '[微信红包] 恭喜发财，大吉大利', { n: ['inv-redpacket-offer'] }),
         L(Y, '哈哈哈谢谢老板'),
-        L(Y, '这下要搬去深圳了'),
+        L(Y, '这下要搬去深圳了', { p: ['loop-move-shenzhen'] }),
         L(M, '什么时候搬'),
-        L(Y, '四月底吧，房子还没找'),
+        L(Y, '四月底吧，房子还没找', { p: ['loop-move-shenzhen'] }),
       ],
     },
     {
@@ -246,11 +259,11 @@ export const privateYizhou: ChatScript = {
     {
       at: '2026-04-28 20:02',
       lines: [
-        L(Y, '到深圳了'),
+        L(Y, '到深圳了', { c: ['loop-move-shenzhen'], p: ['conv-shenzhen'] }),
         L(Y, '暂时住南山科技园附近，走路十分钟到公司', { p: ['y-loc-new'] }),
         L(Y, '[位置] 深圳湾科技生态园'),
         L(M, '以后去深圳有地方蹭饭了'),
-        L(Y, '欢迎欢迎，随时来'),
+        L(Y, '欢迎欢迎，随时来', { p: ['conv-shenzhen'] }),
       ],
     },
     {
@@ -262,7 +275,7 @@ export const privateYizhou: ChatScript = {
         L(Y, '打算国庆回九江办，到时候发请帖', { p: ['ev-wedding'] }),
         L(M, '一定到'),
         L(Y, '[名片] 苏苏'),
-        L(Y, '加一下苏苏，她想问你婚纱照在哪拍的'),
+        L(Y, '加一下苏苏，她想问你婚纱照在哪拍的', { p: ['loop-photo-question'] }),
         L(M, '好的马上加'),
       ],
     },
@@ -302,14 +315,14 @@ export const privateYizhou: ChatScript = {
     {
       at: '2026-09-01 21:00',
       lines: [
-        L(Y, '婚礼定了，10月3号中午，九江', { p: ['ev-wedding'] }),
+        L(Y, '婚礼定了，10月3号中午，九江', { p: ['ev-wedding', 'loop-wedding-plan', 'conv-wedding-date'] }),
         L(Y, '酒店地址：九江市浔阳区滨江路188号锦江酒店三楼宴会厅', { n: ['tx-venue'] }),
         L(Y, '{{img}}'),
-        L(M, '我请好假了'),
+        L(M, '我请好假了', { p: ['loop-wedding-plan'] }),
         L(M, '[转账]', { n: ['inv-gift-money'] }),
         L(Y, '你这是干嘛，人来就行'),
         L(M, '份子钱先给你', { n: ['inv-gift-money'] }),
-        L(Y, '那我收下了，谢谢小满'),
+        L(Y, '那我收下了，谢谢小满', { p: ['conv-wedding-date'] }),
       ],
     },
     {

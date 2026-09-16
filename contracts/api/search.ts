@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import { Id } from '../common'
 import { PersonRefDTOSchema } from '../entities'
+import { InteractionSearchHitSchema } from './interaction'
 
-export const SearchTypesSchema = z.enum(['all', 'people', 'claims'])
+export const SearchTypesSchema = z.enum(['all', 'people', 'claims', 'interaction'])
 export type SearchTypes = z.infer<typeof SearchTypesSchema>
 
 export const SearchQuerySchema = z.object({
@@ -23,5 +24,7 @@ export const SearchResponseSchema = z.object({
       highlights: z.array(z.tuple([z.number().int(), z.number().int()])),
     }),
   ),
+  /** SPEC §9.8「来往」: segment summaries and loop texts. Last group — it matches more loosely than the others. */
+  interaction: z.array(InteractionSearchHitSchema),
 })
 export type SearchResponse = z.infer<typeof SearchResponseSchema>

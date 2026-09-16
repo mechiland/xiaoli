@@ -1,0 +1,42 @@
+{
+  "inputHash": "a1e95b52d769d54211bffec81b0bd8d54ade74edc960c28dae6c6d59520a0c52",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T08:08:33.595Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "loops#0",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "周末回家吃饭属于即时协调安排"
+      },
+      {
+        "fpId": "loops#1",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n9",
+        "reason": "周末回去帮弄手机属于临时安排"
+      },
+      {
+        "fpId": "loops#2",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n5",
+        "reason": "订生日包厢属于聚餐安排协调"
+      },
+      {
+        "fpId": "loops#5",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "同学给过生日属于即时协调安排"
+      }
+    ]
+  }
+}

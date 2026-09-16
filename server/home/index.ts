@@ -10,5 +10,15 @@ export {
   type HomeBlocks,
   type HomeBlocksResult,
   type HomeOptions,
+  type UpcomingPlansFn,
 } from './queries'
-export { computeUpcoming, dateItemLabel, UPCOMING_WINDOW_DAYS, type UpcomingDateRow } from './upcoming'
+export {
+  compareUpcoming,
+  computeUpcoming,
+  dateItemLabel,
+  mergeUpcoming,
+  UPCOMING_WINDOW_DAYS,
+  type UpcomingDateRow,
+  type UpcomingPlanRow,
+  type UpcomingRow,
+} from './upcoming'

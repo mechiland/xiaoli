@@ -1,5 +1,6 @@
-// Pure "即将到来" computation (SPEC §9.4): next occurrence of each confirmed important date within 30 days.
-import type { HomeResponse } from '@/contracts'
+// Pure "即将到来" computation (SPEC §9.4): the next occurrence of each confirmed important date within 30 days,
+// merged with the 约定 (`plan` loops with a `dueAt`) that fall due inside the same window.
+import type { DayString, HomeResponse, PersonRefDTO } from '@/contracts'
 import { nextOccurrence } from '@/lib/lunar'
 
 export const UPCOMING_WINDOW_DAYS = 30
@@ -15,6 +16,17 @@ export interface UpcomingDateRow {
   day: number | null
   isLeapMonth: boolean
 }
+
+/** One 约定 row, structurally `UpcomingPlan` from `@/server/interaction` (ARCHITECTURE §1.17). */
+export interface UpcomingPlanRow {
+  person: PersonRefDTO
+  loopId: number
+  label: string
+  solar: DayString
+  days: number
+}
+
+export type UpcomingRow = HomeResponse['upcoming'][number]
 
 const KIND_LABELS: Record<string, string> = {
   birthday: '生日',
@@ -44,12 +56,41 @@ export function computeUpcoming(rows: UpcomingDateRow[], today: string, windowDa
     if (next.days > windowDays) continue
     out.push({
       person: { id: r.personId, label: r.personLabel },
+      kind: 'date',
       dateId: r.dateId,
+      loopId: null,
       label: dateItemLabel(r.kind, r.label),
       solar: next.solar,
       lunarLabel: r.calendar === 'lunar' ? (next.lunarLabel ?? null) : null,
       days: next.days,
     })
   }
-  return out.sort((a, b) => a.days - b.days || a.person.label.localeCompare(b.person.label, 'zh-Hans-CN') || a.dateId - b.dateId)
+  return out.sort(compareUpcoming)
+}
+
+/**
+ * The whole block is one date-sorted list (SPEC §9.4): dates and 约定 mixed, ascending by solar day. `days` is derived
+ * from the same solar day, so it orders identically; the tiebreakers keep the order stable for one and the same day.
+ */
+export function compareUpcoming(a: UpcomingRow, b: UpcomingRow): number {
+  return (
+    a.solar.localeCompare(b.solar) ||
+    a.days - b.days ||
+    a.person.label.localeCompare(b.person.label, 'zh-Hans-CN') ||
+    a.kind.localeCompare(b.kind) ||
+    (a.dateId ?? a.loopId ?? 0) - (b.dateId ?? b.loopId ?? 0)
+  )
+}
+
+/**
+ * Merges the 约定 rows into the important-date rows. Plans outside the window are dropped defensively: the block is
+ * "the next 30 days", and an overdue 约定 is 人物页's business (SPEC §9.3 — the home page gets no reminder list).
+ */
+export function mergeUpcoming(dates: UpcomingRow[], plans: UpcomingPlanRow[], windowDays = UPCOMING_WINDOW_DAYS): UpcomingRow[] {
+  const rows: UpcomingRow[] = [...dates]
+  for (const p of plans) {
+    if (p.days < 0 || p.days > windowDays) continue
+    rows.push({ person: p.person, kind: 'plan', dateId: null, loopId: p.loopId, label: p.label, solar: p.solar, lunarLabel: null, days: p.days })
+  }
+  return rows.sort(compareUpcoming)
 }

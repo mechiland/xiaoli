@@ -3,6 +3,7 @@
 import { ChevronDown } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import { EvidenceMark, EvidenceRow } from '@/components/evidence'
+import { LastContactLine } from '@/components/interaction'
 import type { ClaimDTO, ImportantDateDTO, ProfileResponse } from '@/contracts'
 import { cn } from '@/lib/cn'
 import { anchorId } from '@/lib/links'
@@ -126,7 +127,7 @@ export function infoboxSummaryParts(p: ProfileResponse): SummarySegment[][] {
     if (i.birthday.next) seg.push({ text: `（${daysText(i.birthday.next.days)}）`, keep: true })
     parts.push(seg)
   }
-  if (i.lastContactAt) parts.push([{ text: '最后联系 ' }, { text: formatMsgDay(i.lastContactAt), keep: true }])
+  if (i.lastContactAt) parts.push([{ text: '最后一次聊天 ' }, { text: formatMsgDay(i.lastContactAt), keep: true }])
   if (parts.length === 0 && i.chats.length) parts.push([{ text: '共同聊天 ' }, ...i.chats.map((c) => ({ text: `『${c.chat.title}』` }))])
   return parts
 }
@@ -245,9 +246,10 @@ export function InfoboxFields({ profile, markOf }: { profile: ProfileResponse; m
           </ul>
         </Field>
       )}
+      {/* SPEC §9.5: not a bare timestamp — the day, how long ago, and what that conversation was about. */}
       {i.lastContactAt && (
-        <Field label="最后联系">
-          <span className="font-data tabular-nums">{formatMsgDay(i.lastContactAt)}</span>
+        <Field label="最后一次聊天">
+          <LastContactLine personId={profile.person.id} lastContactAt={i.lastContactAt} />
         </Field>
       )}
     </dl>

@@ -7,8 +7,22 @@ import { EvidenceMark, EvidenceRow } from '@/components/evidence'
 import type { ClaimDTO, ImportantDateDTO, PersonRefDTO, ReviewItem, ReviewRequest, Status } from '@/contracts'
 import { cn } from '@/lib/cn'
 import { personHref } from '@/lib/links'
-import { useReviewAction } from './data'
-import { editableText, formatImportantDate, isLabelEcho, formatPartialDate, HANDLE_KIND_LABEL, nextOccurrenceNote, personLabel, relationWord, STATUS_LABEL } from './format'
+import { useCloseLoop, useReviewAction } from './data'
+import {
+  editableText,
+  formatImportantDate,
+  isLabelEcho,
+  formatPartialDate,
+  HANDLE_KIND_LABEL,
+  loopDueLabel,
+  loopOpenedLabel,
+  loopSentence,
+  loopStateLabel,
+  nextOccurrenceNote,
+  personLabel,
+  relationWord,
+  STATUS_LABEL,
+} from './format'
 
 type ClaimItem = Extract<ReviewItem, { type: 'claim' }>
 
@@ -60,8 +74,10 @@ export function ItemRow(props: RowProps) {
 
 function PlainRow({ importId, sectionPersonId, sectionPersonLabel, selfId, it, index, fresh }: RowProps) {
   const review = useReviewAction(importId)
+  const close = useCloseLoop(importId)
   const [editing, setEditing] = useState(false)
   const status = it.item.status
+  const pending = review.isPending || close.isPending
 
   const content = (() => {
     const struck = textByStatus(status)
@@ -109,6 +125,18 @@ function PlainRow({ importId, sectionPersonId, sectionPersonLabel, selfId, it, i
             {status !== 'rejected' && nextOccurrenceNote(it.item) && <Meta>{nextOccurrenceNote(it.item)}</Meta>}
           </>
         )
+      case 'loop': {
+        // SPEC §9.9: the sentence a person would say, then the day it opened in small type. The direction is in the
+        // wording ("你答应…" / "她问你…，你没回"), never printed as promise/mine.
+        const meta = [loopOpenedLabel(it.item.openedAt), loopDueLabel(it.item)].filter(Boolean).join(' · ')
+        return (
+          <>
+            <span className={struck}>{loopSentence(it.item, personLabel({ id: sectionPersonId, label: sectionPersonLabel }, selfId))}</span>
+            <Mark it={it} index={index} />
+            {meta && <Meta>{meta}</Meta>}
+          </>
+        )
+      }
       case 'event': {
         const others = it.item.participants.filter((p) => p.id !== sectionPersonId)
         return (
@@ -145,7 +173,7 @@ function PlainRow({ importId, sectionPersonId, sectionPersonLabel, selfId, it, i
             ) : (
               <TextEditor
                 initial={editableText(it)}
-                label={it.type === 'relation' ? '改写关系' : '改写'}
+                label={it.type === 'relation' ? '改写关系' : it.type === 'loop' ? '改写这件事' : '改写'}
                 pending={review.isPending}
                 onCancel={() => setEditing(false)}
                 onSave={(text) => {
@@ -158,9 +186,21 @@ function PlainRow({ importId, sectionPersonId, sectionPersonLabel, selfId, it, i
             content
           )}
         </div>
-        {!editing && <Actions status={status} pending={review.isPending} onAccept={() => review.mutate({ it, action: 'accept' })} onReject={() => review.mutate({ it, action: 'reject' })} onEdit={() => setEditing(true)} />}
+        {!editing && (
+          <Actions
+            status={status}
+            pending={pending}
+            handledLabel={it.type === 'loop' ? loopStateLabel(it.item) : null}
+            onAccept={() => review.mutate({ it, action: 'accept' })}
+            onReject={() => review.mutate({ it, action: 'reject' })}
+            onEdit={() => setEditing(true)}
+            // 已经了结了 = confirm + close in one call; an item already closed by a later message has nothing to close
+            onClose={it.type === 'loop' && it.item.state === 'open' ? () => close.mutate({ it }) : undefined}
+          />
+        )}
       </div>
       {review.isError && <RowError message={review.error.message} onRetry={() => review.variables && review.mutate(review.variables)} />}
+      {close.isError && <RowError message={close.error.message} onRetry={() => close.variables && close.mutate(close.variables)} />}
     </EvidenceRow>
   )
 }
@@ -175,6 +215,8 @@ function textPatch(it: ReviewItem, text: string): ReviewRequest['patch'] {
       return { label: text }
     case 'event':
       return { summary: text }
+    case 'loop':
+      return { text }
     default:
       return {}
   }
@@ -238,14 +280,33 @@ function ChangeRow({ importId, it, index, oldIndex, fresh }: RowProps & { it: Cl
 
 // ---- actions ----------------------------------------------------------------------------------------------------
 
-function Actions({ status, pending, onAccept, onReject, onEdit }: { status: Status; pending: boolean; onAccept: () => void; onReject: () => void; onEdit: () => void }) {
+function Actions({
+  status,
+  pending,
+  onAccept,
+  onReject,
+  onEdit,
+  onClose,
+  handledLabel,
+}: {
+  status: Status
+  pending: boolean
+  onAccept: () => void
+  onReject: () => void
+  onEdit: () => void
+  /** 未结事项 only: "已经了结了" — confirms and closes in one click (SPEC §9.9) */
+  onClose?: () => void
+  /** what a handled row says instead of 已确认 (a closed loop reads 已了结) */
+  handledLabel?: string | null
+}) {
   // One rule for every row type. Desktop: a fixed 128 px right column. Under 640 px: always its own line under the
   // row text, right-aligned — never inline after a short statement, so a group's actions share one position.
-  const box = 'flex shrink-0 items-center justify-end gap-5 text-[13px] leading-7 sm:w-[128px] sm:gap-4'
+  // 未结事项 have a fourth action, which wraps onto a second line inside the same column and keeps the right edge.
+  const box = 'flex shrink-0 flex-wrap items-center justify-end gap-x-5 gap-y-0.5 text-[13px] leading-7 sm:w-[128px] sm:gap-x-4'
   if (status !== 'proposed') {
     return (
       <div className={box} data-row-state={status}>
-        <span className="text-ink-3">{STATUS_LABEL[status]}</span>
+        <span className="text-ink-3">{handledLabel ?? STATUS_LABEL[status]}</span>
       </div>
     )
   }
@@ -268,6 +329,11 @@ function Actions({ status, pending, onAccept, onReject, onEdit }: { status: Stat
       <button type="button" className={btn} onClick={onEdit}>
         改写
       </button>
+      {onClose && (
+        <button type="button" data-row-close className={btn} onClick={onClose}>
+          已经了结了
+        </button>
+      )}
     </div>
   )
 }

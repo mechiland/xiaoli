@@ -4,12 +4,12 @@ import { HomeView } from '@/components/home'
 import { indexLetter, sortKey } from '@/lib/pinyin'
 import { signInHref } from '@/lib/links'
 import { getDb } from '@/server/db'
-import { computeUpcoming, getHomeBlocks, type HomeBlocksResult, type UpcomingDateRow } from '@/server/home'
+import { computeUpcoming, getHomeBlocks, mergeUpcoming, type HomeBlocksResult, type UpcomingDateRow, type UpcomingPlanRow } from '@/server/home'
 import { getServerUser } from '@/server/session'
 import { homeEnv } from '../../../_home/load'
 
 // Home showcase variants on top of the signed-in account's real home data (dev only, dev/layout.tsx).
-// ?variant=collapsed | lunar | no-upcoming | long | empty-onboarding
+// ?variant=collapsed | lunar | no-upcoming | plans | long | empty-onboarding
 export const dynamic = 'force-dynamic'
 
 const SURNAMES = [...'安白蔡曹陈程戴丁杜范方冯付高葛龚顾郭韩何洪胡贾江姜金康孔赖梁廖刘龙卢陆罗吕马毛莫倪潘彭钱秦邱任邵沈石史宋苏孙谭汤陶田万汪魏温文伍夏萧谢熊严颜杨叶易殷尹于余俞袁岳章赵郑钟朱庄邹']
@@ -69,6 +69,22 @@ function lunar(r: HomeBlocksResult): HomeBlocksResult {
   return { ...r, blocks: { ...r.blocks, upcoming: computeUpcoming(rows, today, 31) } }
 }
 
+/** 约定 (SPEC §9.4) mixed into the real dates: the interaction module has no seed data yet. */
+function plans(r: HomeBlocksResult): HomeBlocksResult {
+  const people = r.blocks.index?.groups.flatMap((g) => g.people) ?? []
+  const p = (i: number) => people[i % Math.max(1, people.length)] ?? { id: 1, label: '林知夏' }
+  const day = (offset: number) => {
+    const [y, m, d] = r.today.split('-').map(Number)
+    const t = new Date(Date.UTC(y, m - 1, d + offset))
+    return t.toISOString().slice(0, 10)
+  }
+  const rows: UpcomingPlanRow[] = [
+    { person: { id: p(1).id, label: p(1).label }, loopId: 900201, label: '说好周末一起去看新家的装修', solar: day(2), days: 2 },
+    { person: { id: p(4).id, label: p(4).label }, loopId: 900202, label: '约了下个月一起吃饭', solar: day(21), days: 21 },
+  ]
+  return { ...r, blocks: { ...r.blocks, upcoming: mergeUpcoming(r.blocks.upcoming ?? [], rows) } }
+}
+
 function long(r: HomeBlocksResult): HomeBlocksResult {
   const longLabel = '大学室友阿宁（杭州独立设计工作室合伙人兼周末陶艺课代课老师）'
   const first = r.blocks.index?.groups[0]?.people[0] ?? { id: 1, label: '林知夏' }
@@ -77,7 +93,7 @@ function long(r: HomeBlocksResult): HomeBlocksResult {
     blocks: {
       ...r.blocks,
       upcoming: [
-        { person: { id: first.id, label: longLabel }, dateId: 900101, label: '第一次一起去景德镇做陶瓷的纪念日', solar: r.today, lunarLabel: null, days: 0 },
+        { person: { id: first.id, label: longLabel }, kind: 'date' as const, dateId: 900101, loopId: null, label: '第一次一起去景德镇做陶瓷的纪念日', solar: r.today, lunarLabel: null, days: 0 },
         ...(r.blocks.upcoming ?? []).slice(0, 3),
       ],
       recentlyUpdated: [
@@ -116,6 +132,7 @@ export default async function HomeShowcasePage({ searchParams }: { searchParams:
   if (variant === 'collapsed') r = collapsed(r)
   else if (variant === 'lunar') r = lunar(r)
   else if (variant === 'no-upcoming') r = { ...r, blocks: { ...r.blocks, upcoming: [] } }
+  else if (variant === 'plans') r = plans(r)
   else if (variant === 'long') r = long(r)
   else if (variant === 'empty-onboarding') r = { ...r, isEmpty: true, needsOnboarding: true }
   return <HomeView initial={r} tz={env.APP_TZ} />

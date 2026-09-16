@@ -151,6 +151,19 @@ Round 1 (2026-09-15). Additive to ARCHITECTURE; nothing here changes a documente
 - **W2-G2 (orchestrator)**: 第 1 波标注 agent 写在本节的推理笔记同样移到 `.dev/superseded-gold/superseded-wave1/decisions-annotator-wave1.md`（gitignored），避免新标注 agent 通过允许读取的本节看到旧金标准的判断。
 - gold-change: 聊天记录_20260405_223012 39f5ec7f20c0 — 补漏：idx 172（3月12日"深圳有家做出行的在聊，蓝鲸出行，岗位是技术负责人"）只是在谈岗位，诱导推断"已在蓝鲸出行工作"，按 SPEC §8.7"不推断原文没有说的"应列为 inference_trap；同一段对话的 170（n15）、173–174（n13）已列，172 属漏标。新增 negative n18，其余不变。
 - gold-change: 聊天记录_20260910_183020 588eaea919f8 — 补漏：idx 27（果果奶奶"我在校门口了，果果今天几点放学"）是 SPEC §8.7 点名的即时协调（"我在门口"），应列为 coordination negative；同类到达通知 117–118（n14）和紧接着的 28（n12）都已列入，27 属漏标。新增 negative n28（evidence [27]），c22/r4 仍引用 27 作为证据，其余不变。
+- **W5-G1 (annotator, 2026-09-16)**: goldVersion 1 → 2：给 7 份金标准（4 synthetic + 3 real）补上 `loops` 与 `conversations`；`claims`/`handles`/`relations`/`dates`/`events`/`negatives` 一字未动，所以第 4 波之后那次比较仍然成立。这是扩展不是修改，但 §7.6 对每个 lockKey 的第 2 个及以后版本一律要求 gold-change 行，故逐条列在下面。标注规则：(a) loop 只记原文明确说出口的承诺、提问、约定（SPEC §7 交互层、§8.7），"应该会""有空的话"不记，"后文有人答了的提问"不记；(b) 只记在开启它的那段会话（3 小时间隔切段 = 一个抽取窗口，§8.5）结束之后仍然未结的 loop —— 同一窗口里开启又了结的事项管线表达不出来（`closes` 只能引用上一窗口输入里带进来的 loop id），写进金标准只会制造够不着的召回；(c) `direction` 一律按"下一步该谁动、从 self 这边写"，self 欠的（含回答 self 自己提的问题以外的、别人问 self 的问题）= `mine`；(d) `conversations` 只标有实质内容的会话段，纯寒暄段（天气、表情、早晚安、复读）不标 —— 按 §8.8 这类窗口本来就该输出 `segment: null`，标了会把 `topicCoverage` 拖低而不说明任何问题；`topics` 取两三个"摘要绕不开"的词；(e) 判断上站不住的条目一律 `optional: true`。
+- **W5-G2 (annotator, 2026-09-16)**: SPEC §7 的四类 loop 覆盖不了群聊里的**广播式请求**（老师"请各位家长把紧急联系人信息私发给我"、父亲"你们谁有空帮我问问租金"）：没人承诺，也不是约定，措辞上又不都是问句，但用户确实欠着。这次一律标成 `optional: true`（能落进 `question` 的按 `question`，否则 `plan`），等产品定了归属再改。另一处边界：SPEC §8.7"即时协调两边都不记"与 §7"约好但还没发生的事 = plan + mutual"在"约明天几点吃饭"这类句子上直接冲突；本次采用的分界是——句子指向一个尚未发生的未来场合就是 loop，句子说的是此刻（"我到了""几点放学"）就两边都不记。相应地，已有的 coordination negatives（如 20260405 的 n6、20260910 的 n21）仍然只约束 claim，不约束 loop。
+- gold-change: 聊天记录_20260405_223012 f16e92d975d6 — 见 W5-G1：新增 loops 9 条（optional 3，其中 2 条带 closedBy）与 conversations 17 段，goldVersion 改为 2，其余字段不变。
+- gold-change: 聊天记录_20260910_183020 dc700fd3d2d4 — 见 W5-G1：新增 loops 5 条（optional 4，其中 1 条带 closedBy）与 conversations 12 段，goldVersion 改为 2，其余字段不变。
+- gold-change: 聊天记录_20260912_095501 b2e8fbda70e8 — 见 W5-G1：新增 loops 8 条（optional 6，其中 1 条带 closedBy）与 conversations 12 段，goldVersion 改为 2，其余字段不变。
+- gold-change: 聊天记录_20260914_211545 658f7b5caf8d — 见 W5-G1：新增 loops 10 条（optional 4，无 closedBy —— 这份导出里没有任何一件事在后文被明确了结）与 conversations 13 段，goldVersion 改为 2，其余字段不变。
+- gold-change: real-9c94d9e7d17496e9 c872feee5f7e — 见 W5-G1：新增 loops 1 条（optional 1，无 closedBy）与 conversations 1 段，goldVersion 改为 2，其余字段不变。
+- gold-change: real-df2f003ef7b4c7d7 1f20affe19dc — 见 W5-G1：新增 loops 1 条（optional 1，带 closedBy）与 conversations 2 段，goldVersion 改为 2，其余字段不变。这份导出里其余待办都在同一个窗口内开启并了结，按 W5-G1 规则 (b) 不入金标准。
+- gold-change: real-c83d048e7bbc3ad6 6701d0f280b8 — 见 W5-G1：新增 loops 2 条（optional 0，其中 1 条带 closedBy）与 conversations 4 段，goldVersion 改为 2，其余字段不变。
+- **W5-G3 (annotator, 2026-09-16)**: 冻结之后按 §7.6 跑 `validate-gold --source synthetic`，看 intent.json 的分歧告警（只给埋点 id，不给内容）。4 条 loop 分歧，逐条回到原文重判后全部采纳，理由如下。(1) `loop-move-shenzhen`（20260405 与 20260914）："这下要搬去深圳了"+"四月底吧，房子还没找"。我第一遍按 SPEC §7 的四类排除了它 —— 既不是对我的承诺，也不是双方的约定，只是对方宣布自己要做的事。但 §7 的本意是"还有什么没了结"，对方说出口、尚未发生、用户明显会想被提醒的事属于这一类；20260914 里它还在 idx 36（"到深圳了"）被后文明确了结，跨窗口，正是 close 检测该抓的东西。补为 `plan` + `theirs`（四类里没有"对方自己的待办"，`kind` 只能就近取，`kind` 不匹配按 §7.3 只报告不扣分）。(2) `loop-book-room`（20260912）：**这条没有采纳，告警保留**。埋点指的是 idx 122"我来订（包厢）"，它在 idx 123"别铺张，家里吃就行"被否掉，两条落在**同一个 3 小时窗口内**（20:10–20:13）：按 §8.8 该窗口结束时这件事已经了结，模型不该把它当未结事项输出，而 `closes` 只能引用上一窗口输入里带进来的 loop id，所以管线在结构上表达不出它 —— 写进金标准只会造出一条够不着的召回。判断是埋点与 §8.5/§8.8 的窗口机制之间的冲突，不是金标准错，留给 eval-synthetic 决定要不要改生成器（core request 未提，先记在这里）。查这条时另外发现 idx 205"在店里，我安排包厢"（中秋，到导出结束仍未了结、跨窗口）是真漏标，已补为 k9 `optional: true`（与 k8"中秋25号在火锅店聚餐"语义相邻，避免一件事占两条召回）。(3) `loop-wedding-plan`（20260914）：k3 已经覆盖，只是证据停在 idx 66/67（提出）而没有带上 idx 175（"婚礼定了，10月3号中午，九江"，确认），补进证据。没有任何一条是为了抬分数改的，改的都是我自己回看原文后认为原判有误的。
+- gold-change: 聊天记录_20260405_223012 35c0ddf727cd — 见 W5-G3：新增 loop k10（四月底搬去深圳，plan/theirs，未了结），其余字段不变。
+- gold-change: 聊天记录_20260912_095501 fcc0c0029a88 — 见 W5-G3：新增 loop k9（安排中秋聚餐的包厢，promise/theirs，optional，未了结），其余字段不变。
+- gold-change: 聊天记录_20260914_211545 2fde71dd8233 — 见 W5-G3：新增 loop k11（四月底搬去深圳，plan/theirs，closedBy 36 done），k3 证据补入 idx 175，其余字段不变。
 
 ## parser
 
@@ -286,6 +299,21 @@ Round 2 (2026-09-15, fix-up: coherent seed profiles).
   - Mix (today 2026-09-15): 5000 claims, ≈80% confirmed, 14% proposed, 3.2% superseded (159 linked), 2.9% rejected, 33% with validFrom; ~6,240 messages, 143 relations, 116 events. Build ≈ 0.35 s; total `pnpm seed` ≈ 21 s.
   - `seed.test.ts` adds a coherence test. It checks: at most one current confirmed job and one current home per person, no repeated statement per person, at most one wedding, superseded validity ordering, every AI claim's evidence sharing wording with its statement, fathers/siblings/堂 cousins sharing surnames, one spouse per person, and long-profile's daughter carrying her husband's surname.
 
+Round 3 (2026-09-16, wave 5: the interaction layer).
+
+- **V13 Segments are planted conversations, not a partition of the chat.** The seed's messages are scattered — a chat averages one or two messages a day at random hours — so the 3-hour session rule that `planWindows` and `groupSegments` use would cut it into ~6,000 one-message sessions, and a segment over them would be neither realistic nor useful. Instead `scripts/seed/conversations.ts` holds ~30 hand-written dialogue scripts and `Builder.conv()` plants one as a burst of real messages on a given day, minutes apart. 41 segments over 40 bursts, every one of the 9 chats covered; `pnpm seed` reduces the random filler by exactly the number of messages the bursts added, so the account stays at 6,243 messages.
+  - The span is resolved in `finalize()` **after** seq assignment, from the real message list: `startSeq`/`endSeq` are the burst's first and last message, and `messageCount`/`startedAt`/`endedAt` are recomputed over everything actually sitting in that span — including an unrelated filler message that happened to land inside it. So the row can never disagree with the messages, which is what every derived conversation and rhythm depends on.
+  - `segment_participants` are exactly the people who spoke inside the span, with their real message counts (self included: 「谁在这段里说过话」 does not exclude the user).
+  - Planted on purpose: `split-a`/`split-b` are one conversation cut at a window boundary minutes apart (they must regroup into ONE conversation — the I2 rationale), `same-day-morning`/`same-day-evening` are two bursts eleven hours apart on the same day (two conversations), one `hidden` segment (a throwaway exchange about the weather), one `sourceKind: 'manual'` segment (a summary the user rewrote). `review-empty` deliberately gets no segment: it is the import that found nothing.
+  - The build asserts all of this (`conversationsByPerson`, `groupSeedSegments` in `dataset.ts` — a local copy of the 3-hour rule, since verify-seed may not depend on the wave-5 interaction module), so a future change to message times fails the seed instead of silently producing a wrong timeline.
+- **V14 `loops.text` is a bare fragment.** `prompts/extract.v9.md` §8 says the extractor writes 「不写主语人名，不带句号」 and `lib/loop-text.ts` composes 「你答应…」/「X 问你…，你没回」 at render time. Round 3 first stored whole sentences and the person page rendered 「你答应你答应帮她表妹看简历」. `seed.test.ts` now pins the rendered string of the tagged loops through `loopSentence`, so the seed can only ever hold what the extractor would hold.
+- **V15 `direction` = whose move is next**, not who spoke: `mine` = the user owes it, `theirs` = the other person owes it. So 「她问我，我没回」 is `question` + `mine`. The SPEC §7 bullet said `theirs`; the prompt, ARCHITECTURE and `loopSentence` always said otherwise and SPEC has been corrected. The seed carries both branches (`question-mine-open` on long-profile, `question-theirs-open` on private-alice).
+- **V16 12 loops covering every state the UI renders.** open promise + mine (recent), open question + mine (unanswered), open question + theirs, plan + mutual with `dueAt` inside 30 days (confirmed, on long-profile) and a second one `proposed` (on lunar-birthday-soon) so 首页即将到来 has rows, one closed `done` (closing message is a real later message in the same chat), one closed `dropped`, one expired (no `dueAt`, opened 300 days ago), three `proposed` (one on long-profile for the unconfirmed styling, two in `review-mixed` for the import result page), and one on a group-only contact so `initiatedByMe` comes back null. `openedMessageId`/`closedMessageId` are always real messages and the close is always the later seq — the seed asserts it.
+- **V17 Rhythm subjects.** `long-profile` = 19 conversations (14 this year, median gap 19 days, 6 me / 7 them) so the full sentence renders; `sparse-profile` (also tagged `rhythm-small`) = 3 conversations so the 「样本不足」 path renders (`medianGapDays` null); `leap-month` (tagged `group-only`) = 2 group-only conversations so both initiator counts are null. `private-alice` sits exactly on `MIN_RHYTHM_CONVERSATIONS` (5).
+- **V18 Manifest version 2** adds the `segments` and `loops` tag groups (`seed.segment(tag)`, `seed.loop(tag)`, and the `segment:` / `loop:` prefixes in `manifestHasTags`). `ManifestRef`/`SeedRef` gain optional `chatId` and `text`. Tags: segments `hidden`, `manual`, `split-a`, `split-b`, `same-day-morning`, `same-day-evening`; loops `promise-mine-open`, `question-mine-open`, `question-theirs-open`, `plan-upcoming`, `plan-upcoming-proposed`, `closed-done`, `closed-dropped`, `expired`, `proposed`, `proposed-promise-theirs`, `proposed-question-mine`, `group-only`; persons `rhythm-small`, `group-only`.
+- **V19 Budgets still hold with the extra request.** The person page now fires `GET /api/people/:id/interaction` besides the profile, so `_smoke/perf-budgets` measures it too, at the same 300 ms bar. Measured against `next dev` on :3000 with the full seed account: page `/` 181.7 ms, `GET /api/home` 137.6 ms, page `/p/<long-profile>` 145.5 ms, `GET /api/people/:id` 119.9 ms, `GET /api/people/:id/interaction` 126.1 ms (median of navigations 2–4, first discarded).
+- **V20 Counts after wave 5** (`pnpm seed` twice, identical): 41 conversation_segments, 97 segment_participants, 12 loops, evidence 7,946 (+ 3 per segment, 2–3 per loop), messages 6,243, claims 5,000, 200 visible persons. Every import with a chat except `review-empty` and `unfinished` has conversations (2–7 each; `private-long-2` shows 7 conversations over 8 segments — that is the split pair regrouping).
+
 ## eval-synthetic
 
 Round 1 (2026-09-15). Everything in fixtures/synthetic is fictional. Planted details live only in `*.intent.json` (hidden from the annotator until freeze), so they are not repeated here.
@@ -350,6 +378,38 @@ Round 1 (2026-09-15). Everything in fixtures/synthetic is fictional. Planted det
   - Replay `20260915-180233` vs `20260915-171445`: every metric, error count and gate value is identical, except replay p95WindowMs (informational, ±2 ms). 0 duplicate persons in all 7 scored zips; judge 29 cached, 0 fallback, 0 live calls.
   - ARCHITECTURE §7.2 wording: core request eval-synthetic #4. GOLD_FORMAT.md tells annotators to list every name a sender goes by under that sender.
 
+- **E21 goldVersion 2: loops and conversations (wave 5, 2026-09-16).** ARCHITECTURE §7.2–§7.4. The whole extension is additive; the round-1 numbers had to stay bit-for-bit identical, and that was verified, not assumed (see "Proof" below).
+  - **Schema.** `goldVersion` accepts `1` and `2`; `loops?` and `conversations?` are optional. `eval:gold-template` now writes `goldVersion: 2` with `loops: []`, `conversations: []`. validate-gold adds: loops/conversations require goldVersion 2; `closedBy` in range and strictly after the opening evidence; `closedReason` only with `closedBy`; conversation spans in range, `endIdx >= startIdx`, and no two gold conversations overlapping (a message belongs to one conversation). Drift guard, freeze rules and the LOCK append-only check are untouched and apply to both versions.
+  - **The contract with extract is pinned, twice (core request eval-synthetic #5).** The first draft of this harness read `segments[].speakers` and `loops[].closedByIdx`; extract emits `participants` (objects, not strings) and `closedIdx`. Nothing threw. The fields read `undefined`, every interaction metric reported 0, and all three interaction gates passed — on nothing. That is a worse failure than a red test, so the names are now pinned: (a) `eval/tests/offline-contract.test.ts` assigns the real `OfflineExtractionResult` from `@/server/extract` to the harness's mirror type, so a rename stops `pnpm typecheck`; (b) the same file runs the **real** `extractOffline` over the committed `聊天记录_20260912_095501.zip` with a stubbed in-memory LLM (no live call, no cassette — the stub reads the window's own localSeqs and open-loop ids out of the prompt), asserts the exact key sets of `segments[0]`, `loops[0]` and `closes[0]`, and then scores that result and asserts the interaction counters are non-zero. A last test re-scores the same result with two fields renamed and asserts the metrics go quietly to 0 — the failure mode is in the suite, named, so nobody has to rediscover it. `eval/src/entries.ts` declares the three arrays **required**, not optional, for the same reason: an optional field that goes missing is still assignable.
+  - **Absent ≠ empty.** A gold file without the `loops` key was never annotated for loops, so that zip contributes **nothing** to the loop metrics — its predicted loops are not counted as FPs and its (non-existent) gold loops not as FNs. Same for `conversations`. Scoring a v1 file's predicted loops as 0 % precision would have punished a capability nobody annotated. `intentDisagreements` follows the same rule, so a planted loop raises no warning against gold that has no loops array.
+  - **Matching.** loops = same person key + judge step A over `text` (the existing `matchClaims` prompt and client — no third judge call type), one-to-one greedy, the same two passes as claims. The match input's person key is `loops:<key>`, so a loop call can never collide with that person's claim call in the judge cache. A `kind`/`direction` mismatch on a matched pair is reported as `loopKindMismatch` (metric + `details.interaction.loopKindMismatch`), never a miss: only the text decides. conversations = fully deterministic, no LLM: the run's segments are grouped with `SESSION_GAP_HOURS` from `@/contracts` (never a literal 3), a prediction matches a gold conversation at ≥ 50 % of the **gold** span, and summary quality is only topic coverage (normalized substring of the joined summary + topics). Cheap and stable on purpose — an LLM judging summaries would add cost and variance for a number nobody gates.
+  - **Grouping is the product's own `groupSegments`.** `eval/src/conversations.ts` imports it from `@/server/interaction` (§7.3 names it for a reason: a harness that grouped its own way would be measuring a grouping nobody ships, and `groupSegments` is the one with the boundary-drift and reverse-order tests). The harness only adapts shapes — offline has one chat, so `chatId` is a constant, `startSeq`/`endSeq` are the segment's idx span, and `startedAt`/`endedAt` come from the segment itself (extract emits them), falling back to the messages. Segments whose span is not inside the export are dropped before grouping: they are already counted by `segmentInvalidEvidence` and must not be able to stretch a conversation over a corrupt index. The wave-5 first draft had a local copy, written while `server/interaction` still threw `not_implemented`; it is gone.
+  - **Closes: which field each metric reads (wave 5 follow-up).** extract's offline result carries the close twice — `loops[].closedIdx` (the resolved state after every window's closes were applied and the invalid ones dropped) and `closes[]` (the raw events, keyed by `loopIndex`). `loopCloseRecall` reads **`closedIdx`**, because that is the field the app stores as `loops.closed_message_id` and therefore what a user would see; reading the event list would score closes that validation later threw away. `loopFalseClose` reads **`closes[]`**, because "which window claimed this close" is a property of the event and is not on the loop at all.
+  - **`loopFalseClose` counts only mechanically impossible closes (DECISIONS I13).** The first version implemented §7.4 literally — a close of a loop gold leaves open — and I flagged in this file that one honest model misjudgement would then fail the whole source. The orchestrator agreed and changed the definition (I13). Now it counts exactly three things, all of which `validateOutput` already drops, so a survivor is a pipeline or harness bug and the 0 gate is safe: a `loopIndex` that is not a loop of this run; a close in a window **earlier** than the window that first produced the loop (it cannot have been shown that loop); and closing evidence that is not strictly after the opening message. A model closing something gold leaves open is a loop **false positive** and costs the 0.80 precision gate instead. `details.interaction.falseCloses` carries the reason string, so a failure names which of the three it was. The check runs whether or not the zip has gold loops: it is about the pipeline, not about the annotation.
+  - **Loop recall is reported, NOT gated, in this round.** Gated: loops `precisionLenient` ≥ 0.80 (a wrong "you promised X" is worse than a missed one), `loopFalseClose` = 0, `segmentInvalidEvidence` = 0. 未结事项 is a brand-new capability with no baseline run, so a recall gate would be a number invented on the spot. `pnpm eval` writes a per-source warning saying so in plain words, and the report and the compare table both label the row. Raise both once two eval runs exist (§7.4).
+  - **Invalid evidence and sensitive text.** Segments and loops have their own counter, `segmentInvalidEvidence` (gate 0), so `invalidEvidencePost` stays exactly the claims/handles/relations/dates/events number it always was. Both run over **every** predicted segment and loop, annotated or not: they are mechanical checks on pipeline output, not match metrics. `sensitiveInStatement` extends to loop `text` and segment `summary`/`topics` under the same gate 0.
+  - **The judge cache was protected.** Loop FPs are classified in their own `classifyFps` batches, appended after the five round-1 types, so those batches — and therefore every committed `eval/judge-cache/**` key — are byte-identical. `judge-fp.v1.md` is deliberately **not** edited and **not** bumped to v2: the cache key is `sha256(promptVersion + JSON(input))`, so a new judge prompt version would miss every cached answer and force `judgeFallback: true` in replay, which fails every gate. Only `FpItemType` gained `'loop'` (a value in the input JSON, which the existing label rules handle unchanged).
+  - **Proof (this is the "verify, don't assume" part).** Same 4 committed synthetic gold files, same cassettes, same judge cache, `--prompt extract.v7`, run once on a `git worktree` of HEAD's `eval/src` and once on this one (everything else identical): every number in `sources`, `zips`, `gates`, `usage` and `gold` is identical except `p95WindowMs` 3218 → 3220 ms (wall clock). The only structural differences are the added keys (`loops`, `interaction`, `errors.loops`) and 6 new gates, all passing on synthetic (`loops.precisionLenient` null → passes, `loopFalseClose` 0, `segmentInvalidEvidence` 0). `judge 28 cached, 0 fallback` in both. `eval/tests/interaction.test.ts` makes the same claim as an explicit regression test: the same v1 gold scored against a pred with loops/segments and one without gives identical per-type metrics, identical errors/subLabels, identical gates, and null (not 0) loop ratios. `pnpm eval:validate-gold` output is unchanged, warning for warning.
+  - **Report and comparison.** The report carries `metrics.loops` (full row: P/R lenient+strict, yieldPer100, error taxonomy) and `metrics.interaction` (`loopCloseRecall`, `loopFalseClose`, `loopKindMismatch`, `conversationCoverage`, `topicCoverage`, `segmentInvalidEvidence`, plus the raw counters so sources can be micro-averaged). `--compare` prints a real side-by-side table (it printed one line before) and writes a `triage` block per source: the 分流 rule of extract.v9 moves text that used to become a claim into a segment or a loop, so `claims.predicted` / precision / recall **will** move for reasons that are not claim quality. The table puts claims n, claims FN, loops n and segments n on adjacent lines with that sentence attached, instead of leaving it to be discovered in the per-type table.
+  - **Synthetic fixtures.** `PlantedDef.type` gains `loop` and `conversation`, `LineOpts` gains `c` (the ids a message *closes*). Planting is metadata only: the ZIP bytes of all 7 fixtures are byte-identical after regeneration (checked by sha256), so frozen gold, `messagesSha256` and every extract cassette stay valid. `聊天记录_20260405_223012` (promise made 2025-10-28 and kept 9 days later, an open promise, an open promise-to-explain, an open dated plan, 2 conversations), `聊天记录_20260914_211545` (a dated plan opened and kept 26 days later, an unanswered question, a dated plan still open at the export end, 2 conversations) and `聊天记录_20260912_095501` (a promise dropped in the same scene, an unanswered question, 2 dated plans, 3 conversations) plant the material; the intent files record `loopKind`, `direction`, `dueAt`, `closedBy`/`closedReason` (only when the close is inside that export) and conversation `startIdx`/`endIdx`/`topics`. Intent files stay hidden from the annotator until freeze (§7.6).
+  - **PLAN §2 boundary.** PLAN forbids changing gold to make numbers look better. Adding new *categories* (loops, conversations) is an extension of what is measured, not a change to what existing gold says: no committed gold file was touched, no LOCK version was appended, no existing item changed, and the proof above shows the existing categories score identically. A later edit to an existing gold item would still need the `gold-change:` line and the annotator's hand.
+
+- **E22 The two reporting defects, the two-call split, and the 分流 block that had to go (wave 5 follow-up, 2026-09-16).** DECISIONS I16/I17. The live `extract.v9` run (`eval/reports/synthetic/20260916-070918.json`) reported `loops.predicted = 0` and `conversationsPredicted = 0` for a run that had produced 12 loops on one zip and 22 segments across four. Both numbers were false, and both were false **in the same direction** — "the model produced nothing" — which is the direction that makes a dead feature look measured and fine. That is the I14 failure mode again, so the fix is written down as a rule, not as two patches.
+
+  - **The rule: `predicted` is what the run produced; only the RATIOS may go null.** "Absent ≠ empty" (E21) was right about the *match* metrics and wrong about the counts. A gold file with no `loops` key still cannot say whether a loop is right — so no TP, no FP, no FN, no judge call, and precision/recall/`conversationCoverage` stay `null`. But the count is not a match metric. `TypeCounts` now carries **`scored`** next to `predicted`: `scored` is the precision denominator, `predicted` is the truth. They differ only for `loops` on gold without a `loops` key. Reporting 0/12 instead would have been the mirror-image lie ("the model got every loop wrong") and would have failed the 0.80 gate on a number nobody measured.
+  - **Defect 1 (`loops.predicted`).** `scoreZip` built its loop item list as `loopsAnnotated ? predLoops : []`, so the count came out of an empty array. It now always builds from `pred.loops`; the FP pass skips loops entirely when gold has none (no judge call is spent, `errors.loops` stays all-zero), and `counts.types.loops.scored` is 0 in that case.
+  - **Defect 2 (`conversationsPredicted`).** `groupRunSegments` only ran inside `if (conversationsAnnotated)`, so with 22 segments in hand the grouping never ran. It now always runs — `conversationsPredicted` is what the product's own `groupSegments` makes of the run's own segments — and only the *matching* against gold is conditional.
+  - **The tests are the deliverable.** `eval/tests/interaction.test.ts` → "DEFECT GUARD (I16): predictions are reported even when gold cannot score them": a run with 3 loops, 1 close and 3 segments scored against a goldVersion-1 file must report `loops.predicted 3`, `predictedCloses 1`, `segments 3`, `conversationsPredicted 3`, and `precisionLenient / precisionStrict / recallStrict / recallLenient / conversationCoverage / topicCoverage / loopCloseRecall` all **null**, with `fp = 0`, an all-zero `errors.loops` and no judge call. Both defects fail that test. Two more cover the reader-facing side: the gate note says "3 loops predicted, none scored", and `summaryLines` prints `n=3` next to "no gold zip annotates loops". `eval/tests/offline-contract.test.ts` makes the same assertion on the **real** `extractOffline` output (stubbed LLM, no cassette, no live call) scored against the same gold with its `loops`/`conversations` keys removed — real pipeline, real counts, null ratios.
+  - **One round-1 number legitimately moves: `yieldPer100Total`.** It counts everything the pipeline emitted per 100 messages, so it now includes loops. It already did so whenever gold *was* annotated; the fix only removes the inconsistency where the same run yielded a different total depending on whether the annotator had got there yet. Per-type metrics, every gated scalar and the error taxonomy are unchanged (proof below).
+  - **Both prompt versions are in the report.** `EvalReport.interactionPromptVersion` sits next to `promptVersion`. It is **observed**, not declared: `eval/src/usage.ts` wraps the `LlmClient` handed to `extractOffline` and reads the prompt version off the calls the run actually made, falling back to `extract.INTERACTION_PROMPT_VERSION` only when no interaction call was issued (and warning when the constant exists but 0 calls were made). `summaryLines` prints it on the header line.
+  - **The cost of the split is in the report, split.** `usage.byCall` = `{extract, interaction, dedup, other} × {inputTokens, outputTokens, calls, failedCalls}`, counted by the same wrapper. It does not trust `extractOffline`'s own total — it compares against it and writes a `usage mismatch` warning when they disagree, which is how a second call quietly falls out of a cost report. The bucket rule does **not** rest on `purpose`: extract sends the interaction call with `INTERACTION_PURPOSE = 'other'`, so the split keys on the prompt version (`interaction.*`, or exactly `INTERACTION_PROMPT_VERSION`). `eval/tests/offline-contract.test.ts` pins that end to end against the real calls, because a rename of the purpose or the version would otherwise move the interaction cost silently into the extraction bucket. `--compare` prints `cost A / cost B / cost Δ` per bucket.
+  - **`--compare` guards the interaction version, one step softer than gold sha.** Two *different* non-null interaction prompts is a refusal (`throw`), like a gold-sha mismatch: two prompts moved at once and no row of the table is attributable. `null` on one side is the split itself being measured (I17), which is a legitimate comparison, so it is a loud `warnings[]` entry printed as `⚠ …` at the top of the table instead. Mode and model mismatches are flagged the same way. Old report files (no `interactionPromptVersion`, no `usage.byCall`) still compare — both read as null/zero.
+  - **The 分流 block is gone, and what replaced it says less.** It told the reader that "claims n down + segments/loops up = the routing rule working, not a regression". The live run went the other way — claims n 50 → 55 **and** precision down (I15) — so that sentence was an excuse waiting for exactly the regression it got. Since I17 there is no routing to appeal to: two independent calls, and the extraction call is not told the interaction layer exists. `CompareReport.triage` is now `claimsVsInteraction`, the same rows without the story, and `CLAIMS_VS_INTERACTION_NOTE` says the two are independent calls, that a claims change is a claims change, and that segments/loops rising neither explains nor offsets a claims precision drop. A test asserts the note contains "两次独立的模型调用" / "没有分流" and contains none of "是规则在起作用" / "the rule working" / "not a regression", so the excuse cannot come back by accident.
+  - **"0 loops" is never ambiguous again.** `windows[].interaction` (extract's own field) is counted as `windows.interactionFailed` / `interactionSkipped` per zip, and a per-source warning says how many windows contributed no segment and no loops because the second call did not land. Without it, a failed interaction call and a model that found nothing produce the same 0.
+  - **Regression guard (re-run, real result).** Two `git worktree`s of HEAD, both overlaid with the current working tree except that one keeps HEAD's `eval/src`; 4 **committed** synthetic gold files (the working-tree gold is being annotated right now and was deliberately not used), same cassettes, same judge cache, `--prompt extract.v7`, replay. Comparing gates **by `source|name`** rather than by array index: every gate value, threshold, op, `passed` and note is identical; every `sources.synthetic` metric is identical; every per-zip metric is identical; `usage` totals are identical (129,724 in / 8,932 out / 55 calls); `gold[]` and `passedBySource` are identical; judge 28 cached, 0 fallback, 0 live calls. The only numeric difference is `p95WindowMs` 3219 → 3217 ms (wall clock). The only structural differences are additions: `loops.*`, `interaction.*`, `errors.loops`, `*.scored`, `usage.byCall`, `interactionPromptVersion`, `windows.interactionFailed/Skipped`, 6 interaction gates (all passing), and one new warning. **Honest caveat:** in that replay there are no `interaction.v1` cassettes yet, so the interaction call cassette-missed on all 23 calls and was `failed` on 20 of 23 windows — the run produced 0 segments and 0 loops, and `loops.predicted = 0` was *true* there. The guard therefore proves the round-1 numbers are untouched; it does **not** exercise the defect fix on recorded data. That proof is the unit tests plus the real-`extractOffline` test above, and the next recorded run with interaction cassettes is what will show it on live output.
+  - **Checks.** `pnpm vitest run eval` 10 files / 141 tests, 0 failed. `npx tsc --noEmit` clean for `eval/**`, `scripts/synthetic/**`, `fixtures/**` (the errors it reports are in `server/extract/**`, which is mid-landing of the split). `pnpm eval:validate-gold` 7/7, 0 errors — unchanged; it now also warns `intent loop "loop-book-room" has no gold loop with overlapping evidence`, which comes from the annotator's in-progress goldVersion-2 file, not from this change. No live LLM call and no cassette was recorded. Both worktrees were removed.
+  - **ARCHITECTURE deltas for the integrator** (core-owned text, not changed here): §7.4 should say that `predicted` is reported whether or not gold scores it and that `scored` is the precision denominator; §7.5's `EvalReport` gains `interactionPromptVersion` and `usage.byCall`, `TypeMetrics` gains `scored`, `zips[].windows` gains `interactionFailed`/`interactionSkipped`, and the `--compare` sentence should name the interaction-version guard and drop the 分流 wording.
+
 ## integrator
 
 Wave 1 integration (2026-09-15).
@@ -412,6 +472,12 @@ Round 1 (2026-09-15).
 - **S8 Keyboard tests without a DOM test stack.** The repo has no jsdom/testing-library; rather than request dependencies, keyboard logic is pure (`components/search-overlay/lib/keys.ts`, unit-tested: ⌘K/Ctrl K toggle, "/" only outside text fields, IME, wrap-around) and the real keyboard flows run in `verify search/showcase` and `search/person-picker` checks (↓↑ Enter to `#claim-`, "/" typed into a field does not open, Esc, picker Enter/Esc).
 - **S9 Showcase stubs `POST /api/people`.** In wave 2 that route is review's 501 stub; the scenario fulfils it with 201 to verify the UI flow (Enter → navigate to the person) without adding a person to the seed account. The real round trip is to be re-checked once review's route lands.
 
+Wave 5 — 交互层 (2026-09-16).
+
+- **S10 「来往」 is passed through, and its absence is not an error.** `searchAll` calls `searchInteraction(db, ownerId, q, limit)` (`@/server/interaction`) with the raw trimmed query — that module does its own normalizing and returns the hits with their `href` and highlight ranges already built. If it throws, search logs one warn line and returns `interaction: []`, so 人物 and 信息 still answer. `SearchOptions.interaction` injects the function, so `server/search` unit tests never reach the interaction module. `types` is now read as "which group", with `all` meaning all three.
+- **S11 Overlay: 来往 last, one flat keyboard list.** The group renders third and last (SPEC §9.8: it matches more loosely), each row "日期 · 聊天名 · 匹配的那句话" with the server's ranges marked; the date is `8月12日`, with the year only when the hit is not from the current year. Its rows are appended to the same `items` array as 人物 and 信息, so ↑/↓, Enter, `aria-activedescendant` and the "没有找到 + 新建人物" empty state need no special case. Navigation follows the hit's own `href` (段落 → `chatHref(chatId, messageId)`, 未结事项 → `personHref(personId, { type: 'loop', id })`), with a fallback built locally if a hit ever arrives without one.
+- **S12 The 来往 scenario step stubs `/api/search`.** `searchInteraction` was still a stub while this was built, and the seed has no segments or loops, so `search/showcase` fulfils one search response containing all three groups to verify the group's position, the row's shape, the highlight and where a 段落 hit navigates (a real seed chat and a real message id, fetched first). To be re-checked against real data once the seed carries interaction rows.
+
 ## review
 
 Round 1 (2026-09-15). Public entries `@/server/review` and `@/components/evidence`; contract shapes unchanged.
@@ -435,6 +501,18 @@ Round 1 (2026-09-15). Public entries `@/server/review` and `@/components/evidenc
 - **R17 Undo instead of transactions (round 2).** Rows that must exist before the batch (the new claim for an edit of a confirmed claim or for a replacement, the new person for a split, manual items) are removed by an idempotent undo if the batch fails; the undo also restores the original claim or the handle's person. In a merge, the person rows (`mergedIntoId`) come last, after the review_log rows, so if a merge longer than one batch is cut off it can be run again.
 - **R18 Import review counts only shown items (round 2).** A handle without a person and an event without participants have no section, so `allHandled`/`empty` ignore them.
 - **R19 Evidence UI details (round 2).** On narrow screens (< 640px) the mark has an invisible hit area of about 27×27 px (`[data-evidence-hit]`); the glyph itself is unchanged. Inside the bordered block, BlockError drops its own left rule. For element shots in the showcase scenario, the top bar is switched to non-sticky just for the shot.
+
+Wave 5 (2026-09-16), 交互层. Public entries unchanged. Core requests review#1 (the `loop` review contracts) and review#2 (`owned()` over the interaction tables) landed during the wave; the local workarounds are gone and nothing in review shadows a contract type any more.
+
+- **R20 Loops are reviewable, segments are not.** `applyReview(db, ownerId, {type:'loop', id}, …)` supports accept / reject / edit / delete and writes `review_log` like every other type; `supersede` stays claims-only. `segment` fails fast: `applyReview` asserts reviewability before it loads the row (400 `validation_failed`), and `bulkReview` reports each segment as `{code:'validation_failed'}` instead of counting it as updated. The reason is SPEC §9.9: a 段落摘要 says what was said that day, it is not an assertion about a person, so there is nothing to confirm, and one import produces dozens of them. Editing or hiding a segment is `PATCH /api/segments/:id` (interaction). `GET /api/evidence/segment/:id` still works — reading the original messages is not reviewing.
+- **R21 Two table maps.** `TABLES` has an entry per `TargetType` so indexing it typechecks and so evidence can load a segment row; `REVIEWABLE` is `TABLES` minus `segment` and is what `syncImportStatus` sweeps. `conversation_segments` has neither `status` nor a review meaning, and iterating `TABLES` would have queried a column that does not exist.
+- **R22 Loop derivation lives in review too.** `state` / `expired` / `daysOpen` are computed by `server/review/loops.ts`, not imported from `@/server/interaction`: both modules are built in the same wave, and review must not depend on a sibling that is still mid-flight. Both read SPEC §7 交互层 and the same two constants (`LOOP_EXPIRY_DAYS_WITH_DUE = 14`, `LOOP_EXPIRY_DAYS_NO_DUE = 90`). The dependency points one way only: review never imports `@/server/interaction`, and `dueDay` here is the **canonical** reading of a PartialDate due date for the whole app — interaction imports it from `server/review/loops.ts` instead of re-deriving it, so the two sides cannot drift by luck. Rules: closed iff `closedMessageId` or `closedReason` is set (a loop closed by hand has only the reason), `state = closedReason ?? 'done'` when closed; `daysOpen` runs to the close day, else to today, never negative; a closed loop is never `expired`. A PartialDate `dueAt` means the **last** day it can stand for (`2026-09` → `2026-09-30`), so a plan is not called expired before its month is out.
+- **R23 Loop edit.** Patch `{text?, dueAt?, kind?, direction?}`, edited in place and confirmed, with the old values in `review_log.before` — the same shape as handles/relations/dates/events (R2), no history row. `dueAt: null` clears the due date and counts as a real edit; an empty patch is 400. `text` is trimmed and `text_norm` recomputed. `supersede` on a loop is 400: only a claim can be 已过时.
+- **R24 未结事项 group in the import review.** `sections[].loops` holds this import's AI loops, oldest `openedAt` first. They count towards `newCount`, `allHandled` and `empty`, but never towards `highConfidence` — a loop has no confidence score, exactly like handles/relations/dates/events (A6). An older loop that this import *closed* is not in the group: it keeps the `import_id` of the import that opened it, so it shows up in 「这次聊了什么」 with nothing to confirm (SPEC §9.9).
+- **R25 Merge folds `segment_participants`, sums on collision.** Loops move by `person_id` like claims. `segment_participants` has pk `(segment_id, person_id)`, so when both persons spoke in the same segment the insert is an `onConflictDoUpdate` adding `excluded.message_count` — the two rows counted different messages of one conversation. `moved` gains `loop` (loops moved) and `segment` (participant rows folded; the segment itself does not move, only who spoke in it). Chunk size is `rowsPerInsert(5)`, not `LINK_ROWS`, because the row has five columns.
+- **R26 Reopen-on-delete has to run before the messages do (ARCHITECTURE §11 step 7, milestone M7).** `loops.closed_message_id` is FK `on delete set null`, so once M is gone there is nothing left to tell a loop closed by a deleted message from one the user closed by hand (`closedMessageId` null, `closedReason` set). The `update loops set closed_message_id = null, closed_at = null, closed_reason = null where closed_message_id in (M)` therefore rides in the item batch, which commits **before** the batch that deletes the messages. A delete cut off between the two batches has already reopened; re-running it is a no-op. There is no post-hoc repair, and there cannot be one.
+- **R27 Segments are decided by their span, loops by their evidence.** Loops go through step 2/3 like any derived item. Segments go through step 2 (every evidence message in M → deleted, with participants and evidence) but are **excluded from the step-3 AI sweep**: a segment is tied to `[start_seq, end_seq]`, not to the assertions inside it, so an AI segment with no evidence rows at all must not be swept away while the messages it summarises are still there. Instead, after M is deleted, one pass over the import's chat deletes segments whose span is now empty and recomputes `message_count` / `started_at` / `ended_at` of the rest from the messages still inside the span (`coalesce` guards the two not-null columns). Both statements are idempotent recomputations, so an interrupted delete heals on re-run. `deletedItems.segment` counts both routes.
+- **R28 `segment_participants` is recomputed, not just pruned.** ARCHITECTURE §11 asks for the rows of persons with no remaining message in the segment to be dropped; the pass recomputes `message_count` from the messages still in the span first and then deletes the rows that came out 0, which is the same set and also stops a stale count from being carried into a later merge (R25). Scoped to the deleted import's chat, since every message in M belongs to it. The persons-created-by-this-import orphan sweep gained a `not exists (select 1 from loops …)` guard, so a person the import created but who still has an open loop is not deleted out from under it.
 
 ## extract
 
@@ -689,6 +767,178 @@ Overall critic fix round 3 (2026-09-16).
 
 - **X32 `mapLlmError` 尊重 retryable（orchestrator，2026-09-16）**：`no_api_key`/`unauthorized`/`insufficient_balance` → `fatal_error` + 新的 `WindowErrorCode` `llm_config`；default 分支改为按 `e.retryable` 决定 fatal 还是 retryable，不再把所有未列出的错误当成可重试。效果：无效 key 时 6 个窗口各失败 1 次（此前各 3 次），错误码保留到 `extraction_jobs.error`。
 
+
+Wave 5 — interaction layer (2026-09-16).
+
+- **X33 `prompts/extract.v9.md` = extract.v8 + the interaction layer; `PROMPT_VERSION` is now `extract.v9`.**
+  - `promptFeatures(version)` gains `interaction` (true from `extract.v9`). It gates **both** sides: `renderExtractPrompt` only prints the two new known-person lines, and `validateOutput` only looks at `segment`/`loops`/`closes`, when it is on. `extract.v1–v8` therefore render byte-identically and validate exactly as before — `prompts.test.ts` asserts that rendering the same `WindowInput` *with* `lastContact`/`openLoops` equals rendering it without them for v1, v5 and v8, and `validate.test.ts` asserts that a v8 call given all three keys produces the same output, the same `rawItemCount` and no drops. The hand-written v1 cassettes replay unchanged.
+  - Prompt changes on top of v8 (v8's own rules are untouched): two-layer intro (档案 / 来往); the input section documents 上次来往 and 未结事项; a fourth "做法" step; sections 7–9 for `segment` / `loops` / `closes`; the example JSON gains all three; "六个键" → "九个键，segment 没有内容时写 null".
+  - **分流 instead of delete.** v8's "即时协调（…）不记" line is replaced by "每句话先想它属于哪一层：长期事实 → claim；这次来往 → `segment.summary`；说出口还悬着的事 → `loop`；三者都不属于的即时协调不记"，加上"即时协调不进 claim，但它可能是 loop 或 segment 的内容"。The "还没发生的安排不记" rule now routes a stated arrangement to `loop`(kind=plan), and the transactional rule routes 报价/工期 to `segment.summary`.
+  - The three output keys are accepted at the top level for **every** version (they are in the contract now), but are ignored — not parsed, not counted in `rawItemCount` — when `interaction` is off. An unknown key outside the nine still fails the window (X4).
+  - **Eval consequence, not fixed this round:** the committed eval cassettes are `extract.v5` (and v6/v7/v8), so a plain `pnpm eval` replay now misses every extract cassette; it has to be run with `--prompt extract.v5` until v9 is recorded. Recording v9 on both sources is ≈ 0.18 M tokens (X20) and needs live budget; no live call was made in this wave. The interaction metrics of §7.4 (loops P/R, `loopCloseRecall`, `conversationCoverage`, `segmentInvalidEvidence`) have no measurement yet.
+- **X34 Validation (all behind `opts.interaction`; new drop reason `unknown_close`).**
+  - `segment` / `loops` / `closes` evidence goes through the same `checkEvidence` as every other item: out of window → `evidence_out_of_window`, only 【上下文】 messages → `context_only`, empty → `empty_evidence`, and (v7+ rule) only invisible kinds → `invalid_item`. Reading note: ARCHITECTURE §6 says a segment "with no non-context evidence" is dropped as `invalid_item` while the bullet above it names `context_only`. Implemented as `context_only` — the reason code stays the specific one; "the whole segment is dropped" is what actually happens either way, since a segment has nothing to keep partially.
+  - `segment`: `summary` shorter than 4 characters after normalisation → `invalid_item` (the schema's own `min(4)` catches the raw case and reports `summary:too_small` in `DroppedItem.fields`). At most one per window; a model that answers with a list keeps the first and drops the rest as `invalid_item`. `speakers` are resolved like any other person ref; an unresolvable speaker is dropped from the list, not the segment.
+  - `loops`: unresolvable person → `unknown_person`; a loop whose person **is** self → `self_loop` (`direction` is written from the user's side, so a loop between the user and the user is not one); a `dueAt` that is not a PartialDate is removed and the loop kept (same treatment as `events.happenedAt`); repeats of the same (person, normalised text) inside one window merge their evidence.
+  - `closes`: `loopId` must appear in some `known[].openLoops` of **this window's** input, and that loop's `openedAt` must be `<=` the `sentAt` of the earliest close-evidence message; otherwise `unknown_close`. Equal timestamps pass (a question answered in the same minute). A second close of the same loop in one window is `invalid_item`. This is the whole of the mechanical close check — whether a `promise` really is a commitment stays the prompt's job (ARCHITECTURE §6).
+- **X35 Sensitive guard: drop, not rewrite, for loop text and segment summary.** A claim has a useful generic form ("提供过手机号" is still a fact about a person); an unfinished thing or a conversation topic does not, so a loop whose `text` matches the patterns is dropped (like an event summary) and a segment whose `summary` matches is dropped whole. Sensitive `topics` are cut from an otherwise clean segment. `softenDayNumbers` runs first, so "5号之前把合同签了" stays a date and is not read as a house number. A new person the guard drops takes its loops and its speaker slot with it. This keeps the §7.4 gate `sensitiveInStatement` = 0 over loop text and segment summary/topics deterministic.
+- **X36 Persistence and stores.**
+  - `LoadedWindow` gains `chatId` and `span` (the window's own first/last message `seq` and `sentAt`). The segment's natural key is `(ownerId, chatId, startSeq, endSeq)`, so `proposeItems` upserts with `ON CONFLICT … DO UPDATE`: re-extracting a span overwrites summary, topics, counts and provenance in place (SPEC §8.8). Participants and `evidence` rows are **replaced**, not merged — a stale participant or evidence row would outlive the summary it describes.
+  - The span is the whole window, context messages included: the segment describes the window, and §8.4's ±20 context messages are part of what was said there. Overlapping windows therefore produce overlapping segments; regrouping them into conversations is `groupSegments()`'s job (§1.17), not extract's.
+  - **Participants are counted from the messages, not from the model.** `segment.speakers` only decides whether a person exists at all; `{personId, messageCount}` comes from the window's own senders, because the model cannot count and the row is what the 来往 rhythm is read from.
+  - Loops: one open loop per (person, `text_norm`) — a later window restating the same commitment merges evidence instead of inserting. Closes are `UPDATE loops SET closed_message_id, closed_at, closed_reason WHERE id AND owner_id AND closed_message_id IS NULL`, so an already-closed loop is never re-closed and import order cannot overwrite the message that actually ended it (SPEC §7 交互层).
+  - `itemsCreated` counts an inserted loop and an inserted-or-overwritten segment; a close is an update, not an item, and is not counted. `countProposed` (which decides `reviewing` vs `done`) now includes proposed loops; segments carry no status and are never reviewed one by one.
+  - `d1Store.loadWindow` fills `lastContact` (the latest non-hidden `conversation_segments` row of any chat this person spoke in, strictly before the window's first message — hidden is the user saying "don't show me this") and `openLoops` (that person's loops with `closed_message_id IS NULL` and `status != 'rejected'`, newest first, cap 12). `memoryStore` fills both from what the offline run itself has produced so far, so eval and the app show the model the same shape; `offline.test.ts` checks that a loop opened in window 0 appears in window 1's prompt with its id and can be closed there.
+  - `OfflineExtractionResult` gains `segments`, `loops`, `closes`, message refs as parsed-export idx like every other type; `closes[].loopIndex` points into `loops`.
+- **X37 Loop dedup rides the one dedup call per window (no second call).** Exact normalised text matches merge without the model. The rest travel in the **same** per-person group of the existing `dedup.v2` request, with candidate ids shifted by `LOOP_ID_OFFSET` (1e9) and new-item indexes by `LOOP_INDEX_OFFSET` (1e6); a returned duplicate is accepted only when both sides are in the same range, so a claim can never be merged into a loop. A window with no loops produces a byte-identical dedup payload, so the recorded dedup cassettes still hit. The per-request deadline in §6 has no room for a second call, and the dedup prompt is unchanged (no `dedup.v3`).
+- **X38 Core.** `server/db/owned.ts` had to list the three interaction tables before any owner-scoped query on them could typecheck (core request extract#7); core landed it during this wave, so the temporary `ownedInteraction()` cast was removed again and `d1Store` / `jobs.ts` / the tests use `owned()` and `withOwner<>()` like every other table.
+- **X39 Cassettes.** `server/extract/__fixtures__` now carries per-version scenarios: the six v1 failure cassettes are unchanged, plus one hand-written `extract.v9` cassette (a private chat where one promise is said out loud) that replays through the real llm adapter and asserts the whole offline path — v9 rendering → replay → validation → `memoryStore` → `segments`/`loops` in the result. No live LLM call was made in this wave.
+
+Wave 5 fix round — the interaction layer becomes a second call (2026-09-16).
+
+The measurement first, because the rest of this round follows from it. Same 4 synthetic zips, same frozen gold, v8 and
+v9 both recorded live the same day: claims P (lenient) 0.90 → 0.76 (gate 0.85), claims R (strict) 0.77 → 0.66 (gate
+0.70), handles P 1.00 → 0.875 (gate 0.90), transactionalAsClaimRatio 0.04 → 0.073 (gate 0.05) — and claims **count**
+50 → 55. The count going *up* while precision went down is what rules out the 分流 explanation: the model was not
+routing momentary content away, it was doing its original job worse with three more tasks in the same call
+(DECISIONS I15). The owner chose the structural fix (I17), not a prompt rewrite.
+
+- **X40 `PROMPT_VERSION` is `extract.v8` again; the interaction layer is its own call with its own prompt.**
+  - `prompts/extract.v9.md` stays in the registry and on disk — `--prompt extract.v9` still renders it for comparison —
+    but it is not the production prompt and nothing reads an interaction flag off a version any more.
+    `PromptFeatures` lost its `interaction` field; `promptFeatures('extract.v9')` is just v7/v8's features.
+  - `prompts/interaction.v1.md` + `INTERACTION_PROMPT_VERSION = 'interaction.v1'`. It is v9's sections 7–9 rewritten as
+    a prompt in its own right: its own intro ("你只做一件事"), its own 做法 (three questions over the fragment), the three
+    output sections, and an explicit "你不记录关于某个人的长期事实 …… 写了也会被丢掉" so the one job it has is the only
+    job it tries. `prompts.test.ts` asserts none of the extraction vocabulary (`newPersons`, `supersedesClaimId`,
+    `category`, `real_name`, `service_provider`) appears in it.
+  - **`validateOutput` is byte-identical to its extract.v8 self.** Verified, not assumed: `diff` against
+    `git show HEAD:server/extract/validate.ts` is empty apart from export keywords, a doc comment, and one `if (key)`
+    guard that only affects the interaction path. In particular `segment` / `loops` / `closes` are **not** tolerated at
+    the top level any more — they are unknown keys and fail the window, exactly as they did before X33. That is the
+    behaviour the passing gate run measured, and `validate.test.ts` now pins it.
+  - Same for `applySensitiveGuard`: identical to HEAD, with the loop/segment half moved to
+    `applyInteractionSensitiveGuard`. X35's reasoning (drop, don't rewrite) is unchanged; the "a dropped new person
+    takes its loops with it" clause simply disappeared, because the interaction output has no `newPersons`.
+- **X41 The interaction input is deliberately smaller than the extraction input.** `renderInteractionPrompt` renders
+  person id + label, `lastContact` and `openLoops` — **no confirmed `claims` and no aliases**. The claims list is the
+  bulk of the extraction prompt's input tokens and this call cannot use it, so the second call costs far less than the
+  first; the two together are nowhere near double. The extraction prompt now renders `renderKnown` with no interaction
+  branch at all, so every recorded extract cassette of v1–v9 replays byte-identically whatever the store fills in
+  (`prompts.test.ts` asserts this for v1, v5, v8 and v9).
+- **X42 `validateInteraction(json, input)` (`server/extract/validate-interaction.ts`)** carries over every §8.8 rule
+  that used to sit behind `opts.interaction`: evidence in window / not context-only / not all-invisible, `unknown_close`
+  (a loop id this window was never shown, or a close before the loop opened), one segment per window, summary < 4 chars
+  → `invalid_item`, loop `self_loop` and repeat-merge, malformed `dueAt` removed. One rule is **new**: a person ref the
+  window's `known` does not carry is `unknown_person`, and that includes every `tempId`. The interaction call has no
+  `newPersons` section, and the extraction call's tempIds belong to a call that ran in parallel and may have failed, so
+  there is nothing to resolve them against. This is also what makes the parallelism sound: the two calls share no
+  intermediate state, only the window.
+- **X43 The two calls go out together (`Promise.all`), and the pair is charged once.**
+  - `extractWindow` builds both tasks and awaits them together, so the window's wall time is `max(extract,
+    interaction)`, not their sum. `pipeline.test.ts` proves it rather than asserting it politely: the fake extraction
+    call refuses to resolve until the interaction call has been dispatched, and races a 2 s timeout that fails with a
+    message. Made sequential on purpose, that test fails; it was checked both ways.
+  - **Attempt clock.** The old `attemptClock` added every call's latency, which for two concurrent calls would charge
+    the window twice for time it spent once — in replay that is not an approximation, it is wrong. Calls now hand their
+    timing to a `defer` list and the pair is charged as `max(wall)`, `max(latency)`. `WindowOutcome.latencyMs` still
+    sums both, because that is what the calls cost; `attemptMs` is what the window waited (core request extract#10e).
+  - **Deadline slicing.** Both start with `timeoutMs = min(20_000, deadlineAt - now - 6_000)`; dedup is unchanged (only
+    with ≥ 4 s left); persistence keeps ≥ 2 s. The interaction call is **skipped, not failed**, when under 6 s remain
+    *at the moment it would start*. That check lives inside the interaction task, which is the honest place for it: the
+    extraction task runs first to its own `await`, so if dispatching it has eaten the budget the interaction call is
+    skipped instead of being sent with no time to answer. Tested with an injected clock the fake extraction call
+    advances.
+- **X44 Failure isolation, and what it is not.** The interaction task never throws and never returns an error the
+  caller has to handle: an LLM error, a `validation_failed`, or a thrown exception all come back as
+  `{ status: 'failed' }`. The window still counts `done`, `itemsCreated` is unaffected, the claims still persist, and
+  `WindowOutcome.interaction` records `'ok' | 'skipped_deadline' | 'failed' | 'not_needed'` (`not_needed` = empty
+  window, no call made; `dedup`'s vocabulary). The reverse does not hold: a failed extraction call retries the whole
+  attempt and discards that attempt's interaction result with it — the persistence call happens after both, so there is
+  nothing to roll back. Three tests cover the three failure modes plus the reverse direction, and
+  `cassettes.test.ts`'s `interaction-failed` scenario proves it end to end through the real adapter: the interaction
+  cassette is a recorded timeout, and the claim still lands.
+- **X45 `llm_calls`: the interaction call is logged as its own call, but not yet under its own `purpose`.** It carries
+  `promptVersion: 'interaction.v1'`, so cassettes key separately (two directories under
+  `server/extract/__fixtures__/cassettes/`, both replaying in `cassettes.test.ts`) and cost can be read per prompt
+  version. `purpose` should be `'interaction'`, but `LlmPurposeSchema` is core-owned **and** is what `CassetteSchema`
+  validates `purpose` against, so a literal `'interaction'` would make every hand-written interaction cassette fail to
+  parse. `INTERACTION_PURPOSE` is therefore `'other'` for now — still distinct from `extract` and `dedup`, which is
+  what `byPurpose` needs — behind a single exported constant, and core request extract#9 asks for the enum value. This
+  is a naming compromise, not a measurement compromise: nothing in the pipeline or the tests tells the two calls apart
+  by purpose, they all use the prompt version.
+- **X46 `eval-fill.ts` treats the interaction call as a window call.** `--allow-extract-misses` now gates any request
+  whose prompt version starts with `interaction.` as well, so a top-up run cannot quietly re-record the second call at
+  full token cost.
+- **X47 What this round does NOT prove.** The split restores the *extraction* prompt to the exact version that passed
+  every synthetic gate — that part is safe by construction, because `renderExtractPrompt` and `validateOutput` are
+  byte-identical to the v8 code that produced 0.90 / 0.77 / 1.00 / 0.04, and its cassettes replay unchanged. What is
+  **not** established is that the claims numbers come back in a live run: v8's gate run was a different process
+  (one call per window), and nothing here can rule out a second-order effect. It also says nothing about the
+  interaction layer's own quality — the gold still has no interaction annotations (I16), so loops P/R,
+  `conversationCoverage` and `topicCoverage` remain unmeasured. The only thing that settles either question is a live
+  run of `extract.v8` + `interaction.v1` on the same 4 zips against the same frozen gold. No live call was made in
+  this round.
+- **X48 `interaction.v2`: a loop needs a third threshold, because "said out loud" + "still unsettled" admits every
+  household errand.** The live run of the split (`eval/reports/synthetic/20260916-074900.json`) settled X47's first
+  question — every claims/handles/transactional gate came back (I20) — and exposed the second: the interaction call's
+  own **loop precision 0.556 against a 0.80 gate**, recall 0.71. The model is not getting things wrong; it is
+  recording things that should never be recorded. 16 of the loop false positives are annotated `should_ignore` and
+  all 16 are the same shape: 给留半个西瓜, 晚上过去拿西瓜, 把那个表情包发过去, 找找暑假阅读打卡的本子,
+  明天放学在东门顺路接果果, 回头细说面试安排的事, 私下问问老师换座位的事 … Nothing in the prompt forbade them.
+  The reason is a spec mistake, now corrected in §8.8: when §8.7's "即时协调不记" and §7's "约好但还没发生的是 plan"
+  were reconciled, the line drawn was **tense** ("a sentence pointing at a future occasion is a loop; a sentence
+  about right now is recorded nowhere") plus an explicit "the `coordination` negatives constrain claims only, not
+  loops". Those two sentences together licensed exactly this list — 晚上过去拿西瓜 is future-tense and coordination.
+  Tense is a necessary condition, not a sufficient one.
+  `interaction.v2` adds the missing third threshold, so a loop must pass all three: (1) said out loud, (2) still
+  unsettled when the excerpt ends, (3) **worth remembering the next time you see this person** — still has weight a
+  month later, the test being neither tense nor certainty but whether failing to do it would actually matter to the
+  relationship. The prompt carries the contrast list verbatim from the measured failures (record: 帮表妹看简历 /
+  下个月一起去看动画展 / 帮忙打听杭州的幼儿园 / 把那本书寄给她; do not record: 给留半个西瓜 / 晚上过去拿水果 /
+  发个表情包 / 找本子 / 顺路接孩子 / 回头细说), and `plan` is bounded to **an occasion you would put on a calendar**
+  (a meal, a visit, a trip, an errand with a date), not a within-the-day household arrangement. v1's own example was
+  part of the problem and is fixed: its `question` loop was 问了周六几点出发还没回, which is 即时协调 by extract.v8's
+  own words; the example now shows 帮忙看一下简历 and 问了搬家公司是怎么找的还没回. `interaction.v1` stays registered
+  so `--interaction-prompt interaction.v1` still renders for comparison.
+- **X49 The same-day end of that threshold is mechanical, so it is not left to the prompt — and what that costs.**
+  `validateInteraction` drops a loop whose `text` carries a same-day / immediate time marker **and** has no usable
+  `dueAt`, with the existing `momentary` reason. The word list is not a second list: `validate.ts` now holds
+  `MOMENTARY_WORDS` (the X26 claim vocabulary, unchanged in content) and exports `LOOP_MOMENTARY`, built from it plus
+  the spoken markers that only ever appear in a loop's text — 今晚, 晚上, 待会, 一会, 马上, 回头. One array on
+  purpose: the claim rule and the loop rule cannot drift. Deliberately absent: 下周 / 下个月 / 周末 / 国庆, so a dated
+  plan ("下个月一起去看动画展") survives; and a `dueAt` that parses as a partial date buys a pass, because that is what
+  a calendar occasion looks like.
+  Replayed against the recorded interaction answers of 20260916-074900, the rule catches **4 of the 16** false
+  positives (晚上过去拿西瓜, 明天放学在东门顺路接果果, 回头细说面试安排的事, 回头带去看苏苏工作室的门头) — and
+  **2 loops the frozen gold requires**: k6, whose gold text is literally 晚上看转过来的租房文章 (the *gold's own*
+  phrasing carries 晚上), and k7 把最近在追的剧名发过去, which the model emitted as 回头把在追的剧名发过去. A third
+  near miss, 这周把龙井寄过来, survives because the model filled `dueAt: "2025-12-14"` — the escape hatch is real and
+  the model does use it. No word list separates 晚上看…租房文章 from 晚上过去拿西瓜, so this is the price of having a
+  mechanical half at all, and it is pinned by name in `validate-interaction.test.ts` rather than left to be
+  rediscovered in a report. Arithmetic on that frozen output: predicted 36 → 30, tp 20 → 18, **precision 0.556 →
+  0.600**; goldMatched 12 → 10, **recall 0.706 → 0.588**. It buys precision, which is what this round is for, but it
+  is not free and it is not the main lever.
+  `validate-interaction.test.ts` also pins all 16 false positives by string with the layer that owns each, so a prompt
+  edit that re-admits one, or a validator rule that silently starts catching one, fails a test; the four "record"
+  examples are asserted to survive. `server/extract`: 153 tests green (was 144), full suite 780 green, typecheck clean.
+- **X50 Open tension: the frozen gold does not itself hold to threshold 3.** Gold k6 is 晚上看转过来的租房文章 and gold
+  k7 is 把最近在追的剧名发过去 — a same-evening reading favour and "send me the show's name", which the new §8.8
+  threshold and the contrast list ("发个表情包", "回头细说") tell the model **not** to record. The blind annotator and
+  the threshold disagree, so loops recall has a ceiling that no prompt or validator can lift while the gold stays
+  frozen (I16/LOCK). This is recorded, not acted on: gold is not extract-owned and re-annotating mid-round would
+  invalidate the comparison the split was measured with. If a live `interaction.v2` run comes back with precision at
+  or above 0.80 and recall below ~0.60, this is the first thing to look at.
+- **X51 What X48/X49 do NOT prove, and the honest estimate.** No live call was made in this round — the hand-written
+  cassettes were regenerated (the interaction ones move to `interaction.v2/`) and hand-written answers cover the rest,
+  so nothing here measures the model. The validator half alone puts precision at 0.600 (X49), which does **not** reach
+  the 0.80 gate: with 18 true positives the run may carry at most 4 false positives, so the prompt has to remove
+  **8 or more of the remaining 12** by judgement alone. Prompt changes of this kind are not reliably additive and the
+  same instruction can also cost recall, which starts at 0.706 with no margin. Best guess: **more likely than not to
+  land in 0.65–0.85 — a real chance of passing and a real chance of one more round**, with recall expected to fall
+  into the 0.5s whichever way precision goes (X50). Recall was deliberately not chased. The one number that settles
+  it is a live run of `extract.v8` + `interaction.v2` on the same 4 zips against the same frozen gold.
+
 ## import
 
 - **I1 Alignment (SPEC §8.4).** `alignMessages` is an exact LCS over fingerprint sequences: drop elements whose fingerprint does not occur in the other sequence (a disjoint re-import stays O(n)), trim the common prefix/suffix, then Myers O((N+M)·D) on the rest. Past D = 1000 it falls back to a greedy in-order match, which is not optimal; this is recorded because it only matters for pathological reorderings. Same-minute duplicates (two "嗯") match pairwise and are never collapsed. Unmatched messages go after the last stored message sent at or before them, between the matched anchors. This uses an optional `sentAt` on `existing`, additive to the §1.4 signature (core request import#3). New seqs are spaced evenly in their gap. When a gap is too small, the chat is **renumbered** (round 2, replaces the ×1024 rescale): stored message k → (k+1)·unit, unit = smallest power of two ≥ (largest bounded gap + 1)·1024; stored seqs above 2^44 (legacy rescales) also trigger it. Old values are never multiplied, so repeated prepends stay bounded (max ≈ stored count × unit); every seq is asserted ≤ 2^52. See I15 for the D1 side. The renumber runs **before** the inserts, so the new seqs are computed against the renumbered values.
@@ -744,7 +994,7 @@ Round 1 (2026-09-15).
 - **H5 Layout.** One 816px column. The first screen is the date line plus the full-column hero `SearchTrigger` (64px tall, largest element), with sections starting below it so part of 即将到来 is visible at 1440×900. Rows are separated by 1px rules; names are ink links underlined only on hover; 最近导入 sits at the foot in 13px under its own rule.
 - **H6 Empty drop zone and the global veil.** The drop zone listens to drag events itself and stops propagation, so the import module's window-level "松开以导入" veil does not stack on it: over the zone, the zone shows its own drag-over state ("松开以导入", darker hairline, highlight wash); elsewhere on the page, the veil shows as usual. Drop, click on the zone or "选择文件" → `useImportOverlay().open({ file })`. When `needsOnboarding`, a one-line link to `/welcome` sits under the zone.
 - **H7 /welcome.** A single field "我在微信里的显示名". Several names can be separated by 、，, (split, trimmed, de-duplicated; ≤ 10 names, ≤ 40 characters each, matching the settings contract). 保存 PATCHes `{ selfDisplayNames, onboarded: true }` and 跳过 PATCHes `{ onboarded: true }` (saved names are kept). Both invalidate me/settings/home and `router.replace('/')`. Saved names are prefilled on a revisit. Errors are shown inline; the field is marked invalid only for validation errors.
-- **H8 Showcase hooks (development only).** `/?devFail=upcoming,index|all` makes those blocks' server fetch fail (`app/(app)/_home/load.ts`, active only when `NEXTJS_ENV=development`), so scenarios can show the real client fallback: delay `/api/home` 3 s for loading, or answer 500 for the block error. `/dev/home/showcase?variant=collapsed|lunar|no-upcoming|long|empty-onboarding` renders `HomeView` over the signed-in account's real data with one block altered. In `collapsed`, 64 generated names reuse real person ids, so links resolve. Scenarios: `home/showcase` (seed), `home/empty` (empty; the overlay is closed at preview, so nothing is created), `home/onboarding` (fresh), `home/small-account` (seed2).
+- **H8 Showcase hooks (development only).** `/?devFail=upcoming,index|all` makes those blocks' server fetch fail (`app/(app)/_home/load.ts`, active only when `NEXTJS_ENV=development`), so scenarios can show the real client fallback: delay `/api/home` 3 s for loading, or answer 500 for the block error. `/dev/home/showcase?variant=collapsed|lunar|no-upcoming|plans|long|empty-onboarding` renders `HomeView` over the signed-in account's real data with one block altered. In `collapsed`, 64 generated names reuse real person ids, so links resolve. Scenarios: `home/showcase` (seed), `home/empty` (empty; the overlay is closed at preview, so nothing is created), `home/onboarding` (fresh), `home/small-account` (seed2).
 - **H9 P3.** `pnpm verify home/showcase` on `next dev`, 1440: page `/` TTFB median 176.9 ms, `GET /api/home` Server-Timing median 150.3 ms (samples in `artifacts/home__showcase/*/log.json`). No `next build` needed.
 
 Overall-critic fix round 1 (2026-09-16).
@@ -752,6 +1002,12 @@ Overall-critic fix round 1 (2026-09-16).
 - **H10 Sensitive claims are not "new information".** `loadRecentlyUpdated` filters `claims.sensitive = false`. A sensitive claim (the §6 guard's "提供过手机号" / "提供过收货地址" placeholders) never becomes `latest`, even when it was confirmed after a meaningful claim of the same import, and a person whose only recent confirmed claims are sensitive is not listed: the placeholder says nothing worth remembering, and the person page still shows it. H2's definition of *Recently updated* is amended accordingly. Covered by `server/home/home.test.ts` and a `home/showcase` check on the seeded account.
 - **H11 Separators never start a line.** Every " ·" in HomeView (upcoming rows, including the lunar line, and 最近导入 rows) is `Sep`: a no-break space plus the dot, followed by an ordinary space that is the only break point. The line may end with "·" but never starts with it. The date range, the solar day and the import time are each `whitespace-nowrap` (same rule as person P15). The `long` showcase variant has five 最近导入 titles of different lengths, and `home/showcase` checks at 1440 and 390 that no `[data-home-sep]` sits at the row's left edge.
 - **H12 Example file name is synthetic.** The empty home shows `聊天记录_20260101_120000.zip` as its example, not a real sample's name.
+
+Wave 5 — 交互层 (2026-09-16).
+
+- **H13 约定 join 即将到来 as ordinary rows.** `loadUpcoming` merges `getUpcomingPlans(db, ownerId, 30)` (`@/server/interaction`) into the important-date rows and sorts the whole block by `solar` ascending (`mergeUpcoming` / `compareUpcoming` in `server/home/upcoming.ts`; ties break on `days`, then person label, then `kind`, then id, so the order is stable). A row now carries `kind`, with `dateId` set for dates and `loopId` for 约定 — both nullable, exactly one of them set. Plans outside the window (overdue, or beyond day 30) are dropped here as well as in interaction: 即将到来 is "the next 30 days", and SPEC §9.3 forbids anything that reads as a reminder list. H2's definition of *Upcoming* is amended accordingly. This is the only thing the interaction layer adds to the home page — no counts, no badges, no 久未联系 list.
+- **H14 The 约定 half degrades on its own.** The interaction module is a separate unit as far as home is concerned; if `getUpcomingPlans` throws, `loadUpcomingPlans` logs one warn line and returns `[]`, so 即将到来 still renders its dates instead of turning the whole block into a BlockError. `HomeOptions.plans` injects the function, so `server/home` unit tests never reach the interaction module.
+- **H15 The 约定 row is interaction's component.** Home computes and sorts the data but mounts `@/components/interaction`'s `PlanRow` for the row itself (ARCHITECTURE §1.17: each interaction surface is a self-contained component mounted by the owning page), including its "约定" marker and its `personHref(personId, { type: 'loop', id })` link. `/dev/home/showcase?variant=plans` mixes two synthetic 约定 into the real dates, since the seed has no loops yet.
 
 
 ## person
@@ -843,6 +1099,17 @@ Round 1 (2026-09-15). Page `/imports/:id` (`app/(app)/imports/[id]/page.tsx` →
 
 - **IR-x2 三处 progress（orchestrator，2026-09-16）**：`Progress` 由三处各自计算——extract 的 `getProgress`、review 的 `importProgress`、import 的 `jobProgress`；页面在非抽取中用 `progress ?? review.progress`，实际取的是 import 那份。第一次只改了前两处，截图里原因仍然不显示，改到第三处才生效。三处都加了失败原因聚合，各自有回归测试（extract: jobs.test.ts；review: regressions.test.ts；import: imports.test.ts）。下次改 Progress 语义要三处一起改，或者合并成一个实现。
 
+Round 2 (wave 5, 2026-09-16). 交互层到达本页：每个人物节下新增 **未结事项** 组，以及集成者挂上的 **「这次聊了什么」** 块（interaction 拥有其内容，本模块只负责它的位置）。
+
+- **IR15 loop 是又一种 review item，不是新机制。** `'loops'` 加入 `GROUPS`（顺序在 `events` 之后，它是唯一讲"接下来"而不是"这个人是谁"的组），于是 `sectionItems` / `proposedItems` / `deriveReview` / `markIndexes` / `useFresh` / 本节全部确认 全部自动覆盖它：loop 计入 `newCount` 与 `allHandled`，脚注编号连号，已处理的留在原位。逐个补齐 `it.type` 的 switch：`personIdsOf` → `[personId]`、`editableText` → `item.text`（**原始文本**，不是渲染出来的句子，否则改写会把"你答应"写进库里）、`textPatch` → `{ text }`、`applyItemUpdate` / `applyStatus` 加 `loops` 一行、`chunksOf` 按 kind 分块。`renamePerson` 不动：loop 行里的人名取自 `section.person.label`，改名自然跟着变。
+- **IR16 方向写进句子，不印枚举。** 抽取写进 `loops.text` 的是裸片段（`prompts/extract.v9.md`："把露营装备清单发过去"、"问了周六几点出发还没回"），谁欠谁在 `direction`/`kind` 里。`loopSentence(loop, personLabel)` 用它们选主语和动词，拼成 SPEC §9.5/§9.9 的说法："你答应帮她看简历"、"贺知遥问你国庆有没有空，你没回"、"约好下个月去成都"。`direction: 'mine'` 一律是**用户自己**的责任（promise：用户答应；question：对方问、用户欠回答）。文本已经带了动词（以 答应/说好/约/问 开头）就不再加一次；已经说了"还没回"就不再补"，你没回"。人名未知时用"对方"。左侧 gutter 只放 kind（承诺 / 问题 / 约定），与 新信息 放类别、别名与关系 放"别名/关系"同一套版式。**人物页的 `LoopRow`（interaction 拥有）目前直接打印 `loop.text`，同一条 loop 在两页读法不同 —— 记在 core-requests import-result #4，本模块不能改它的文件。**
+- **IR17 「已经了结了」是一次请求，不是 accept+close 两次。** 服务端 `closeLoop` 把 `proposed` 一并置 `confirmed`（`server/interaction/write.ts`，DECISIONS I4），所以 `useCloseLoop` 只 `POST /api/loops/:id/close {reason:'done'}`，把返回的 loop 写回 review 缓存，行立刻显示为已处理而不是待处理；没有两次调用的先后问题，也不会停在"确认了但没关上"。随后的 900 ms 合并 refetch 拿到的服务端状态一致。已经被后续消息关掉的 loop（`state !== 'open'`）不再显示这个按钮 —— 没有东西可关。已处理的 loop 不说"已确认"而说 **已了结 / 不用管了**（`loopStateLabel`），被划掉的仍按通用规则显示"已划掉"并加删除线。
+- **IR18 批量确认不含 loop。** `highConfidence` 只装 claim（review `import-review.ts`：loop 没有 confidence），页面的 `deriveReview` 只过滤 `type === 'claim'`，所以"确认所有可信度高的条目"第一步显示的条数与 loop 无关；scenario 有一条 check 断言这个数字等于 claim 数且此时页面上确有待处理的 loop。"本节全部确认"则**包含** loop（它走 `/api/review/bulk`，`TargetType` 有 `loop`），否则该节永远处理不完。
+- **IR19 第四个操作换行，不挤第五列。** 行操作仍是右侧固定 128 px 一列（IR13c），loop 多一个"已经了结了"（5 字）放不下，于是这一列改成 `flex-wrap` + `gap-y-0.5`：桌面上"确认 不对 改写"占一行、"已经了结了"折到第二行，右边缘不变（scenario 的"one right edge for all rows"仍然通过）；窄屏整行铺开，四个并排。其他行类型三个按钮仍然不换行，版式没变。
+- **IR20 「这次聊了什么」不加确认按钮，也不进 `allHandled`。** 它挂在 review 查询之外（interaction 自己取 `GET /api/imports/:id/interaction`），所以天然不进 progress、不进 `deriveReview`、不进批量范围。SPEC §9.9 有一整段专门写了为什么不能加确认按钮（摘要描述"那天聊了什么"，错了污染不了人物档案；一次导入几十段，逐条确认会把页面压垮），本轮只验证、不动它。showcase 有一步专门断言：一个导入只剩摘要没动过时，底部照样显示"已全部处理"。
+- **IR21 showcase 自己造 loop 与摘要。** 种子导入早于交互层，`GET /api/imports/:id/interaction` 没有数据，`review` 也没有 loop；并行还有人在改 `server/review/**` 与 `server/interaction/**`。所以 `_support.ts` 增加 `withLoops()`（四种状态：proposed 三类 / confirmed / rejected / 已被后续消息关掉）、`importConversations()` 与 `guardInteraction()`，后者与 `guardJobs` 一起在每次 `clearRoutes` 后重装，把 `GET /api/imports/:id/interaction`（默认空）和 `GET /api/evidence/loop/:id`（借用一条真 claim 的证据）钉死，**截图因此不依赖别人当下的进度**；被截图的始终是真实页面与真实组件树（`/imports/:id` + `ImportConversations`），只有 HTTP 答复是桩。scenario 里另有一条 check 记录真实 interaction 路由此刻的状态（本轮 200）。
+- **IR22 没有做 dev showcase 页。** 本模块没有 `app/(app)/dev/import-result/**`，IR9 记的就是这个选择：页面完全由查询驱动，dev 页要么重建一套 QueryClient 假数据（与 scenario 的 fixture 重复），要么渲染不出真实组件树。本轮继续在 scenario 里用路由桩覆盖所有状态，没有新建 dev 页。
+
 ## deploy
 
 Round 1 (2026-09-15). Owns `wrangler.jsonc`, `open-next.config.ts`, `scripts/deploy/**`, `docs/DEPLOY.md`, `.github/**`, plus the version pins and deploy section of `README.md`. The orchestrator assigned README.md for this wave; `docs/core-requests/README.md` still lists README.md as core's.
@@ -867,3 +1134,160 @@ Loop 1 (2026-09-16), `artifacts/blind-judge/20260916-041245/` (gitignored). Pair
 - **B2 Not re-run in loop 1.** The integrator knows the key and took part in development, so it may not judge. A re-run needs a fresh judge given `pairs/<n>/A.png` and `B.png` paths. The comparison is recorded, not a gate (PLAN §5), so it does not block. Known confounders for the re-run: the references are Monica's 2018 classic UI (v1.6.0), not the vault UI; they are 1202 px wide, ours 1440 px; each side shows its own branding.
 
 - **B3 盲评重跑（orchestrator，2026-09-16）**：第一次无效，是编排脚本的错误：给 judge 的 prompt 里放的是 key 标签（"reference"/"ours"），不是图片路径。这次重跑用了一个没有参与开发的新 agent，只给四个 pairs/<n>/{A,B}.png 路径。结果：pair 1（首页 vs Monica dashboard）和 pair 2（人物页 vs Monica 联系人页）的两个问题（更能帮你记住这个人、看起来更用心）都选了 B = ours。理由摘要：B 有具体、可记住的人物信息（生日同时列出农历/公历和剩余天数、每人一句新信息、带来源编号的分节正文），排版克制、层级清楚；A 有演示占位文字和乱码，空模块和操作按钮多。judge 指出的 B 的不足：页面很长、字小、对比度偏低、没有头像、条目轻重不分。局限（结果只作记录、不作过关条件）：参考图是 Monica 2018 年的经典 UI（v1.6.0），带演示占位数据，而我们用的是精心构造的种子数据；两边都露出各自品牌，图宽不同（1202 vs 1440），所以 judge 不是完全盲评。judge 用的是和开发 agent 同一个模型家族。结果在 artifacts/blind-judge/20260916-041245/result.json（gitignored）。
+
+## interaction layer (orchestrator, 2026-09-16)
+
+设计讨论的结论，先写在这里，再落到 SPEC §7 交互层 / §8.8 / §9.3–§9.9 和 ARCHITECTURE §1.17 / §4.1 / §6 / §7 / §11。
+
+- **I1 为什么加这一层。** 原来的记忆模型只有语义记忆（persons → claims/relations/dates），回答"这个人是谁"。它回答不了"我们上次聊了什么、还有什么没了结、我们多久来往一次"。更糟的是 `extract.v8` 第 76 行明确要求丢掉即时协调，而丢掉的东西没有第二个去处。所以这一轮不是加规则，是加去处：长期事实 → claim，这次来往 → segment，悬而未决 → loop，三者都不是才不记。
+
+- **I2 会话不建表。** `windowing.ts` 早就按 3 小时间隔切会话，只是切完就扔。但会话边界会漂移：这次导入停在 21:00，下次补上 21:30 的消息，两段就并成一段。所以摘要挂在**窗口区间**（`chatId + startSeq..endSeq`，唯一约束）上，会话是 `groupSegments()` 读时聚合。边界变了只是重新分组，已有摘要不作废。3 小时这个常数收敛到 `contracts/common.ts` 的 `SESSION_GAP_HOURS`，分窗和聚合共用一个定义。
+
+- **I3 loop 不存状态机。** open/done/dropped 由 `openedMessageId` / `closedMessageId` 两个事件推出，`expired` 读时算。代价是查询多一次 join，换来的是乱序导入（先导 9 月再导 3 月）、重复导入、删除导入三件事自动正确 —— 关闭只认消息时间，不认导入时间。删除导入时 `closed_message_id` 落在被删消息里的 loop **重新变回未结**（ARCHITECTURE §11 step 7），因为关闭它的那句话已经不在了。这是 SPEC M7 的验收点。
+
+- **I4 摘要不走确认，未结事项走确认。** "AI 只提议"（SPEC §3）针对的是**对人的断言** —— 写进档案、会被当成事实的东西。段落摘要描述的是"那天聊了什么"，错了污染不了人物档案；而一次导入会产出几十段摘要，逐条确认会把导入结果页压垮。所以摘要默认可见、可改写、可隐藏，不进待确认流，不计入 `allHandled`/progress。loop 相反：它会出现在首页和人物页、会影响用户接下来做什么，所以保留 proposed/confirmed，但复用 SPEC §9.5 的"未确认条目就地显示、颜色降一档"，不集中不计数。用户点"已完成/不用管"本身就是确认动作。
+
+- **I5 不破 §9.3。** 交互层最容易滑向"提醒系统"。明确写死：没有全局未结事项列表、没有条数、没有按久未联系排序的名单、没有警示色。节奏是描述不是催促，只出现在人物页上。首页只多一样：带明确日期的约定并入已有的"即将到来"（那本来就是一份按日期排的清单）。会话少于 `MIN_RHYTHM_CONVERSATIONS`（5）时不写平均间隔 —— 三次聊天算不出节奏。群聊不算"谁先开口"和回复间隔，因为群里回复归属不明确、导出也没有秒（SPEC §6）。
+
+- **I6 不加第二次模型调用。** segment / loops / closes 和 claims 在同一次窗口调用里产出，输出 token 多 20–30%，输入侧每人多 100–200 token（上次来往 + 未结事项列表）。loop 判重搭现有的每窗口一次 dedup 调用。§6 的 28 秒 per-request deadline 里没有第二次调用的余量。
+
+- **I7 约定不造第三种实体。** "下个月去成都"是 `kind='plan'` 且带 `dueAt` 的 loop，首页直接读它，不再生成 event。`events` 继续只表示**已经发生的**人生节点。
+
+- **I8 评测是扩展不是修改。** `goldVersion: 2` 的 `loops` / `conversations` 是可选字段，v1 金标准文件保持有效且**分数不变**（有回归测试守着）。PLAN 禁止的是为了提高分数改金标准，新增类别不在此列。loop 精确率入闸（≥ 0.80），召回率本轮只报不闸 —— 新能力没有基线。v9 的分流规则会让一部分原来被记成 claim 的文本改去 segment/loop，claims 的指标会动，报告必须把这个变化显式列出来，不许埋掉。
+
+- **I9 LLM 预算（orchestrator，2026-09-16）。** loop 1 收尾时用掉 2,880,757 / 3,000,000 token，只剩 ~119K。`extract.v9` 落地后 `PROMPT_VERSION` 变成 v9，而现有磁带录的是 v5–v8，所以 `pnpm eval` 回放跑不了 v9，必须实录一次（extract 估计 ~180K token）。剩余额度不够，按 PLAN「模型调用成本」的规则不能超支。交互层这一轮是 loop 2，所以把计数器 `--reset --loop loop2-interaction` 归零重新计。归零的是计数器，不是已经花掉的钱：loop 1 的实际消耗记在 STATUS.json 的 `llmUsage.note` 里，没有抹掉。在 v9 实录完成之前，任何声称达到 §7.4 闸门的说法都是无效的 —— 现在根本没有 v9 的测量值。
+
+## interaction
+
+Wave 5 builder decisions for `server/interaction/**`, `components/interaction/**`. The orchestrator's I1–I8 above are the why; these are the how, and only the choices the spec left open.
+
+- **X1 `groupSegments` is order-free and returns oldest first.** It buckets by `chatId`, sorts each bucket by `startedAt` then `startSeq`, and joins a segment to the running group when `minutesBetween(group.endedAt, segment.startedAt) <= SESSION_GAP_HOURS * 60`. Exactly 3 h apart is one conversation, 3 h 1 min is two. The running `endedAt` is the max, so an overlapping re-extraction of a wider window does not shorten the group. Because the rule reads the sorted list rather than the input, a reverse-order import produces an identical answer — asserted in `pure.test.ts`, together with the drift case (two segments 3.5 h apart are two conversations until a later import lands between them, then one).
+- **X2 Hidden segments still shape the conversation.** A hidden summary is left out of the person page's timeline, but it keeps its place in the grouping and in `messageCount` — hiding a sentence you wrote about a day does not change what happened that day. A conversation whose every segment is hidden disappears from the timeline. `GET /api/imports/:id/interaction` includes hidden segments (flagged) so "隐藏" can be undone where it was done.
+- **X3 `expired` starts the day after the threshold.** More than 14 days past `dueAt` (the last day a partial `dueAt` could still have happened: `2026-08` → `2026-08-31`), or more than 90 days past `openedAt` — "过期 14 天后" reads as *after* those days, so day 14 is not yet expired. This matches `deriveLoop` in `server/review/loops.ts` exactly, because the import result page and the person page must not disagree about the same row (core-request interaction#5 asks for the two copies to be collapsed; until then `pure.test.ts` pins the boundary on both sides). `daysOpen` runs from `openedAt` to `closedAt` for a closed item and to today otherwise, never negative. Closed items are never expired. `已过去 N 天` counts from the due date when there is one, otherwise from the opening.
+- **X4 Rhythm suppresses more than the average under the minimum.** SPEC §9.5 forbids the average gap below 5 conversations; the sentence also drops "谁先开口" there, because "只写最近一次和总次数" is the whole instruction. The initiator clause additionally needs at least 3 attributable conversations and a 60 % majority, otherwise it says "你们先开口的次数差不多". The other side is named "对方", not a pronoun and not the person's label — the section is mounted with only a `personId`, and "TA" is banned on the self page.
+- **X5 "Who spoke first" is the sender of the message at the first segment's `startSeq`.** Private conversations only. If that sender maps to neither the self person nor this person (a merged or unlinked handle), the conversation contributes nothing rather than guessing.
+- **X6 Timeline paging slices conversations, not segments.** `?timeline=5` returns the 5 newest conversations whole; `hasMore` counts conversations, and only the segments actually rendered are decorated with participants and `firstMessageId`. `更早` refetches with `timeline=all` and keeps the previous data on screen (`keepPreviousData`).
+- **X7 The rhythm sentence has no sub-heading.** It reads as the section's lead paragraph directly under 来往; 未结事项 and 来往时间线 carry small serif labels. A label over a single sentence would turn a description into a stat card, which SPEC §9.5 rules out explicitly.
+- **X8 Segments carry a link, loops carry an evidence mark.** SPEC §9.5 gives the timeline "在聊天中查看" per segment and the unfinished items "证据标记"; the section follows that literally rather than putting a footnote on every summary, which would number dozens of marks on one page. Loop marks are numbered from `markStart` (default 1) — see core-request interaction#3.
+- **X9 `closeLoop` sets `closedAt = now` and leaves `closedMessageId` null**, and lifts `proposed` to `confirmed` (SPEC §7: closing is confirming). `reopenLoop` clears all three close columns but does **not** un-confirm: the user's judgement about whether the item is real survives reopening it.
+- **X10 The 即将到来 约定 rows take full and month-level due dates.** `2026-10` is placed on 2026-10-31, the last day it could still happen; a bare `2026` is too vague for a dated list and is left out. A closed or rejected plan leaves the list immediately, because it is queried by the absence of a close event rather than by a stored state.
+- **X11 `这次聊了什么` shows its two actions without hovering.** The person page hides 改写/删除 until hover because it is a reading page; the import result page is where the user is reviewing, so 改写 and 隐藏 are visible (quiet, `text-ink-3`). There are still no confirm buttons anywhere in that block, it contributes nothing to progress, and it is outside the bulk-confirm range (SPEC §9.9).
+- **X12 The infobox summary is one line.** `最后一次聊天` shows "9月13日 · 3 天前" and, under it, the newest conversation's first summary truncated to one line (SPEC §9.5 "下面一行小字"); clicking it expands every segment of that conversation with its own chat link. The summary is only shown when the newest conversation actually reaches the last-contact day, so the infobox never attributes an old summary to a recent message.
+- **X13 No copies left.** Everything interaction had duplicated at the start of the round was collapsed during it: owner scoping (core widened `OwnedTable` / `OwnedLinkTable`, so every query calls `owned()` from `@/server/db`), query matching (`server/interaction/text.ts` re-exports search's helpers), the loop-state rule (`server/interaction/loop-state.ts` re-exports `@/lib/loop-state`, shared with review) and the due-day reading on the client (`components/interaction/format.ts` imports `dueDay` from the same place). Core-requests interaction#1–#5 are all resolved; the tests in `server/interaction/__tests__/pure.test.ts` stay as the shared rule's test suite.
+- **X14 A loop is worded at render time, not in the database.** `loops.text` is a bare fragment ("把清单发过去"); `loopSentence` from `@/lib/loop-text` puts the subject and verb around it using `direction` and `kind`, which are never printed. `direction` says whose move is next, so a question the other person asked and the user has not answered is `question` + `mine` and reads "林知夏问你国庆有没有空，你没回". Sharing the wording with the import result page is the point: for one round the same item read two different ways on two pages.
+- **X15 A conversation with every summary hidden leaves the timeline but stays in the rhythm.** Hiding a summary is a statement about the summary, not about the day, so `conversationCount` still counts it; there is simply no row left to render. On the seed account this is visible: 19 conversations counted, 18 listed. The scenario asserts the difference rather than either number alone, so the rule cannot drift silently.
+
+- **I10 `direction` 只有一个含义：下一步该谁动（orchestrator，2026-09-16）。** 我第一版 SPEC §7 把它写岔了：承诺类按"谁欠"写（`promise`+`mine` = 我答应的），提问类却按"谁问的"写（说"对方问了我而我没回"是 `question`+`theirs`）。同一个字段两套读法，必然出事。提示词 v9 第 90 行和 ARCHITECTURE §2.5 一直写的是"谁欠下一步"，所以是 SPEC 错，已改：**对方问了我而我没回 = `question` + `mine`**（欠回答的是我）。种子数据按错的那版写了，一并改。
+
+- **I11 `loops.text` 存不带主语的片段，句子在渲染时拼（orchestrator，2026-09-16）。** 提示词要求 `text` 不写主语（"周五前把报价发过来"），主语和动词由 `direction` + `kind` 在 `lib/loop-text.ts` 的 `loopSentence` 拼出来（"你答应…"、"她问你…，你没回"）。这样改措辞是改渲染，不用重新抽取。import-result 先按这个实现了，interaction 的人物页却直接打印原文加个句号 —— 同一条事项在两个页面读起来不一样。收进 `lib/loop-text.ts` 共享，两边都用它。种子数据存的是已经拼好的句子，再过一遍渲染会变成"你答应你答应帮她表妹看简历"，已让 verify-seed 改回片段并加单元测试把种子钉在同一条措辞规则上。
+
+- **I12 反序导入不收敛（orchestrator，2026-09-16）。** SPEC M7 原本写"把两份记录反序导入，结果一致"。我按这条写了验收测试，结果是**不成立**：抽取只对新消息的窗口生成任务，先导晚的那份时那句了结的话就已经被读过了，等后来导入早的那份、loop 才被建出来，那句话不会再被重读；§8.4 的上下文消息也救不了，因为只落在上下文上的条目会被 `context_only` 丢掉。
+
+  要自动收敛，只能在每新建一个 loop 之后，把它之后所有已读窗口重跑一遍找 `closes`，模型调用翻倍，v1 不值。用户手上有出路：人物页上点"已经了结了"。SPEC M7 已改成如实描述，`tests/integration/m7-interaction.test.ts` 第三个用例断言的是**真实行为**而不是愿望，并在注释里写明原因 —— 这样以后有人真去实现重跑，这条测试会以"失败"的方式提醒他改断言，而不是默默通过。
+
+  值得记一笔的是：loop 的事件溯源设计本身是对的，前两条（正序关闭、删除导入后重新打开）都直接通过了，代价只出在"重读"这一件事上。
+
+
+- **I13 `loopFalseClose = 0` 这个闸门我第一版定错了（orchestrator，2026-09-16）。** ARCHITECTURE §7.4 原文说它"只管机械错误"，但按字面实现出来，模型关掉了一条金标准认为还开着的事项也会计入 —— 一个诚实的判断失误就让整个 source 挂掉。eval builder 按规格实现了并如实提了风险，是对的。已改定义：`loopFalseClose` **只**统计机械上不可能的关闭（关的 loop 根本没给过这个窗口，或者关闭证据不在开启证据之后），这两种 `validateOutput` 已经拦掉了，所以还能漏出来就是管线或 harness 的 bug，闸门保持 0。模型把不该关的关了，算 loop 的假阳性，归 0.80 精确率那道闸，不归这里。
+
+- **I14 离线结果的字段名必须钉死（orchestrator，2026-09-16）。** extract 产出 `segments[].participants` 和 `loops[].closedIdx`，eval harness 读的是 `speakers` 和 `closedByIdx` —— 两边对不上，而且**不会报错，只会安静地把所有交互指标算成 0**。这是最坏的一类 bug：指标全绿，其实什么都没测。已把 `memoryStore` 真实返回的形状写进 ARCHITECTURE §6，并让 eval 按这个形状读、加一个 fixture 断言把字段名钉住，让以后的改名以测试失败的形式暴露出来。
+
+- **I15 extract.v9 让原有抽取质量退步了，退步的原因就是它自己（orchestrator，2026-09-16）。** 同样 4 份合成样本、同样冻结的金标准、v8 与 v9 都是当天现场实录（不是回放旧磁带），结果：
+
+  | 指标 | v8 | v9 | 闸门 |
+  |---|---|---|---|
+  | claims 精确率（宽松） | **0.90** | 0.76 | ≥ 0.85 |
+  | claims 召回率（严格） | **0.77** | 0.66 | ≥ 0.70 |
+  | claims 条数 | 50 | 55 | |
+  | handles 精确率 | **1.00** | 0.875 | ≥ 0.90 |
+  | relations 精确率 | 0.92 | 0.92 | ≥ 0.90 |
+  | events 精确率 / 条数 | 0.89 / 9 | 0.64 / 14 | |
+  | 事务类被记成 claim | **0.04** | 0.073 | ≤ 0.05 |
+  | 段落数 | 0 | 22 | |
+  | **合成样本闸门** | **通过** | **未通过** | |
+
+  之前最后一次通过的基线是 v5（memory 记着 v6–v8 从未在合成样本上测过），所以 v5→v9 的落差里混着 v6/v7/v8 的改动。补录 v8 就是为了把这一段摘干净：**v8 通过，v9 不通过，退步是 v9 引入的。**
+
+  **不能用"分流规则"解释掉。** harness 自带的 `分流 check` 提示说"claims 条数下降 + segments/loops 上升 = 规则在起作用"。这次是反的：claims 条数**从 50 涨到 55**，精确率同时下降，事务类比例几乎翻倍。也就是说模型没有把即时协调分流出去，而是在原来的活儿上变粗糙了 —— 一次调用里塞进三件新任务（segment / loops / closes），挤掉了它做 claim 的注意力。
+
+  这直接挑战 **I6**（"不加第二次模型调用"）。I6 当时的理由是 28 秒 per-request deadline 里没有第二次调用的余量 —— 那是成本论证，不是质量论证，而现在有了质量证据站在反面。下一步要在三条路里选：把 v9 的提示词收紧到不伤 claims；把交互层拆成第二次调用（要重新设计窗口预算）；或者维持 v8 做 claims、交互层作为独立的第二遍处理。这个选择需要产品主人拍板，不是我自己能定的取舍。
+
+- **I16 交互层本身是能跑出东西的，但质量没有任何测量（orchestrator，2026-09-16）。** 别把 I15 读成"交互层不工作"。单看 `聊天记录_20260912_095501.zip`，离线管线实打实产出 5 个段落、12 条未结事项、3 条关闭，字段齐整（`openedIdx`/`closedIdx`/`loopIndex` 都对）。但是：
+
+  1. **金标准里没有交互层标注。** 4 份 gold 都还是 goldVersion 1，`loopsAnnotated: 0`、`conversationsAnnotated: 0`，所以 loops 的精确率/召回率、`conversationCoverage`、`topicCoverage` 全是 `-`。要测就得让 annotator 按 §7.6 盲标一轮 v2 金标准。
+  2. **harness 有两处上报缺陷，会让人误以为模型什么都没产出。** 报告里 `loops.predicted = 0`（真实是 12）、`conversationsPredicted = 0`（真实有 22 个段落可分组）。前者是"没有金标准就不计预测数"，后者是分组没跑。两者都不影响闸门，但都在**往"没产出"的方向撒谎**，正是 I14 那类错误的翻版 —— 指标好看/难看都不要紧，不能骗人。已记为待修。
+
+- **I17 交互层拆成第二次调用，并行发（orchestrator + 产品主人，2026-09-16）。** I15 给出的证据面前，产品主人选了"拆"。具体：
+
+  - **`extract.v9` 退役，不上线。** `PROMPT_VERSION` 回到 `extract.v8` —— 它今天现场实录过，合成样本闸门零项失败，是有测量支撑的选择，不是退回一个没测过的旧版本。
+  - **新增 `prompts/interaction.v1.md` 与 `INTERACTION_PROMPT_VERSION`**，独立的 `InteractionOutputSchema`（contracts）。
+  - **两次调用并行**（`Promise.all`），不是串行。交互调用不需要抽取调用的结果，所以窗口墙上时间是 `max(两者)`，28 秒预算不用重新谈。
+  - **交互调用的输入更小**：不给已确认 claim 列表（它用不上），只给窗口消息、人物 label、上次来往、未结事项。成本增加远不到翻倍。
+  - **失败各自隔离**：交互调用失败和 dedup 失败同级，非致命 —— 窗口照常 `done`，claims 照常入库，只记 `WindowOutcome.interaction = 'failed'`。反过来不成立：抽取调用失败，整个窗口重试，那一次的交互结果一起丢弃。
+
+  这条明确推翻 **I6**。I6 说"不加第二次调用"，理由是 28 秒 per-request deadline 里没余量 —— 那是**延迟论证**。现在有**质量证据**指向反面，而且并行发之后延迟论证本身也不成立了。把这段留在这里，是为了让以后想合并回一次调用的人先看到这次的数字。
+
+- **I18 盲标 annotator 找出的规格缺陷（orchestrator，2026-09-16）。** 它按 SPEC 标了 39 条 loop / 61 段会话，同时报回一份问题清单。逐条处理：
+
+  1. **已修：§8.7「即时协调两边都不记」与 §7「约好但还没发生的事 = plan」直接打架。** "下周四晚上吃饭？"两条都占。采纳 annotator 的解法，按**时态**划界写进 §8.8：指向将来场合的是 `plan`，说当下的（"我到了""几点放学"）哪边都不记。并写明金标准里 `coordination` 反例**只约束 claim 不约束 loop** —— 不写这一句，交互提示词会照旧措辞把语料里所有约饭都压掉。
+  2. **待定（需产品主人拍板）：四种 kind 装不下「没人认领的请求」。** "请各位家长把紧急联系人信息私发给我"、"你们谁有空帮我问问租金" —— 没人承诺、没有约定、也未必是疑问句，但用户确实欠着。annotator 说这是**真实群聊里最常见的一种**，现在无处安放。要么加第四种 `kind: 'request'`，要么归到 `question` + `mine`（语义别扭，界面标签"问题"不对）。
+  3. **待定：`direction` 在「第三方自己的计划」上失效。** "我四月底搬去深圳" —— 谁也不欠谁。`theirs` 是最不坏的选择，但渲染出来会变成"他答应…"，是错的。要么加第四种 direction，要么让 `plan` 允许没有归属方。
+  4. **已确认是设计使然，不是缺口：窗口内开闭的事项抽不出来。** `closes` 只能引用**上一个窗口**带进来的 loop id；而 §8.8 本来就规定"片段里已经被回答、被做到、被取消的，不是未结事项"——所以这类东西根本不该成为 loop。annotator 独立地得出了同一条规则并据此排除了若干诱人的开闭对，这是个好信号（规则是可推导的，不是拍脑袋的）。**但后果要记住**：39 条 gold loop 里只有 7 条带 `closedBy`，有一份样本一条都没有，所以 `loopCloseRecall` 头几轮是个样本极小、方差极大的数，不能当成稳定指标读。
+  5. **已知：问题类永远没有关闭路径。** §8.7 说被回答的提问就不是未结事项，所以 question 只能生而未结。逻辑自洽，代价是 `closedReason: 'done'` 只对 promise 和 plan 可达。
+  6. **重要：真实聊天几乎产不出 loop。** 三份真实导出一共 4 条（其中一条还是选颜色）。也就是说 loop 的闸门**实际上是在合成数据上测的**，真实样本那道 `precisionLenient ≥ 0.80` 可能由一两条决定。定闸门时必须知道这件事。
+  7. **已知：群聊 loop 挂谁身上往往是任意的。** 一个家庭计划，提议的和确认的不是同一个人，挂哪边都说得通；而 loop 匹配要求 person key 相等，于是这会变成一种**沉默的漏检**，报告里任何字段都解释不了。
+
+- **I19 annotator 拒绝了一条 intent 分歧并留下警告（orchestrator，2026-09-16）。** `loop-book-room` planted 的那条在**同一个窗口里**开启又被推翻，按上面第 4 条管线根本表达不了，所以它没有采纳，把警告留着，并说明这是生成器与 §8.5 的冲突、该由 eval-synthetic 定夺，不是金标准的错。这是正确做法：金标准不该为了消掉一条警告而收录管线不可能达到的条目（那是在制造无法达成的召回）。另外 3 条分歧它复读原文后采纳了。
+
+- **I20 拆开之后的实测：claims 救回来了，loop 第一次有真实数字而且不合格（orchestrator，2026-09-16）。** 同样 4 份合成样本、同样冻结的金标准、三次都是现场实录：
+
+  | 指标 | v8 单跑 | v9 合并一次调用 | **v8 + interaction.v1（拆开）** | 闸门 |
+  |---|---|---|---|---|
+  | claims 精确率 | 0.90 | 0.76 | **0.88** | ≥ 0.85 ✅ |
+  | claims 召回率 | 0.77 | 0.66 | **0.72** | ≥ 0.70 ✅ |
+  | claims 条数 | 50 | 55 | 49 | |
+  | handles 精确率 | 1.00 | 0.875 | **1.00** | ≥ 0.90 ✅ |
+  | 事务类误记 | 0.04 | 0.073 | **0.02** | ≤ 0.05 ✅ |
+  | relations 精确率 | 0.92 | 0.92 | 0.857 | ≥ 0.90 ❌ |
+  | loops 精确率 | — | — | **0.556** | ≥ 0.80 ❌ |
+  | loops 召回率 | — | — | 0.71（只报不闸） | |
+
+  **拆分达到了它的目的。** I15 里那四项退步全部回到闸门以上，事务类误记甚至比 v8 单跑还好（0.02 vs 0.04）。I17 的判断成立。
+
+  **relations 这一项不要当成退步。** 抽取侧的提示词和 `validateOutput` 与 v8 逐字节相同（builder 用 `git show HEAD:` diff 验证过），两次实录的差别是 wrong_person 假阳性从 2 条变成 4 条，n 从 26 变成 28。**n≈27 的样本上，一条就值 3.6 个百分点，两条就跨过闸门。** 也就是说这道闸门现在是在一个小到无法区分"真实变化"和"模型抖动"的样本上判定的。这是**方法论问题，不是代码问题**，必须记下来：单次实录不足以判定 ±0.05 量级的变化。要么多跑几次取中位数，要么扩大样本，要么承认这类闸门只能抓大幅退步。
+
+  **loop 的第一份真实成绩：精确率 0.556，不合格（闸门 0.80）；召回率 0.71 还行。** 假阳性里 **16 条是 `should_ignore`** —— 也就是模型在记本来就不该记的东西，是"记太多"而不是"记错"。这和 annotator 的观察对得上（I18 第 2 条：真实群聊里大量"没人认领的请求"，规格里无处安放，模型只好乱塞）。方向明确：交互提示词要收紧"什么不算未结事项"，而不是提高召回。
+
+  **会话覆盖率 0.40，但话题覆盖率 0.90。** 这两个数放在一起说明的不是"摘要写得差"，而是**粒度不一致**：管线一个窗口出一段（4 份样本共 22 段），annotator 按"连续说话的段落"标了 50 段。模型做出来的会话，话题几乎都对（0.90）；只是切得比金标准粗。这是 §8.5 窗口粒度与 §7 会话定义之间的口径差，不是质量问题，不能当成模型的错来修。
+
+  **成本（拆分的代价，现在报告里可读）**：抽取 149K 输入 / 8.4K 输出，交互 77K 输入 / 6.0K 输出，dedup 6.5K。交互调用约等于抽取调用的 52% 输入 —— 和 I17 "输入更小、远不到翻倍"的设计预期一致。
+
+- **I21 时态那条门槛是我定松的，补第三条（orchestrator，2026-09-16）。** I18 第 1 条采纳 annotator 的时态划界，并写明 `coordination` 反例只约束 claim 不约束 loop。这两句合起来正好给"晚上过去拿西瓜"发了通行证 —— 它是将来时，而且 coordination 的约束被我明确解除了。实测 loop 精确率 0.556，16 条 `should_ignore` 假阳性几乎全是家常小事（留西瓜、拿桃子、发表情包、找本子、顺路接孩子）。
+
+  **时态是必要条件，不是充分条件。** SPEC §8.8 补第三道门槛：**下次见到这个人时，还值得你想起来欠着这件事** —— 判据不是时态也不是确定性，而是没做到会不会真的影响这段关系。配一份来自真实失败的正反对照直接写进提示词，并加一条机械规则（带当天/即刻时间词且无 `dueAt` 的直接丢），复用 claims 那份已有的即时词表而不是另起一份，免得两份词表各自漂移。
+
+  顺带修正我上一轮的判断：我以为"没地方放的请求被硬塞进现有四类"是主因（I18 第 2 条），**证据显示不是** —— 16 条里只中 1 条。所以 `kind: 'request'` 暂不加：真实样本一共才 4 条 loop，撑不起一个 schema 改动。annotator 的观察仍然记在案，等真实语料多了再看。
+
+  `direction` 第三方计划那条（I18 第 3 条）比预想的小：`plan` 本来就不带主语，只有"我四月底搬去深圳"这类被记成 plan 时会渲染成"**约好**我四月底搬去深圳"——没人跟你约。已在 `lib/loop-text.ts` 改成 `plan` + `theirs` 渲染为"某某打算…"，两行，不动 schema。
+
+- **I22 收紧之后的实测：原有质量完全恢复，loop 精确率仍不达标（orchestrator，2026-09-16）。** 同样 4 份样本、同样冻结金标准、现场实录：
+
+  | 指标 | v8 单跑（基线） | v9 合并 | 拆开 v1 | **拆开 + v2 收紧** | 闸门 |
+  |---|---|---|---|---|---|
+  | claims 精确率 | 0.90 | 0.76 | 0.88 | **0.90** | ≥0.85 ✅ |
+  | claims 召回率 | 0.77 | 0.66 | 0.72 | **0.77** | ≥0.70 ✅ |
+  | handles 精确率 | 1.00 | 0.875 | 1.00 | **1.00** | ≥0.90 ✅ |
+  | relations 精确率 | 0.92 | 0.92 | 0.857 | **0.92** | ≥0.90 ✅ |
+  | 事务类误记 | 0.04 | 0.073 | 0.02 | **0.02** | ≤0.05 ✅ |
+  | loops 精确率 | — | — | 0.556 | 0.625 | ≥0.80 ❌ |
+  | loops 召回率 | — | — | 0.706 | 0.588 | 只报不闸 |
+
+  **claims 精确率/召回率回到 0.90 / 0.77，与 v8 单跑一模一样**；relations 也回到 0.92。这同时**证实了 I20 里的判断**：上一轮 relations 0.857 确实是模型抖动，不是拆分造成的退步 —— 同一份逐字节相同的提示词，三次实录给出 0.92 / 0.857 / 0.92。原有抽取质量在交互层旁边完好无损，这是拆分要达到的目标，达到了。
+
+  **loop 精确率 0.556 → 0.625，仍差 0.80；召回 0.706 → 0.588。** 假阳性从 16 条降到 9 条。剩下的 9 条里有相当一部分是**判断题而不是硬错**："周末回家吃饭，把朵朵带上"、"订生日聚餐的包厢"、"国庆回九江办婚礼时发请帖" —— judge 判成即时协调，但说它们是家庭约定也站得住。也就是说剩下的差距不全是模型的错，有一部分是"什么算未结事项"这条线本身还没有共识。
+
+  **builder 事先说了它不认为能到 0.80（估 0.65–0.85），结果 0.625，落在它给的区间外沿。** 这个预判是诚实的，记下来。
+
+- **I23 机械规则和金标准打架（extract X50，orchestrator 确认）。** 那条"带当天/即刻时间词且无 `dueAt` 就丢"的规则，在 16 条假阳性里只抓住 4 条，同时**误伤了 2 条金标准要求的 loop** —— gold k6 原文就叫「晚上看转过来的租房文章」，k7 是「把最近在追的剧名发过去」，模型产出时带了「回头」。没有任何词表能把它们和「晚上过去拿西瓜」分开，builder 试过了。
+
+  这是机械规则的代价，已按名字钉进测试。更深一层：**盲标的 annotator 和新加的第三道门槛互相矛盾** —— k6/k7 正是第三道门槛叫模型不要记的东西。所以在金标准冻结的前提下，loop 召回率有一个提示词和校验层都够不到的天花板。**没有动金标准**：PLAN 明令禁止为了分数改金标准，而且重标会让这一轮的对比全部失效。这条留给下一轮，需要的是重新谈"什么算未结事项"，不是再调一次措辞。

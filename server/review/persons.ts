@@ -1,5 +1,5 @@
 // Person-level review actions: create, merge, split, manual add (ARCHITECTURE §1.6, §11 Merge/Split).
-import { eq, inArray, isNull, max, or } from 'drizzle-orm'
+import { eq, inArray, isNull, max, or, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type {
   AddClaimRequest,
@@ -26,10 +26,12 @@ import {
   evidence,
   handles,
   importantDates,
+  loops,
   messages,
   owned,
   persons,
   relations,
+  segmentParticipants,
   withOwner,
   withOwnerLink,
   type Db,
@@ -37,7 +39,7 @@ import {
 import { errors } from '@/server/errors'
 import { detectMentions, syncImportStatus, validateDay } from './actions'
 import { claimDTOs, dateDTOs, eventDTOs, loadRows, personDTO, relationDTOs, TABLES, type ClaimRow, type PersonRow, type RelationRow } from './dto'
-import { chunk, EVIDENCE_ROWS, IN_CHUNK, LINK_ROWS, logStatements, norm, runBatch, runBatchOrUndo, uniq, type LogEntry } from './util'
+import { chunk, EVIDENCE_ROWS, IN_CHUNK, LINK_ROWS, logStatements, norm, rowsPerInsert, runBatch, runBatchOrUndo, uniq, type LogEntry } from './util'
 
 type Stmt = BatchItem<'sqlite'>
 
@@ -78,6 +80,11 @@ export async function mergePersons(db: Db, ownerId: string, fromId: number, into
   const claimIds = (await db.select({ id: claims.id }).from(claims).where(owned(claims, ownerId, eq(claims.personId, fromId)))).map((r) => r.id)
   const dateIds = (await db.select({ id: importantDates.id }).from(importantDates).where(owned(importantDates, ownerId, eq(importantDates.personId, fromId)))).map((r) => r.id)
   const eventIds = (await db.select({ id: eventParticipants.eventId }).from(eventParticipants).where(owned(eventParticipants, ownerId, eq(eventParticipants.personId, fromId)))).map((r) => r.id)
+  const loopIds = (await db.select({ id: loops.id }).from(loops).where(owned(loops, ownerId, eq(loops.personId, fromId)))).map((r) => r.id)
+  const partRows = await db
+    .select({ segmentId: segmentParticipants.segmentId, messageCount: segmentParticipants.messageCount })
+    .from(segmentParticipants)
+    .where(owned(segmentParticipants, ownerId, eq(segmentParticipants.personId, fromId)))
   const rels = await db
     .select()
     .from(relations)
@@ -87,7 +94,25 @@ export async function mergePersons(db: Db, ownerId: string, fromId: number, into
     db.update(handles).set({ personId: intoId, updatedAt: now }).where(owned(handles, ownerId, eq(handles.personId, fromId))),
     db.update(claims).set({ personId: intoId, updatedAt: now }).where(owned(claims, ownerId, eq(claims.personId, fromId))),
     db.update(importantDates).set({ personId: intoId, updatedAt: now }).where(owned(importantDates, ownerId, eq(importantDates.personId, fromId))),
+    // loops belong to a person like a claim does; segment_participants is a link table and is folded below
+    db.update(loops).set({ personId: intoId, updatedAt: now }).where(owned(loops, ownerId, eq(loops.personId, fromId))),
   ]
+
+  // segment_participants: both persons may already be in the same segment, and the pk is (segment_id, person_id),
+  // so a collision sums `message_count` — the two rows counted different messages of the one conversation
+  // (ARCHITECTURE §11 Merge).
+  stmts.push(
+    ...chunk(partRows, rowsPerInsert(5)).map((part) =>
+      db
+        .insert(segmentParticipants)
+        .values(part.map((r) => withOwnerLink<typeof segmentParticipants>(ownerId, { segmentId: r.segmentId, personId: intoId, messageCount: r.messageCount }, now)))
+        .onConflictDoUpdate({
+          target: [segmentParticipants.segmentId, segmentParticipants.personId],
+          set: { messageCount: sql`${segmentParticipants.messageCount} + excluded.message_count` },
+        }),
+    ),
+    db.delete(segmentParticipants).where(owned(segmentParticipants, ownerId, eq(segmentParticipants.personId, fromId))),
+  )
 
   // claim_mentions: re-point, then drop mentions of a person inside their own claims.
   const mentionRows = await db.select({ claimId: claimMentions.claimId }).from(claimMentions).where(owned(claimMentions, ownerId, eq(claimMentions.personId, fromId)))
@@ -160,13 +185,29 @@ export async function mergePersons(db: Db, ownerId: string, fromId: number, into
   ]
 
   const moved = (type: TargetType, ids: number[]) => ids.map((id) => ({ targetType: type, targetId: id, action: 'merge' as const, before: { personId: fromId }, after: { personId: intoId } }))
-  logs.push(...moved('handle', handleIds), ...moved('claim', claimIds), ...moved('date', dateIds), ...moved('event', eventIds))
+  logs.push(
+    ...moved('handle', handleIds),
+    ...moved('claim', claimIds),
+    ...moved('date', dateIds),
+    ...moved('event', eventIds),
+    ...moved('loop', loopIds),
+    ...moved('segment', partRows.map((r) => r.segmentId)),
+  )
   await runBatch(db, [...stmts, ...logStatements(db, ownerId, logs, now), ...personStmts])
 
   const target = await getPerson(db, ownerId, intoId)
   return {
     person: personDTO(target),
-    moved: { handle: handleIds.length, claim: claimIds.length, date: dateIds.length, relation: relationsMoved, event: eventIds.length },
+    moved: {
+      handle: handleIds.length,
+      claim: claimIds.length,
+      date: dateIds.length,
+      relation: relationsMoved,
+      event: eventIds.length,
+      loop: loopIds.length,
+      // one per segment the person spoke in; the segment itself is not moved, only who spoke in it
+      segment: partRows.length,
+    },
   }
 }
 

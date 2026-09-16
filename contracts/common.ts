@@ -40,7 +40,7 @@ export const Category = z.enum(['work', 'location', 'education', 'family', 'pref
 export type Category = z.infer<typeof Category>
 export const CategorySchema = Category
 
-export const TargetType = z.enum(['handle', 'relation', 'claim', 'event', 'date'])
+export const TargetType = z.enum(['handle', 'relation', 'claim', 'event', 'date', 'segment', 'loop'])
 export type TargetType = z.infer<typeof TargetType>
 export const TargetTypeSchema = TargetType
 
@@ -72,6 +72,35 @@ export const MessageKindSchema = MessageKind
 export const HandleKind = z.enum(['display_private', 'display_group', 'mentioned', 'real_name', 'address_term'])
 export type HandleKind = z.infer<typeof HandleKind>
 export const HandleKindSchema = HandleKind
+
+export const LoopDirection = z.enum(['mine', 'theirs', 'mutual'])
+export type LoopDirection = z.infer<typeof LoopDirection>
+export const LoopDirectionSchema = LoopDirection
+
+export const LoopKind = z.enum(['promise', 'question', 'plan'])
+export type LoopKind = z.infer<typeof LoopKind>
+export const LoopKindSchema = LoopKind
+
+export const LoopCloseReason = z.enum(['done', 'dropped'])
+export type LoopCloseReason = z.infer<typeof LoopCloseReason>
+export const LoopCloseReasonSchema = LoopCloseReason
+
+export const LoopState = z.enum(['open', 'done', 'dropped'])
+export type LoopState = z.infer<typeof LoopState>
+
+/**
+ * Session boundary (SPEC §8.5 分窗 and §7 交互层 会话聚合). The single definition: `planWindows` cuts windows here
+ * and `groupSegments` groups segments into conversations here. Neither redefines it.
+ */
+export const SESSION_GAP_HOURS = 3
+
+/** Below this many conversations a rhythm is noise, so the person page states the last contact only (SPEC §9.5). */
+export const MIN_RHYTHM_CONVERSATIONS = 5
+
+/** A loop with a dueAt is "expired" this many days after it (SPEC §7 交互层). */
+export const LOOP_EXPIRY_DAYS_WITH_DUE = 14
+/** A loop without a dueAt is "expired" this many days after it opened. */
+export const LOOP_EXPIRY_DAYS_NO_DUE = 90
 
 export const ChatKind = z.enum(['private', 'group'])
 export type ChatKind = z.infer<typeof ChatKind>

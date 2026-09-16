@@ -51,6 +51,16 @@ export const groupFamily: ChatScript = {
     { id: 'rel-f-mo', type: 'relation', from: 'jianguo', to: 'chuntian', relationType: 'spouse', text: '林建国与春天的花是夫妻', optional: true },
     { id: 'rel-j-h', type: 'relation', from: 'jingjing', to: 'dahai', relationType: 'spouse', text: '静静是林大海的妻子', optional: true },
     { id: 'duoduo-grade', type: 'claim', person: 'duoduo', category: 'education', text: '读三年级', optional: true },
+    // ---- 交互层（SPEC §7 交互层 / §8.8）。群聊里 loop 挂在具体的人身上，不是挂在群上；text 不带主语；
+    // direction 是「下一步该谁动」（mine = 该我做/该我回答）。
+    { id: 'loop-lizhi', type: 'loop', person: 'dahai', loopKind: 'promise', direction: 'mine', text: '给哥留了一箱荔枝等他来拿', note: '我答应留着，所以是 promise+mine；导出结束时没有取到的确认，未结' },
+    { id: 'loop-book-room', type: 'loop', person: 'jingjing', loopKind: 'promise', direction: 'theirs', text: '订妈生日的包厢', closedReason: 'dropped', note: '同一场景里被爸一句「别铺张，家里吃就行」取消，dropped；同一批消息也是 negative tx-box' },
+    { id: 'loop-train-tickets', type: 'loop', person: 'jingjing', loopKind: 'promise', direction: 'theirs', text: '统一买国庆回家的高铁票', dueAt: '2026-10-01', note: '导出结束时未结' },
+    { id: 'loop-rent-question', type: 'loop', person: 'jianguo', loopKind: 'question', direction: 'mine', text: '帮爸问一下房子的租金', note: '爸问了没人回，欠回答的是我这边，所以 mine；租金数字本身是 negative tx-agent，不进 claim' },
+    { id: 'loop-midautumn', type: 'loop', person: 'dahai', loopKind: 'plan', direction: 'mutual', text: '中秋9月25日在店里一起吃饭', dueAt: '2026-09-25', note: '日期在导出结束之后，未结；同一批消息也是 negative coord-midautumn' },
+    { id: 'conv-quit-job', type: 'conversation', text: '大海宣布辞职开火锅店', topics: ['辞职', '火锅店'], note: '会话边界由标注者判定，这里记的是剧本场景的首尾' },
+    { id: 'conv-open-day', type: 'conversation', text: '火锅店开业当天', topics: ['开业', '火锅店'] },
+    { id: 'conv-move', type: 'conversation', text: '爸妈要搬到大海家对面', topics: ['搬家', '出租'] },
   ],
   negatives: [
     { id: 'inv-transfer-c', kind: 'invisible_content', description: '生活费转账，金额不可见', forbidden: '生活费金额' },
@@ -101,13 +111,13 @@ export const groupFamily: ChatScript = {
     {
       at: '2026-07-15 20:40',
       lines: [
-        L(Mo, '大海，你们物流公司最近还那么忙吗', { p: ['h-work-old'] }),
+        L(Mo, '大海，你们物流公司最近还那么忙吗', { p: ['h-work-old', 'conv-quit-job'] }),
         L(H, '妈，我正想说，我从顺达物流辞职了', { p: ['h-work-old', 'h-work-new'] }),
         L(H, '跟朋友合伙开了个火锅店，下个月开业', { p: ['h-work-new'] }),
         L(F, '胡闹！稳定工作说辞就辞'),
         L(H, '爸，我在顺达干了十年调度，也该出来闯闯了', { p: ['h-work-old'] }),
         L(J, '爸您别急，店面我们看过，在老城区'),
-        L(Mo, '行吧，你们自己拿主意'),
+        L(Mo, '行吧，你们自己拿主意', { p: ['conv-quit-job'] }),
       ],
     },
     {
@@ -133,24 +143,24 @@ export const groupFamily: ChatScript = {
       lines: [
         L(M, '妈的生日快到了，农历七月初九，今年是8月21号，大家记着点', { p: ['mo-bday'] }),
         L(H, '记着呢，今年订个包厢'),
-        L(J, '我来订，还是去老地方？', { n: ['tx-box'] }),
-        L(F, '别铺张，家里吃就行'),
+        L(J, '我来订，还是去老地方？', { n: ['tx-box'], p: ['loop-book-room'] }),
+        L(F, '别铺张，家里吃就行', { c: ['loop-book-room'] }),
         L(Mo, '听你爸的'),
-        L(M, '@林大海 哥，荔枝给你留了一箱，记得来拿', { p: ['h-mention-ge', 'rel-h-m'] }),
+        L(M, '@林大海 哥，荔枝给你留了一箱，记得来拿', { p: ['h-mention-ge', 'rel-h-m', 'loop-lizhi'] }),
       ],
     },
     {
       at: '2026-08-18 11:08',
       lines: [
         L(H, '{{img}}'),
-        L(H, '今天开业，大家有空来尝尝', { p: ['h-open', 'h-work-new'] }),
+        L(H, '今天开业，大家有空来尝尝', { p: ['h-open', 'h-work-new', 'conv-open-day'] }),
         L(H, '[位置] 大海老火锅(老城区店)', { p: ['h-work-new'] }),
         L(M, '恭喜哥！晚上带朵朵过去', { p: ['rel-h-m'] }),
         L(F, '[微信红包] 开业大吉', { n: ['inv-redpacket-c'] }),
         L(Mo, '[语音] 35"', { n: ['inv-voice-c'] }),
         L(Mo, '[语音] 6"', { n: ['inv-voice-c'] }),
         L(N, '我在南京回不去[流泪]，给老爸点个赞'),
-        L(N, '[动画表情]'),
+        L(N, '[动画表情]', { p: ['conv-open-day'] }),
       ],
     },
     {
@@ -169,7 +179,7 @@ export const groupFamily: ChatScript = {
     {
       at: '2026-08-28 09:00',
       lines: [
-        L(J, '国庆高铁票我统一买，把身份证号发我'),
+        L(J, '国庆高铁票我统一买，把身份证号发我', { p: ['loop-train-tickets'] }),
         L(F, '林建国 340000196612230016', { n: ['sens-id'] }),
         L(M, '我的你有，不用发'),
         L(M, '你撤回了一条消息'),
@@ -190,12 +200,12 @@ export const groupFamily: ChatScript = {
     {
       at: '2026-09-08 19:45',
       lines: [
-        L(F, '跟你们说个事，我和你妈下个月搬到大海那边的小区住，老房子租出去', { p: ['fmo-move', 'mo-move', 'rel-f-mo'] }),
+        L(F, '跟你们说个事，我和你妈下个月搬到大海那边的小区住，老房子租出去', { p: ['fmo-move', 'mo-move', 'rel-f-mo', 'conv-move'] }),
         L(Mo, '年纪大了，离你们近点方便', { p: ['mo-move'] }),
         L(M, '好事啊，我也方便过去'),
         L(H, '房子我帮你们看好了，就在我家对面楼', { p: ['fmo-move'] }),
         L(F, '[名片] 中介小刘', { n: ['tx-agent'] }),
-        L(F, '这个中介靠谱，你们谁有空帮我问问租金', { n: ['tx-agent'] }),
+        L(F, '这个中介靠谱，你们谁有空帮我问问租金', { n: ['tx-agent'], p: ['loop-rent-question', 'conv-move'] }),
       ],
     },
     {
@@ -203,8 +213,8 @@ export const groupFamily: ChatScript = {
       lines: [
         L(Mo, '[链接] 中秋节老人出行注意事项 https://example.com/health/mid-autumn'),
         L(Mo, '大家都看看'),
-        L(J, '妈，中秋25号咱们还是在店里吃？', { n: ['coord-midautumn'] }),
-        L(H, '在店里，我安排包厢', { n: ['coord-midautumn'] }),
+        L(J, '妈，中秋25号咱们还是在店里吃？', { n: ['coord-midautumn'], p: ['loop-midautumn'] }),
+        L(H, '在店里，我安排包厢', { n: ['coord-midautumn'], p: ['loop-midautumn'] }),
         L(Mo, '[聊天记录] 春天的花和林建国的聊天记录'),
         L(F, '[OK]'),
         L(M, '👌'),

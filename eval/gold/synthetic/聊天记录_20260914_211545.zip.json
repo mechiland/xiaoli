@@ -1,9 +1,9 @@
 {
-  "goldVersion": 1,
+  "goldVersion": 2,
   "zip": "聊天记录_20260914_211545.zip",
   "annotator": "annotator",
   "annotatedAt": "2026-09-15T10:43:43.624Z",
-  "notes": "Self = 小满: the chat is mostly about the other sender (job, move, marriage), consistent with the user importing a friend chat; chat title = other sender display name. Supersedes used for the job change only. Hometown (回九江) and Hangzhou past are optional because 回 is weak evidence.",
+  "notes": "Self = 小满: the chat is mostly about the other sender (job, move, marriage), consistent with the user importing a friend chat; chat title = other sender display name. Supersedes used for the job change only. Hometown (回九江) and Hangzhou past are optional because 回 is weak evidence. goldVersion 2 (interaction pass): loops and conversations added; claims/handles/relations/dates/events/negatives unchanged. Loops follow SPEC §8.7 (a question someone later answers is not a loop) and are only recorded when they stay open past the conversation (window) in which they were opened, since a close can only be expressed against a loop carried in from an earlier window. Conversations cover the stretches with real content; pure small talk is left out so it does not skew topic coverage.",
   "parserVersion": "wechat-export@1",
   "messageCount": 204,
   "messagesSha256": "398e281f55bdfae181e9649fe6031c739e3cf257dbb39a9628dc97df9a0e3a16",
@@ -402,6 +402,245 @@
         199
       ],
       "optional": true
+    }
+  ],
+  "loops": [
+    {
+      "id": "k1",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "回头细说",
+      "evidence": [
+        6
+      ],
+      "optional": true
+    },
+    {
+      "id": "k2",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "把最近在追的剧名发过去",
+      "evidence": [
+        47
+      ]
+    },
+    {
+      "id": "k3",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "国庆去九江参加婚礼",
+      "dueAt": "2026-10-03",
+      "evidence": [
+        66,
+        67,
+        175
+      ]
+    },
+    {
+      "id": "k4",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "到时候发婚礼请帖",
+      "evidence": [
+        66
+      ],
+      "optional": true
+    },
+    {
+      "id": "k5",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "加一下苏苏的微信",
+      "evidence": [
+        69,
+        70
+      ]
+    },
+    {
+      "id": "k6",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "晚上看转过来的租房文章",
+      "evidence": [
+        92,
+        93
+      ],
+      "optional": true
+    },
+    {
+      "id": "k7",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "帮忙看婚礼流程挑毛病",
+      "evidence": [
+        95,
+        96
+      ]
+    },
+    {
+      "id": "k8",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "下次见面请喝奶茶",
+      "evidence": [
+        161
+      ]
+    },
+    {
+      "id": "k9",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "替我跟苏苏说声恭喜",
+      "evidence": [
+        169
+      ]
+    },
+    {
+      "id": "k10",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "question",
+      "text": "副歌是啦啦啦的那首歌叫什么名字",
+      "evidence": [
+        186,
+        187
+      ],
+      "optional": true
+    },
+    {
+      "id": "k11",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "plan",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "evidence": [
+        23,
+        25
+      ],
+      "closedBy": 36,
+      "closedReason": "done"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "v1",
+      "startIdx": 0,
+      "endIdx": 6,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v2",
+      "startIdx": 14,
+      "endIdx": 17,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v3",
+      "startIdx": 18,
+      "endIdx": 25,
+      "topics": [
+        "offer",
+        "深圳"
+      ]
+    },
+    {
+      "id": "v4",
+      "startIdx": 26,
+      "endIdx": 31,
+      "topics": [
+        "离职"
+      ]
+    },
+    {
+      "id": "v5",
+      "startIdx": 36,
+      "endIdx": 40,
+      "topics": [
+        "深圳"
+      ]
+    },
+    {
+      "id": "v6",
+      "startIdx": 45,
+      "endIdx": 48,
+      "topics": [
+        "追剧"
+      ],
+      "optional": true
+    },
+    {
+      "id": "v7",
+      "startIdx": 63,
+      "endIdx": 70,
+      "topics": [
+        "领证",
+        "婚礼"
+      ]
+    },
+    {
+      "id": "v8",
+      "startIdx": 91,
+      "endIdx": 100,
+      "topics": [
+        "婚礼流程",
+        "租房"
+      ]
+    },
+    {
+      "id": "v9",
+      "startIdx": 111,
+      "endIdx": 113,
+      "topics": [
+        "发烧"
+      ],
+      "optional": true
+    },
+    {
+      "id": "v10",
+      "startIdx": 158,
+      "endIdx": 161,
+      "topics": [
+        "奶茶"
+      ]
+    },
+    {
+      "id": "v11",
+      "startIdx": 165,
+      "endIdx": 169,
+      "topics": [
+        "工作室",
+        "开业"
+      ]
+    },
+    {
+      "id": "v12",
+      "startIdx": 175,
+      "endIdx": 182,
+      "topics": [
+        "婚礼"
+      ]
+    },
+    {
+      "id": "v13",
+      "startIdx": 199,
+      "endIdx": 203,
+      "topics": [
+        "出差"
+      ]
     }
   ],
   "negatives": [

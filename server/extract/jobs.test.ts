@@ -1,13 +1,13 @@
 import { and, eq } from 'drizzle-orm'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { chats, claimMentions, claims, events, evidence, extractionJobs, handles, importantDates, imports, llmCalls, messages, persons, relations, withOwner, type Db } from '@/server/db'
+import { chats, claimMentions, claims, conversationSegments, events, evidence, extractionJobs, handles, importantDates, imports, llmCalls, loops, messages, persons, relations, segmentParticipants, withOwner, type Db } from '@/server/db'
 import { ApiError } from '@/server/errors'
 import { cassetteKey, createLlmClient, d1CallLogger, memoryCassetteStore, type LlmError, type LlmJsonRequest, type LlmJsonResult } from '@/server/llm'
 import { createTestDb, createTestUser, fakeLlm } from '@/tests/helpers/test-db'
 import { d1Store } from './d1-store'
 import { createJobsForImport, processNextJob, retryFailedJobs } from './jobs'
-import { renderExtractPrompt } from './prompt'
-import { PROMPT_VERSION } from './prompt-version'
+import { renderExtractPrompt, renderInteractionPrompt } from './prompt'
+import { INTERACTION_PROMPT_VERSION, INTERACTION_PURPOSE, PROMPT_VERSION } from './prompt-version'
 
 // Window packing (extract.v4+, DECISIONS ## extract X20) is switched off here so two short sessions stay two windows
 // and retry/failure isolation between windows stays testable; `feats.pack` turns it on for the packing cases.
@@ -21,6 +21,10 @@ vi.mock('./prompt-version', async (importOriginal) => {
 const ok = (json: unknown, latencyMs = 800): LlmJsonResult => ({ ok: true, json, raw: JSON.stringify(json), usage: { inputTokens: 900, outputTokens: 90, cacheHitTokens: 0 }, latencyMs, model: 'deepseek-flash', finishReason: 'stop', fromCassette: false })
 const err = (code: LlmError['code']): LlmError => ({ ok: false, code, message: code, raw: null, retryable: code !== 'budget_exceeded', latencyMs: 300 })
 const empty = { newPersons: [], handles: [], relations: [], claims: [], events: [], dates: [] }
+/** the interaction call's "nothing happened here" answer; it is the window's second, parallel call (SPEC §8.8) */
+const emptyInteraction = { segment: null, loops: [], closes: [] }
+/** Every window is two calls now; they are told apart by prompt version, never by arrival order. */
+const isInteraction = (req: LlmJsonRequest) => req.promptVersion.startsWith('interaction.')
 const env = { EXTRACT_MODEL: undefined }
 const deadline = () => Date.now() + 28_000
 
@@ -124,6 +128,7 @@ describe('processNextJob', () => {
           const moved = g?.candidates.find((c) => c.statement === '搬去重庆')
           return ok({ duplicates: moved ? [{ newIndex: g.new[0].index, existingClaimId: moved.id }] : [] })
         }
+        if (isInteraction(req)) return ok(emptyInteraction)
         return ok(req.messages[1].content.includes('我下个月搬去重庆了') ? first : second)
       },
     ])
@@ -264,7 +269,7 @@ describe('processNextJob', () => {
   it('an import with no proposed items and no failures ends as done', async () => {
     const s = await seedImport(SESSIONS.slice(0, 3))
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])
-    const r = await processNextJob(db, fakeLlm([ok(empty)]), s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+    const r = await processNextJob(db, fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))]), s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
     expect(r).toMatchObject({ processed: { status: 'done', itemsCreated: 0 }, importStatus: 'done' })
   })
 
@@ -276,36 +281,40 @@ describe('processNextJob', () => {
     const llm = fakeLlm([
       async (req) => {
         if (req.purpose === 'dedup') return ok({ duplicates: [] })
+        if (isInteraction(req)) return ok(emptyInteraction, 200)
         await new Promise((res) => setTimeout(res, 5_000))
         return ok(out, 5_000)
       },
     ])
     const start = Date.now()
     const r = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: Date.now() + 8_000, env })
+    // the two window calls ran together, so the 5 s extract call is the whole wait; dedup no longer fits
     expect(Date.now() - start).toBeLessThan(30_000)
     expect(r.processed).toMatchObject({ status: 'done', itemsCreated: 1 })
-    expect(llm.calls.map((c) => c.purpose)).toEqual(['extract'])
-    expect(llm.calls[0].timeoutMs).toBeLessThanOrEqual(2_000)
+    expect(llm.calls.map((c) => c.purpose).filter((p) => p === 'dedup')).toEqual([])
+    expect(llm.calls.filter((c) => c.purpose === 'extract')[0].timeoutMs).toBeLessThanOrEqual(2_000)
   }, 20_000)
 
   it('does not call the model with less than 1 s for the extract call; the attempt counts', async () => {
     const s = await seedImport(SESSIONS.slice(0, 3))
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])
-    const llm = fakeLlm([ok(empty)])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))])
     const r = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: Date.now() + 3_000, env })
     expect(r.processed).toMatchObject({ status: 'pending', code: 'deadline' })
+    // neither call goes out: the deadline check happens before the pair is dispatched
     expect(llm.calls).toHaveLength(0)
   })
 
   it('uses the model from settings / env and does nothing for imports that are not extracting', async () => {
     const s = await seedImport(SESSIONS.slice(0, 3))
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])
-    const llm = fakeLlm([ok(empty)])
+    const llm = fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))])
     await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env: { EXTRACT_MODEL: 'deepseek-v4-pro' } })
-    expect(llm.calls[0].model).toBe('deepseek-v4-pro')
+    // both window calls use the resolved model
+    expect(llm.calls.map((c) => c.model)).toEqual(['deepseek-v4-pro', 'deepseek-v4-pro'])
     const r = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
     expect(r).toMatchObject({ processed: null, importStatus: 'done' })
-    expect(llm.calls).toHaveLength(1)
+    expect(llm.calls).toHaveLength(2)
   })
 
   it('isolates owners: another account gets 404 and cannot see the window', async () => {
@@ -335,6 +344,7 @@ describe('processNextJob', () => {
     const llm = fakeLlm([
       (req) => {
         if (req.purpose === 'dedup') return ok({ duplicates: [] })
+        if (isInteraction(req)) return ok(emptyInteraction)
         prompt = req.messages[1].content
         return ok({
           ...empty,
@@ -358,16 +368,127 @@ describe('processNextJob', () => {
     await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])
     const [job] = await db.select().from(extractionJobs).where(and(eq(extractionJobs.ownerId, s.ownerId), eq(extractionJobs.importId, s.imp.id))).all()
     const win = await d1Store(db, s.ownerId).loadWindow({ importId: s.imp.id, jobId: job.id, windowIndex: job.id, startSeq: job.windowStartSeq, endSeq: job.windowEndSeq, focusStartSeq: job.focusStartSeq, focusEndSeq: job.focusEndSeq })
+    // The two calls key on different prompt versions, so they get separate cassette entries (ARCHITECTURE §6).
     const req: LlmJsonRequest = { purpose: 'extract', promptVersion: PROMPT_VERSION, model: 'deepseek-flash', messages: renderExtractPrompt(win), maxTokens: 8192, temperature: 0 }
+    const ireq: LlmJsonRequest = { purpose: INTERACTION_PURPOSE, promptVersion: INTERACTION_PROMPT_VERSION, model: 'deepseek-flash', messages: renderInteractionPrompt(win), maxTokens: 2048, temperature: 0 }
     const content = JSON.stringify({ ...empty, dates: [{ person: { personId: s.ming.id }, kind: 'birthday', month: 3, day: 8, calendar: 'lunar', evidence: [3] }] })
+    const icontent = JSON.stringify({ ...emptyInteraction, segment: { summary: '聊了搬家和妈妈的生日', topics: ['搬家'], speakers: [{ personId: s.ming.id }], evidence: [1] } })
     const store = memoryCassetteStore([
       { key: cassetteKey(req, 'disabled'), recordedAt: '2026-09-15T00:00:00.000Z', model: 'deepseek-flash', promptVersion: PROMPT_VERSION, purpose: 'extract', request: { messages: req.messages, maxTokens: 8192, temperature: 0, thinking: 'disabled' }, response: { content, finishReason: 'stop', usage: { inputTokens: 1500, outputTokens: 60, cacheHitTokens: 0 }, latencyMs: 1200 }, error: null },
+      { key: cassetteKey(ireq, 'disabled'), recordedAt: '2026-09-15T00:00:00.000Z', model: 'deepseek-flash', promptVersion: INTERACTION_PROMPT_VERSION, purpose: INTERACTION_PURPOSE, request: { messages: ireq.messages, maxTokens: 2048, temperature: 0, thinking: 'disabled' }, response: { content: icontent, finishReason: 'stop', usage: { inputTokens: 400, outputTokens: 30, cacheHitTokens: 0 }, latencyMs: 500 }, error: null },
     ])
     const llm = createLlmClient({ env: { NEXTJS_ENV: 'test' }, logger: d1CallLogger(db), mode: 'replay', budget: null, cassetteStore: store })
     const r = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
-    expect(r.processed).toMatchObject({ status: 'done', itemsCreated: 1 })
+    expect(r.processed).toMatchObject({ status: 'done', itemsCreated: 2 })
     const calls = await db.select().from(llmCalls).where(eq(llmCalls.importId, s.imp.id)).all() // owner-checked: filtered by this test's import
-    expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ ownerId: s.ownerId, jobId: job.id, purpose: 'extract', mode: 'replay', promptVersion: PROMPT_VERSION, inputTokens: 1500, rawOutput: content })
+    expect(calls).toHaveLength(2)
+    // cost and latency of the two calls are readable apart: different prompt version and a purpose of its own
+    expect(calls.find((c) => c.promptVersion === PROMPT_VERSION)).toMatchObject({ ownerId: s.ownerId, jobId: job.id, purpose: 'extract', mode: 'replay', inputTokens: 1500, rawOutput: content })
+    expect(calls.find((c) => c.promptVersion === INTERACTION_PROMPT_VERSION)).toMatchObject({ ownerId: s.ownerId, jobId: job.id, purpose: INTERACTION_PURPOSE, mode: 'replay', inputTokens: 400, rawOutput: icontent })
+    expect(calls.find((c) => c.promptVersion === INTERACTION_PROMPT_VERSION)!.purpose).not.toBe('extract')
+  })
+})
+
+// ---- Interaction layer in D1 (SPEC §8.8) ---------------------------------------------------------------------------
+describe('proposeItems: conversation segments, loops and closes', () => {
+  const segment = (summary: string) => ({ summary, topics: ['搬家'], speakers: [{ personId: 1 }], evidence: [1, 2] })
+  /** `json` is the INTERACTION call's answer; the extraction call answers empty. */
+  const runWindow = async (s: Awaited<ReturnType<typeof seedImport>>, json: (personId: number) => object) => {
+    const llm = fakeLlm([(req) => (req.purpose === 'dedup' ? ok({ duplicates: [] }) : isInteraction(req) ? ok(json(s.ming.id)) : ok(empty))])
+    const r = await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+    return { r, llm }
+  }
+  const segRows = (ownerId: string) => db.select().from(conversationSegments).where(eq(conversationSegments.ownerId, ownerId)).all()
+  const loopRows = (ownerId: string) => db.select().from(loops).where(eq(loops.ownerId, ownerId)).all()
+
+  it('stores one segment per window with participants and evidence, and overwrites it when the span is re-extracted', async () => {
+    const s = await seedImport(SESSIONS.slice(0, 3))
+    expect(await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])).toBe(1)
+    await runWindow(s, () => ({ ...emptyInteraction, segment: segment('聊了搬家和妈妈的生日') }))
+
+    const rows = await segRows(s.ownerId)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ chatId: s.chat.id, startSeq: 0, endSeq: 2048, startedAt: '2026-06-01 09:00', endedAt: '2026-06-01 09:02', messageCount: 3, summary: '聊了搬家和妈妈的生日', topics: '["搬家"]', hidden: false, importId: s.imp.id, sourceKind: 'ai' })
+    const parts = await db.select().from(segmentParticipants).where(eq(segmentParticipants.ownerId, s.ownerId)).all()
+    expect(parts.map((p) => [p.personId, p.messageCount]).sort()).toEqual(
+      [
+        [s.ming.id, 2],
+        [s.self.id, 1],
+      ].sort(),
+    )
+    const ev = await db.select().from(evidence).where(and(eq(evidence.ownerId, s.ownerId), eq(evidence.targetType, 'segment'))).all()
+    expect(ev.map((e) => e.messageId).sort()).toEqual(s.msgIds.slice(0, 2).sort())
+
+    // re-extracting the same span overwrites in place (SPEC §8.8), including participants and evidence
+    await retryFailedJobs(db, s.ownerId, s.imp.id)
+    await db.update(extractionJobs).set({ status: 'pending', attempts: 0 }).where(eq(extractionJobs.ownerId, s.ownerId))
+    await db.update(imports).set({ status: 'extracting' }).where(eq(imports.ownerId, s.ownerId))
+    await runWindow(s, () => ({ ...emptyInteraction, segment: { ...segment('只聊了搬家'), speakers: [], evidence: [3] } }))
+    const after = await segRows(s.ownerId)
+    expect(after).toHaveLength(1)
+    expect(after[0]).toMatchObject({ id: rows[0].id, summary: '只聊了搬家', startSeq: 0, endSeq: 2048 })
+    const evAfter = await db.select().from(evidence).where(and(eq(evidence.ownerId, s.ownerId), eq(evidence.targetType, 'segment'))).all()
+    expect(evAfter.map((e) => e.messageId)).toEqual([s.msgIds[2]])
+  })
+
+  it('inserts a loop with evidence, then closes it from a later window and never re-closes it', async () => {
+    const s = await seedImport(SESSIONS)
+    expect(await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 4 * 1024]])).toBe(2)
+    await runWindow(s, (ming) => ({ ...emptyInteraction, loops: [{ person: { personId: ming }, direction: 'theirs', kind: 'promise', text: '把新地址发过来', evidence: [1] }] }))
+    const [loop] = await loopRows(s.ownerId)
+    expect(loop).toMatchObject({ personId: s.ming.id, direction: 'theirs', kind: 'promise', text: '把新地址发过来', textNorm: '把新地址发过来', openedMessageId: s.msgIds[0], openedAt: '2026-06-01 09:00', closedMessageId: null, status: 'proposed', importId: s.imp.id, sourceKind: 'ai' })
+    const ev = await db.select().from(evidence).where(and(eq(evidence.ownerId, s.ownerId), eq(evidence.targetType, 'loop'))).all()
+    expect(ev.map((e) => e.messageId)).toEqual([s.msgIds[0]])
+
+    // the second window is shown the open loop and closes it
+    let prompt = ''
+    const llm = fakeLlm([
+      (req) => {
+        if (req.purpose === 'dedup') return ok({ duplicates: [] })
+        if (!isInteraction(req)) return ok(empty)
+        prompt = req.messages[1].content
+        return ok({ ...emptyInteraction, closes: [{ loopId: loop.id, reason: 'done', evidence: [2] }] })
+      },
+    ])
+    await processNextJob(db, llm, s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+    expect(prompt).toContain(`  未结事项：\n  - [loop ${loop.id}] 承诺·该对方：把新地址发过来（2026-06-01 起）`)
+    const closed = (await loopRows(s.ownerId))[0]
+    expect(closed).toMatchObject({ closedMessageId: s.msgIds[4], closedAt: '2026-06-01 15:05', closedReason: 'done' })
+
+    // an already-closed loop is never re-closed (open/done is an event, not a state machine)
+    const store = d1Store(db, s.ownerId)
+    await store.proposeItems(s.imp.id, { handles: [], relations: [], claims: [], events: [], dates: [], loops: [], closes: [{ loopId: loop.id, reason: 'dropped', closedMessageId: s.msgIds[0], closedAt: '2026-06-01 09:00' }] }, { jobId: null, windowIndex: 0 })
+    expect((await loopRows(s.ownerId))[0]).toMatchObject({ closedMessageId: s.msgIds[4], closedReason: 'done' })
+  })
+
+  it('loadWindow fills lastContact and openLoops, and a closed or rejected loop is not offered', async () => {
+    const s = await seedImport(SESSIONS)
+    await db.insert(conversationSegments).values(withOwner<typeof conversationSegments>(s.ownerId, { chatId: s.chat.id, startSeq: -2, endSeq: -1, startedAt: '2026-05-01 20:00', endedAt: '2026-05-01 20:30', messageCount: 4, summary: '上次聊了装修', summaryNorm: '上次聊了装修', topics: '[]', hidden: false, importId: s.imp.id, sourceKind: 'ai' }, '2026-05-01T20:00:00.000Z'))
+    const [old] = await db.select().from(conversationSegments).where(eq(conversationSegments.ownerId, s.ownerId)).all()
+    await db.insert(segmentParticipants).values({ ownerId: s.ownerId, createdAt: '2026-05-01T20:00:00.000Z', segmentId: old.id, personId: s.ming.id, messageCount: 3 })
+    const loopRow = (over: Partial<typeof loops.$inferInsert>): typeof loops.$inferInsert =>
+      withOwner<typeof loops>(s.ownerId, { personId: s.ming.id, direction: 'theirs', kind: 'promise', text: '开着的事', textNorm: '开着的事', openedMessageId: s.msgIds[0], openedAt: '2026-05-02 10:00', status: 'proposed', importId: s.imp.id, sourceKind: 'ai', ...over })
+    await db.insert(loops).values([
+      loopRow({}),
+      loopRow({ text: '已经结了的事', textNorm: '已经结了的事', closedMessageId: s.msgIds[1], closedAt: '2026-05-03 10:00', closedReason: 'done' }),
+      loopRow({ text: '被否掉的事', textNorm: '被否掉的事', status: 'rejected' }),
+    ])
+
+    const win = await d1Store(db, s.ownerId).loadWindow({ importId: s.imp.id, jobId: null, windowIndex: 0, startSeq: 0, endSeq: 4 * 1024, focusStartSeq: 0, focusEndSeq: 4 * 1024 })
+    expect(win.chatId).toBe(s.chat.id)
+    expect(win.span).toEqual({ startSeq: 0, endSeq: 4 * 1024, startedAt: '2026-06-01 09:00', endedAt: '2026-06-01 15:05' })
+    const ming = win.known.find((p) => p.personId === s.ming.id)!
+    expect(ming.lastContact).toEqual({ at: '2026-05-01 20:00', summary: '上次聊了装修' })
+    expect(ming.openLoops?.map((l) => l.text)).toEqual(['开着的事'])
+    expect(win.known.find((p) => p.personId === s.self.id)?.lastContact).toBeNull()
+  })
+
+  it('a window that only produces a loop leaves the import in review', async () => {
+    const s = await seedImport(SESSIONS.slice(0, 3))
+    await createJobsForImport(db, s.ownerId, s.imp.id, [[0, 2048]])
+    const { r } = await runWindow(s, (ming) => ({ ...emptyInteraction, loops: [{ person: { personId: ming }, direction: 'mine', kind: 'promise', text: '把照片发过去', evidence: [2] }] }))
+    expect(r.processed).toMatchObject({ status: 'done', itemsCreated: 1 })
+    const after = await processNextJob(db, fakeLlm([(req) => (isInteraction(req) ? ok(emptyInteraction) : ok(empty))]), s.ownerId, s.imp.id, { deadlineAt: deadline(), env })
+    expect(after.importStatus).toBe('reviewing')
   })
 })

@@ -5,17 +5,20 @@ import {
   chats,
   claimMentions,
   claims,
+  conversationSegments,
   eventParticipants,
   events,
   evidence,
   handles,
   importantDates,
   imports,
+  loops,
   messages,
   owned,
   persons,
   relations,
   reviewLog,
+  segmentParticipants,
   withOwner,
   withOwnerLink,
   type Db,
@@ -99,6 +102,84 @@ async function world(db: Db, ownerId: string) {
     withOwnerLink<typeof eventParticipants>(ownerId, { eventId: ev.id, personId: b.id }),
     withOwnerLink<typeof eventParticipants>(ownerId, { eventId: evSolo.id, personId: a.id }),
   ])
+  // interaction layer (SPEC §7 交互层): one segment both A and B took part in, one loop on A and one on B
+  const seg = await one(
+    db
+      .insert(conversationSegments)
+      .values(
+        withOwner<typeof conversationSegments>(ownerId, {
+          chatId: priv.id,
+          startSeq: 0,
+          endSeq: 4096,
+          startedAt: '2026-09-01 10:00',
+          endedAt: '2026-09-01 10:30',
+          messageCount: 3,
+          summary: '聊了工作和搬家',
+          summaryNorm: '聊了工作和搬家',
+          topics: '["工作","搬家"]',
+          hidden: false,
+          importId: imp.id,
+          jobId: null,
+          sourceKind: 'ai',
+        }),
+      )
+      .returning(),
+  )
+  await db.insert(segmentParticipants).values([
+    withOwnerLink<typeof segmentParticipants>(ownerId, { segmentId: seg.id, personId: a.id, messageCount: 2 }),
+    withOwnerLink<typeof segmentParticipants>(ownerId, { segmentId: seg.id, personId: b.id, messageCount: 1 }),
+  ])
+  const loopA = await one(
+    db
+      .insert(loops)
+      .values(
+        withOwner<typeof loops>(ownerId, {
+          personId: a.id,
+          direction: 'mine',
+          kind: 'promise',
+          text: '答应帮她看简历',
+          textNorm: '答应帮她看简历',
+          dueAt: null,
+          openedMessageId: m1.id,
+          openedAt: '2026-09-01 10:00',
+          closedMessageId: null,
+          closedAt: null,
+          closedReason: null,
+          status: 'proposed',
+          importId: imp.id,
+          jobId: null,
+          sourceKind: 'ai',
+        }),
+      )
+      .returning(),
+  )
+  const loopB = await one(
+    db
+      .insert(loops)
+      .values(
+        withOwner<typeof loops>(ownerId, {
+          personId: b.id,
+          direction: 'theirs',
+          kind: 'question',
+          text: '问了国庆有没有空',
+          textNorm: '问了国庆有没有空',
+          dueAt: null,
+          // opened by a message A sent: deleting A must NOT take B's loop with it
+          openedMessageId: m1.id,
+          openedAt: '2026-09-01 10:00',
+          closedMessageId: null,
+          closedAt: null,
+          closedReason: null,
+          // confirmed on purpose: the import's only remaining proposed item must be A's loop, so the
+          // "reviewing → done" assertion below actually proves loop importIds reach syncImportStatus
+          status: 'confirmed',
+          importId: imp.id,
+          jobId: null,
+          sourceKind: 'ai',
+        }),
+      )
+      .returning(),
+  )
   const evRow = (targetType: typeof evidence.$inferInsert.targetType, targetId: number, messageId: number) =>
     withOwnerLink<typeof evidence>(ownerId, { targetType, targetId, messageId })
   await db.insert(evidence).values([
@@ -111,8 +192,11 @@ async function world(db: Db, ownerId: string) {
     evRow('event', ev.id, g1.id),
     evRow('event', evSolo.id, m1.id),
     evRow('claim', bClaim.id, g1.id),
+    evRow('segment', seg.id, m1.id),
+    evRow('loop', loopA.id, m1.id),
+    evRow('loop', loopB.id, m1.id),
   ])
-  return { priv, group, imp, self, a, b, merged, mergedTwice, hA, hAg, hAterm, hB, work, city, oldWork, outdated, proposed, mentionClaim, bClaim, relMe, relB, birthday, anniversary, ev, evSolo }
+  return { priv, group, imp, self, a, b, merged, mergedTwice, hA, hAg, hAterm, hB, work, city, oldWork, outdated, proposed, mentionClaim, bClaim, relMe, relB, birthday, anniversary, ev, evSolo, seg, loopA, loopB }
 }
 
 function client(db: Db, userId: string) {
@@ -254,6 +338,20 @@ describe('person routes', () => {
     expect(await byOwner(db.select().from(events).where(owned(events, uid, eq(events.id, w.evSolo.id))))).toBe(0)
     const parts = await db.select().from(eventParticipants).where(owned(eventParticipants, uid, eq(eventParticipants.eventId, w.ev.id)))
     expect(parts.map((p) => p.personId)).toEqual([w.b.id])
+
+    // interaction layer (ARCHITECTURE §11 Delete person): A's loop and its evidence are gone, B's loop survives
+    // even though the message that opened it was sent by A; the segment itself is kept and NOT recounted, only
+    // A's participant row is dropped.
+    expect(await byOwner(db.select().from(loops).where(owned(loops, uid, eq(loops.id, w.loopA.id))))).toBe(0)
+    expect(await byOwner(db.select().from(loops).where(owned(loops, uid, eq(loops.id, w.loopB.id))))).toBe(1)
+    expect(ev.some((e) => e.targetType === 'loop' && e.targetId === w.loopA.id)).toBe(false)
+    expect(ev.some((e) => e.targetType === 'loop' && e.targetId === w.loopB.id)).toBe(true)
+    const segRow = await db.select().from(conversationSegments).where(owned(conversationSegments, uid, eq(conversationSegments.id, w.seg.id))).get()
+    expect(segRow).toBeDefined()
+    expect(segRow!.messageCount).toBe(3)
+    expect(ev.some((e) => e.targetType === 'segment' && e.targetId === w.seg.id)).toBe(true)
+    const segParts = await db.select().from(segmentParticipants).where(owned(segmentParticipants, uid, eq(segmentParticipants.segmentId, w.seg.id)))
+    expect(segParts.map((p) => p.personId)).toEqual([w.b.id])
 
     // reviewLog kept; import had proposed items only on A → now done
     expect((await db.select().from(reviewLog).where(owned(reviewLog, uid))).length).toBeGreaterThanOrEqual(logBefore)

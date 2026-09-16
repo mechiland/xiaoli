@@ -8,6 +8,7 @@ import * as schema from '@/server/db/schema'
 import type { Db } from '@/server/db'
 import { createTestDb, createTestUser } from '@/tests/helpers/test-db'
 import { FILLER_KINDS } from './content'
+import { loopSentence } from '@/lib/loop-text'
 import { TAGGED_LABELS, surnameOf } from './names'
 import { DELETE_ORDER, seedAccounts, type SeedResult } from './write'
 
@@ -325,6 +326,130 @@ describe('pnpm seed dataset', () => {
     const husband = rels.find((x) => x.toPersonId === long && x.label === '老公')!
     const daughter = rels.find((x) => x.toPersonId === long && x.label === '女儿')!
     expect(surnameOf(persons.get(daughter.fromPersonId)!.label)).toBe(surnameOf(persons.get(husband.fromPersonId)!.label))
+  })
+
+  it('seeds conversation segments, participants and loops that agree with the messages (SPEC §7 交互层)', async () => {
+    const refs = first.datasets.seed!.refs
+    const msgs = await db.select().from(schema.messages).where(eq(schema.messages.ownerId, owners.seed)).all()
+    const bySeq = new Map(msgs.map((m) => [`${m.chatId}:${m.seq}`, m]))
+    const byChat = new Map<number, typeof msgs>()
+    for (const m of msgs) byChat.set(m.chatId, [...(byChat.get(m.chatId) ?? []), m])
+    for (const list of byChat.values()) list.sort((a, b) => a.seq - b.seq)
+
+    const segs = await db.select().from(schema.conversationSegments).where(eq(schema.conversationSegments.ownerId, owners.seed)).all()
+    expect(segs.length).toBeGreaterThanOrEqual(30)
+    const chats = await db.select().from(schema.chats).where(eq(schema.chats.ownerId, owners.seed)).all()
+    for (const c of chats) expect(segs.some((s) => s.chatId === c.id), `chat ${c.title} has a segment`).toBe(true)
+    expect(segs.filter((s) => s.hidden)).not.toHaveLength(0)
+    expect(segs.filter((s) => s.sourceKind === 'manual')).not.toHaveLength(0)
+
+    const parts = await db.select().from(schema.segmentParticipants).where(eq(schema.segmentParticipants.ownerId, owners.seed)).all()
+    const partsBySeg = new Map<number, typeof parts>()
+    for (const p of parts) partsBySeg.set(p.segmentId, [...(partsBySeg.get(p.segmentId) ?? []), p])
+    const handles = new Map((await db.select().from(schema.handles).where(eq(schema.handles.ownerId, owners.seed)).all()).map((h) => [h.id, h]))
+
+    for (const s of segs) {
+      const span = (byChat.get(s.chatId) ?? []).filter((m) => m.seq >= s.startSeq && m.seq <= s.endSeq)
+      expect(span.length, `segment ${s.id} span`).toBe(s.messageCount)
+      expect(s.startedAt).toBe(span[0].sentAt)
+      expect(s.endedAt).toBe(span[span.length - 1].sentAt)
+      expect(bySeq.has(`${s.chatId}:${s.startSeq}`), `segment ${s.id} startSeq is a real message`).toBe(true)
+      expect(s.summary.length).toBeGreaterThan(4)
+      const topics = JSON.parse(s.topics) as string[]
+      expect(topics.length).toBeGreaterThanOrEqual(1)
+      expect(topics.length).toBeLessThanOrEqual(4)
+      // participants are exactly the people who spoke inside the span
+      const spoke = new Map<number, number>()
+      for (const m of span) {
+        const pid = handles.get(m.senderHandleId!)?.personId
+        if (pid != null) spoke.set(pid, (spoke.get(pid) ?? 0) + 1)
+      }
+      const got = new Map((partsBySeg.get(s.id) ?? []).map((p) => [p.personId, p.messageCount]))
+      expect([...got.entries()].sort(), `segment ${s.id} participants`).toEqual([...spoke.entries()].sort())
+    }
+
+    const loops = await db.select().from(schema.loops).where(eq(schema.loops.ownerId, owners.seed)).all()
+    const msgById = new Map(msgs.map((m) => [m.id, m]))
+    for (const l of loops) {
+      const open = msgById.get(l.openedMessageId!)
+      expect(open, `loop ${l.id} opens on a real message`).toBeTruthy()
+      expect(l.openedAt).toBe(open!.sentAt)
+      if (l.closedMessageId != null) {
+        const close = msgById.get(l.closedMessageId)!
+        expect(close.chatId).toBe(open!.chatId)
+        expect(close.seq, `loop ${l.id} closes later than it opens`).toBeGreaterThan(open!.seq)
+        expect(l.closedAt).toBe(close.sentAt)
+        expect(l.closedReason).toBeTruthy()
+      }
+    }
+    // every state the person page renders
+    expect(loops.some((l) => l.kind === 'promise' && l.direction === 'mine' && l.closedMessageId === null && l.dueAt === null)).toBe(true)
+    // direction = whose move is next: 'mine' = the user owes it, 'theirs' = the other person owes it
+    expect(loops.some((l) => l.kind === 'question' && l.direction === 'mine' && l.closedMessageId === null)).toBe(true)
+    expect(loops.some((l) => l.kind === 'question' && l.direction === 'theirs' && l.closedMessageId === null)).toBe(true)
+    expect(loops.some((l) => l.closedReason === 'done')).toBe(true)
+    expect(loops.some((l) => l.closedReason === 'dropped')).toBe(true)
+    expect(loops.some((l) => l.status === 'proposed')).toBe(true)
+    const daysBack = (t: string) => (Date.parse(`${TODAY}T00:00:00Z`) - Date.parse(`${t.slice(0, 10)}T00:00:00Z`)) / 86_400_000
+    expect(loops.some((l) => l.dueAt === null && l.closedMessageId === null && daysBack(l.openedAt) >= 90), 'an expired loop').toBe(true)
+    const upcoming = loops.filter((l) => l.kind === 'plan' && l.dueAt && l.closedMessageId === null && daysBack(l.dueAt) <= 0 && -daysBack(l.dueAt) <= 30)
+    expect(upcoming.length, '约定 due within 30 days for 首页即将到来').toBeGreaterThanOrEqual(1)
+
+    // evidence points inside the right span
+    const ev = await db.select().from(schema.evidence).where(and(eq(schema.evidence.ownerId, owners.seed), inArray(schema.evidence.targetType, ['segment', 'loop']))).all()
+    const segById = new Map(segs.map((s) => [s.id, s]))
+    const loopById = new Map(loops.map((l) => [l.id, l]))
+    const segEv = new Set<number>()
+    const loopEv = new Set<number>()
+    for (const e of ev) {
+      const m = msgById.get(e.messageId)
+      expect(m, `evidence message ${e.messageId} exists`).toBeTruthy()
+      if (e.targetType === 'segment') {
+        const s = segById.get(e.targetId)!
+        expect(s, `segment ${e.targetId}`).toBeTruthy()
+        expect(m!.chatId).toBe(s.chatId)
+        expect(m!.seq).toBeGreaterThanOrEqual(s.startSeq)
+        expect(m!.seq).toBeLessThanOrEqual(s.endSeq)
+        segEv.add(e.targetId)
+      } else {
+        const l = loopById.get(e.targetId)!
+        expect(l, `loop ${e.targetId}`).toBeTruthy()
+        expect(m!.chatId).toBe(msgById.get(l.openedMessageId!)!.chatId)
+        loopEv.add(e.targetId)
+      }
+    }
+    expect(segEv.size, 'every segment has evidence').toBe(segs.length)
+    expect(loopEv.size, 'every loop has evidence').toBe(loops.length)
+
+    // manifest tags the scenarios rely on
+    for (const tag of ['hidden', 'manual', 'split-a', 'split-b', 'same-day-morning', 'same-day-evening']) expect(refs.segments[tag], `segment tag ${tag}`).toBeTruthy()
+    for (const tag of ['promise-mine-open', 'question-mine-open', 'question-theirs-open', 'plan-upcoming', 'closed-done', 'expired', 'proposed', 'group-only', 'closed-dropped']) expect(refs.loops[tag], `loop tag ${tag}`).toBeTruthy()
+
+    // `loops.text` is a bare fragment (prompts/extract.v9.md §8): the UI composes subject + verb. Pinning the
+    // rendered string here is what keeps the seed from storing an already-worded sentence ("你答应你答应…").
+    const labels = new Map((await db.select({ id: schema.persons.id, label: schema.persons.label }).from(schema.persons).where(eq(schema.persons.ownerId, owners.seed)).all()).map((p) => [p.id, p.label]))
+    for (const l of loops) {
+      expect(l.text, `loop ${l.id} text has no full stop`).not.toMatch(/[。.]$/)
+      expect(l.text.startsWith('你答应') || l.text.startsWith('约好'), `loop ${l.id} text is a fragment`).toBe(false)
+      const rendered = loopSentence(l as unknown as Parameters<typeof loopSentence>[0], labels.get(l.personId)!)
+      expect(rendered, `loop ${l.id} renders once`).not.toMatch(/你答应你答应|你问.*问你|约好约/)
+    }
+    const renderOf = (tag: string) => {
+      const l = loops.find((x) => x.id === refs.loops[tag].id)!
+      return loopSentence(l as unknown as Parameters<typeof loopSentence>[0], labels.get(l.personId)!)
+    }
+    expect(renderOf('promise-mine-open')).toBe('你答应帮她表妹看简历')
+    expect(renderOf('question-mine-open')).toBe(`${TAGGED_LABELS.longProfile}问你国庆有没有空，你没回`)
+    expect(renderOf('question-theirs-open')).toBe(`你问体育馆的年卡在哪儿办，${TAGGED_LABELS.privateLatin}没回`)
+    expect(renderOf('plan-upcoming')).toBe('约好下个月一起去看动画展')
+    expect(renderOf('group-only')).toBe(`${TAGGED_LABELS.leapMonth}答应把毕业合影的原图发过来`)
+    for (const tag of ['rhythm-small', 'group-only']) expect(refs.persons[tag], `person tag ${tag}`).toBeTruthy()
+
+    // seed2 has its own segments and loop, and never sees seed's
+    const otherSegs = await db.select().from(schema.conversationSegments).where(eq(schema.conversationSegments.ownerId, owners.seed2)).all()
+    expect(otherSegs.length).toBeGreaterThanOrEqual(2)
+    expect(otherSegs.every((s) => !segs.some((x) => x.id === s.id))).toBe(true)
+    expect((await db.select().from(schema.loops).where(eq(schema.loops.ownerId, owners.seed2)).all()).length).toBeGreaterThanOrEqual(1)
   })
 
   it('is idempotent and leaves other users untouched', async () => {

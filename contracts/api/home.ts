@@ -7,10 +7,15 @@ import { PeopleIndexResponseSchema } from './people'
 export const HomeResponseSchema = z.object({
   isEmpty: z.boolean(),
   needsOnboarding: z.boolean(),
+  /** important dates and, from SPEC §9.4, plan loops with a dueAt — sorted together by `solar` asc */
   upcoming: z.array(
     z.object({
       person: PersonRefDTOSchema,
-      dateId: Id,
+      kind: z.enum(['date', 'plan']),
+      /** set when kind = 'date' */
+      dateId: Id.nullable(),
+      /** set when kind = 'plan' */
+      loopId: Id.nullable(),
       label: z.string(),
       solar: DayString,
       lunarLabel: z.string().nullable(),

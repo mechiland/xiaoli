@@ -48,7 +48,10 @@ export interface SeedRef {
   label?: string
   title?: string
   personId?: number
+  chatId?: number
   statement?: string
+  /** loop 正文 (SPEC §7 交互层) */
+  text?: string
 }
 
 export interface ScenarioSeed {
@@ -57,6 +60,10 @@ export interface ScenarioSeed {
   import(tag: string): Promise<SeedRef>
   chat(tag: string): Promise<SeedRef>
   claim(tag: string): Promise<SeedRef>
+  /** 段落 (SPEC §7 交互层) */
+  segment(tag: string): Promise<SeedRef>
+  /** 未结事项 */
+  loop(tag: string): Promise<SeedRef>
   /** the whole manifest entry for the account (null when seed has not run) */
   manifest(): Promise<unknown>
 }

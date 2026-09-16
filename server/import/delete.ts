@@ -8,6 +8,7 @@ import {
   attachments,
   claimMentions,
   claims,
+  conversationSegments,
   eventParticipants,
   events,
   evidence,
@@ -18,10 +19,12 @@ import {
   importMessages,
   imports,
   llmCalls,
+  loops,
   messages,
   owned,
   persons,
   relations,
+  segmentParticipants,
   type Db,
 } from '@/server/db'
 import { chunk, logImport, MAX_PARAMS, runBatches } from './batch'
@@ -33,8 +36,17 @@ const TABLE_NAME: Record<TargetType, string> = {
   claim: 'claims',
   event: 'events',
   date: 'important_dates',
+  loop: 'loops',
+  segment: 'conversation_segments',
 }
 const TYPES = Object.keys(TABLE_NAME) as TargetType[]
+/**
+ * Step 3 ("this import's AI items with no evidence left outside M") applies to everything except segments. A segment
+ * is tied to a span of messages, not to the assertions in it, so whether it survives is decided by the messages still
+ * inside `[start_seq, end_seq]` (step 7 below) — an AI segment with no evidence rows at all must not be swept away
+ * while the messages it summarises are still there.
+ */
+const SWEEP_TYPES = TYPES.filter((t) => t !== 'segment')
 
 const count = async (db: Db, q: SQL): Promise<number> => Number((await db.all<{ n: number }>(q))[0]?.n ?? 0)
 
@@ -50,6 +62,10 @@ function deleteItems(db: Db, ownerId: string, t: TargetType, ids: number[]): Bat
       return db.delete(events).where(owned(events, ownerId, inArray(events.id, ids)))
     case 'date':
       return db.delete(importantDates).where(owned(importantDates, ownerId, inArray(importantDates.id, ids)))
+    case 'loop':
+      return db.delete(loops).where(owned(loops, ownerId, inArray(loops.id, ids)))
+    case 'segment':
+      return db.delete(conversationSegments).where(owned(conversationSegments, ownerId, inArray(conversationSegments.id, ids)))
   }
 }
 
@@ -108,7 +124,9 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
   ).map((r) => r.k)
 
   // 2. Derived items with evidence in M: all evidence in M → delete the item; otherwise only detach that evidence.
-  const doomed: Record<TargetType, Set<number>> = { handle: new Set(), relation: new Set(), claim: new Set(), event: new Set(), date: new Set() }
+  // Loops and segments take part like any other derived item: a loop whose every evidence message is in M goes,
+  // and so does a segment whose every evidence message is in M (SPEC §7 删除语义, ARCHITECTURE §11 step 7).
+  const doomed: Record<TargetType, Set<number>> = { handle: new Set(), relation: new Set(), claim: new Set(), event: new Set(), date: new Set(), loop: new Set(), segment: new Set() }
   const candidates = await db.all<{ t: TargetType; id: number; other: number }>(sql`
     select e.target_type as t, e.target_id as id, max(case when m.first_import_id = ${i} then 0 else 1 end) as other
     from evidence e join messages m on m.id = e.message_id
@@ -119,7 +137,7 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
   for (const c of candidates) if (Number(c.other) === 0 && doomed[c.t]) doomed[c.t].add(Number(c.id))
 
   // 3. AI items of this import with no evidence left outside M.
-  for (const t of TYPES) {
+  for (const t of SWEEP_TYPES) {
     const rows = await db.all<{ id: number }>(sql`select x.id as id from ${sql.raw(TABLE_NAME[t])} x
       where x.owner_id = ${o} and x.import_id = ${i} and x.source_kind = 'ai'
       and not exists (select 1 from evidence e where e.owner_id = ${o} and e.target_type = ${t} and e.target_id = x.id and e.message_id not in (${M}))`)
@@ -147,6 +165,22 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
   }
   for (const part of chunk([...doomed.event], MAX_PARAMS)) {
     itemStmts.push(db.delete(eventParticipants).where(owned(eventParticipants, o, inArray(eventParticipants.eventId, part))))
+  }
+  for (const part of chunk([...doomed.segment], MAX_PARAMS)) {
+    itemStmts.push(db.delete(segmentParticipants).where(owned(segmentParticipants, o, inArray(segmentParticipants.segmentId, part))))
+  }
+  // 7a. Every loop closed by a message in M is open again: the sentence that closed it is gone (SPEC §7 删除语义).
+  // This has to happen while M still exists — `closed_message_id` is `on delete set null`, so once the messages are
+  // gone there is no way left to tell a loop closed by a deleted message from one the user closed by hand. It rides
+  // in this batch, which commits before the one that deletes the messages, so an interrupted delete cannot lose it.
+  const reopenedLoops = await count(db, sql`select count(*) as n from loops where owner_id = ${o} and closed_message_id in (${M})`)
+  if (reopenedLoops > 0) {
+    itemStmts.push(
+      db
+        .update(loops)
+        .set({ closedMessageId: null, closedAt: null, closedReason: null, updatedAt: now })
+        .where(owned(loops, o, inM(loops.closedMessageId))),
+    )
   }
   for (const t of TYPES) {
     for (const part of chunk([...doomed[t]], MAX_PARAMS)) {
@@ -196,6 +230,59 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
     db.delete(imports).where(owned(imports, o, eq(imports.id, i))),
   ])
 
+  // 7b. Segments left with a hole in them. The span `[start_seq, end_seq]` is what a segment is about, so once M is
+  // gone the count, the first and the last message are recomputed from what is still inside it; a segment whose span
+  // is now empty goes, with its participants and evidence (SPEC §7 删除语义: "只删掉一部分消息时段落保留，
+  // messageCount 重算"). Only this import's chat can be affected, since every message in M belongs to it.
+  // Re-running a delete that was cut off here is harmless: both statements are idempotent recomputations.
+  if (imp.chatId !== null) {
+    const c = imp.chatId
+    const inSpan = (m: string, s: string) => sql`${sql.raw(m)}.owner_id = ${o} and ${sql.raw(m)}.chat_id = ${sql.raw(s)}.chat_id
+      and ${sql.raw(m)}.seq >= ${sql.raw(s)}.start_seq and ${sql.raw(m)}.seq <= ${sql.raw(s)}.end_seq`
+    const emptySegments = (
+      await db.all<{ id: number }>(sql`select s.id as id from conversation_segments s
+        where s.owner_id = ${o} and s.chat_id = ${c} and not exists (select 1 from messages m where ${inSpan('m', 's')})`)
+    ).map((r) => Number(r.id))
+    const segStmts: BatchItem<'sqlite'>[] = []
+    for (const part of chunk(emptySegments, MAX_PARAMS)) {
+      segStmts.push(
+        db.delete(segmentParticipants).where(owned(segmentParticipants, o, inArray(segmentParticipants.segmentId, part))),
+        db.delete(evidence).where(owned(evidence, o, eq(evidence.targetType, 'segment'), inArray(evidence.targetId, part))),
+        db.delete(conversationSegments).where(owned(conversationSegments, o, inArray(conversationSegments.id, part))),
+      )
+    }
+    const spanned = (agg: string) => sql`(select ${sql.raw(agg)} from messages m
+      where m.owner_id = ${o} and m.chat_id = ${conversationSegments.chatId}
+        and m.seq >= ${conversationSegments.startSeq} and m.seq <= ${conversationSegments.endSeq})`
+    // `started_at` / `ended_at` are not null; coalesce keeps a segment this pass is about to delete (or already did)
+    // from tripping the constraint if the statements are ever reordered or re-run.
+    segStmts.push(
+      db
+        .update(conversationSegments)
+        .set({
+          messageCount: spanned('count(*)'),
+          startedAt: sql`coalesce(${spanned('min(m.sent_at)')}, ${conversationSegments.startedAt})`,
+          endedAt: sql`coalesce(${spanned('max(m.sent_at)')}, ${conversationSegments.endedAt})`,
+          updatedAt: now,
+        })
+        .where(owned(conversationSegments, o, eq(conversationSegments.chatId, c))),
+    )
+    // Who spoke in the segment is recomputed the same way, and a person with nothing left inside the span stops
+    // being a participant (ARCHITECTURE §11 step 7). The segment itself stays: a conversation belongs to a chat.
+    const spokeIn = sql`(select count(*) from conversation_segments s
+      join messages m on ${inSpan('m', 's')}
+      join handles h on h.id = m.sender_handle_id
+      where s.owner_id = ${o} and s.id = ${segmentParticipants.segmentId} and h.person_id = ${segmentParticipants.personId})`
+    const inThisChat = sql`exists (select 1 from conversation_segments s
+      where s.owner_id = ${o} and s.id = ${segmentParticipants.segmentId} and s.chat_id = ${c})`
+    segStmts.push(
+      db.update(segmentParticipants).set({ messageCount: spokeIn }).where(owned(segmentParticipants, o, inThisChat)),
+      db.delete(segmentParticipants).where(owned(segmentParticipants, o, inThisChat, eq(segmentParticipants.messageCount, 0))),
+    )
+    await runBatches(db, segStmts)
+    deletedItems.segment += emptySegments.length
+  }
+
   for (const part of chunk(r2Keys, 1000)) {
     await r2.delete(part).catch((e) => logImport('warn', 'r2_attachment_delete_failed', { importId: i, name: (e as Error)?.name }))
   }
@@ -223,6 +310,7 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
         and not exists (select 1 from important_dates x where x.owner_id = ${o} and x.person_id = p.id)
         and not exists (select 1 from relations x where x.owner_id = ${o} and (x.from_person_id = p.id or x.to_person_id = p.id))
         and not exists (select 1 from event_participants x where x.owner_id = ${o} and x.person_id = p.id)
+        and not exists (select 1 from loops x where x.owner_id = ${o} and x.person_id = p.id)
         and not exists (select 1 from persons x where x.owner_id = ${o} and x.merged_into_id = p.id)`)
     ).map((r) => Number(r.id))
     if (orphans.length) {
@@ -247,6 +335,6 @@ export async function deleteImport(db: Db, r2: R2Bucket, ownerId: string, import
     ),
   )
 
-  logImport('info', 'import_deleted', { importId: i, deletedMessages, reassignedMessages, detachedEvidence, deletedPersons })
+  logImport('info', 'import_deleted', { importId: i, deletedMessages, reassignedMessages, detachedEvidence, deletedPersons, reopenedLoops, deletedSegments: deletedItems.segment })
   return { deletedMessages, reassignedMessages, deletedItems, detachedEvidence, deletedPersons }
 }

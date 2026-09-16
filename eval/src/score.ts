@@ -1,10 +1,12 @@
 // Scoring of one ZIP: person mapping, matching (§7.3), FP classification, raw counts (§7.4).
+import { groupRunSegments, matchConversations, type ConversationScore, type PredConversation } from './conversations'
 import type { OfflineExtractionResult } from './entries'
 import type { GoldFile } from './gold-schema'
 import type { FpClassifyInput, FpSubLabel, JudgeClient, MatchOutput, Verdict } from './judge'
 import { normKey, sensitiveHits } from './text'
 
-export const TYPES = ['claims', 'relations', 'handles', 'dates', 'events'] as const
+/** `loops` is appended last so the five round-1 types keep their order in reports and FP batches (§7.4). */
+export const TYPES = ['claims', 'relations', 'handles', 'dates', 'events', 'loops'] as const
 export type TypeName = (typeof TYPES)[number]
 export const ERROR_CODES = ['factual_error', 'wrong_person', 'over_inference', 'should_ignore', 'sensitive_leak', 'invalid_evidence', 'other'] as const
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -13,7 +15,7 @@ export const UNKNOWN_PERSON = 'unknown'
 /** Person value of items owned by a `new:` person whose name is a sender's label/alias: `duplicate:<sender key>`. */
 export const DUPLICATE_PREFIX = 'duplicate:'
 const isPhantom = (person: string) => person === UNKNOWN_PERSON || person.startsWith(DUPLICATE_PREFIX)
-const SINGULAR = { claims: 'claim', relations: 'relation', handles: 'handle', dates: 'date', events: 'event' } as const
+const SINGULAR = { claims: 'claim', relations: 'relation', handles: 'handle', dates: 'date', events: 'event', loops: 'loop' } as const
 const SYMMETRIC = new Set(['spouse', 'sibling', 'friend', 'colleague', 'classmate', 'relative'])
 const INVERSE: Record<string, string> = { parent: 'child', child: 'parent' }
 
@@ -25,7 +27,14 @@ export interface ScoreMessage {
 }
 
 export interface TypeCounts {
+  /** everything the run produced — reported whether or not gold can score it (DECISIONS I16) */
   predicted: number
+  /**
+   * the subset of `predicted` that gold could actually be matched against, i.e. the denominator of precision.
+   * Equal to `predicted` for every type except `loops` on a zip whose gold has no `loops` key: there the run's
+   * loops are reported (`predicted`) but not scored (`scored` = 0 → precision/recall are null, not 0).
+   */
+  scored: number
   tpStrict: number
   tpLenient: number
   goldRequired: number
@@ -48,17 +57,74 @@ export interface ZipCounts {
   duplicateSenderPersons: number
   kindMismatch: number
   categoryMismatch: number
-  windows: { total: number; failed: number; dedupSkipped: number; attemptMs: number[]; failedCodes: Record<string, number> }
+  /** interaction layer (§7.4). `*Annotated` is 0/1 per zip: a gold file without the key is left out entirely. */
+  interaction: InteractionCounts
+  /**
+   * `interactionFailed` / `interactionSkipped`: windows whose interaction call did not produce anything. Without
+   * them "0 loops" is ambiguous between "the model found none" and "the call never landed" (DECISIONS I17 failure
+   * isolation — an interaction failure leaves the window `done` and the claims in place).
+   */
+  windows: { total: number; failed: number; dedupSkipped: number; interactionFailed: number; interactionSkipped: number; attemptMs: number[]; failedCodes: Record<string, number> }
+}
+
+export interface InteractionCounts {
+  /** gold has a `loops` key (goldVersion 2) — otherwise loops are not scored for this zip at all */
+  loopsAnnotated: number
+  /** gold has a `conversations` key */
+  conversationsAnnotated: number
+  /** matched loop pairs whose kind or direction differs — reported, never a miss (§7.3) */
+  loopKindMismatch: number
+  /** non-optional gold loops with `closedBy` */
+  goldCloses: number
+  /** …of which the run closed at that idx */
+  goldClosesMatched: number
+  /** mechanically impossible closes: loop never shown to that window, or close not after the open (§7.4, I13) */
+  falseCloses: number
+  /** predicted loops whose resolved `closedIdx` is set */
+  predictedCloses: number
+  segments: number
+  conversationsPredicted: number
+  conversationsGold: number
+  conversationsMatched: number
+  /** Σ per-conversation topic coverage over matched conversations (optional ones included) */
+  topicCoverageSum: number
+  /** matched conversations the sum above runs over */
+  topicCoverageN: number
+  topicsGold: number
+  topicsCovered: number
+  /** segments + loops whose evidence is out of range or outside its window (mechanical, gate = 0) */
+  segmentInvalidEvidence: number
 }
 
 export interface TpDetail { type: TypeName; predIndex: number; goldId: string; verdict: Verdict; text: string; goldText: string; evidenceOverlap: boolean }
 export interface FpDetail { type: TypeName; fpId: string; predIndex: number; person: string; text: string; evidence: number[]; label: ErrorCode; subLabel: FpSubLabel | null; goldId: string | null; negativeId: string | null; reason: string }
 export interface FnDetail { type: TypeName; goldId: string; text: string; lessSpecificMatch: boolean }
-export interface ZipDetails { tp: TpDetail[]; fp: FpDetail[]; fn: FnDetail[]; unmatchedNewPersons: string[]; duplicatePersons: { key: string; person: string }[] }
+export interface LoopCloseDetail { goldId: string; closedBy: number; predClosedByIdx: number | null; matched: boolean }
+export interface InteractionDetails {
+  loopKindMismatch: { goldId: string; predIndex: number; gold: string; pred: string }[]
+  closes: LoopCloseDetail[]
+  /** mechanically impossible closes (§7.4): `predIndex` is the loop, `reason` says what makes it impossible */
+  falseCloses: { predIndex: number; closedIdx: number | null; reason: string }[]
+  conversations: ConversationScore | null
+}
+export interface ZipDetails {
+  tp: TpDetail[]
+  fp: FpDetail[]
+  fn: FnDetail[]
+  unmatchedNewPersons: string[]
+  duplicatePersons: { key: string; person: string }[]
+  interaction: InteractionDetails
+}
 export interface ZipScore { counts: ZipCounts; details: ZipDetails }
 
 const zeroErrors = (): Record<ErrorCode, number> => Object.fromEntries(ERROR_CODES.map((c) => [c, 0])) as Record<ErrorCode, number>
-const zeroType = (): TypeCounts => ({ predicted: 0, tpStrict: 0, tpLenient: 0, goldRequired: 0, goldMatchedStrict: 0, goldMatchedLenient: 0 })
+const zeroType = (): TypeCounts => ({ predicted: 0, scored: 0, tpStrict: 0, tpLenient: 0, goldRequired: 0, goldMatchedStrict: 0, goldMatchedLenient: 0 })
+export const INTERACTION_KEYS = [
+  'loopsAnnotated', 'conversationsAnnotated', 'loopKindMismatch', 'goldCloses', 'goldClosesMatched', 'falseCloses', 'predictedCloses',
+  'segments', 'conversationsPredicted', 'conversationsGold', 'conversationsMatched', 'topicCoverageSum', 'topicCoverageN', 'topicsGold', 'topicsCovered',
+  'segmentInvalidEvidence',
+] as const
+const zeroInteraction = (): InteractionCounts => Object.fromEntries(INTERACTION_KEYS.map((k) => [k, 0])) as unknown as InteractionCounts
 
 export function emptyCounts(): ZipCounts {
   return {
@@ -76,7 +142,8 @@ export function emptyCounts(): ZipCounts {
     duplicateSenderPersons: 0,
     kindMismatch: 0,
     categoryMismatch: 0,
-    windows: { total: 0, failed: 0, dedupSkipped: 0, attemptMs: [], failedCodes: {} },
+    interaction: zeroInteraction(),
+    windows: { total: 0, failed: 0, dedupSkipped: 0, interactionFailed: 0, interactionSkipped: 0, attemptMs: [], failedCodes: {} },
   }
 }
 
@@ -90,10 +157,13 @@ export function addCounts(a: ZipCounts, b: ZipCounts): ZipCounts {
     for (const e of ERROR_CODES) r.errors[t][e] = a.errors[t][e] + b.errors[t][e]
   }
   for (const s of SUB_LABELS) r.subLabels[s] = a.subLabels[s] + b.subLabels[s]
+  for (const k of INTERACTION_KEYS) r.interaction[k] = a.interaction[k] + b.interaction[k]
   r.windows = {
     total: a.windows.total + b.windows.total,
     failed: a.windows.failed + b.windows.failed,
     dedupSkipped: a.windows.dedupSkipped + b.windows.dedupSkipped,
+    interactionFailed: a.windows.interactionFailed + b.windows.interactionFailed,
+    interactionSkipped: a.windows.interactionSkipped + b.windows.interactionSkipped,
     attemptMs: [...a.windows.attemptMs, ...b.windows.attemptMs],
     failedCodes: { ...a.windows.failedCodes },
   }
@@ -116,7 +186,26 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   const n = args.messages.length
   const counts = emptyCounts()
   counts.messages = n
-  const details: ZipDetails = { tp: [], fp: [], fn: [], unmatchedNewPersons: [], duplicatePersons: [] }
+  const details: ZipDetails = {
+    tp: [],
+    fp: [],
+    fn: [],
+    unmatchedNewPersons: [],
+    duplicatePersons: [],
+    interaction: { loopKindMismatch: [], closes: [], falseCloses: [], conversations: null },
+  }
+  // Interaction (§7.2/§7.4): a gold file without the key was never annotated for that type, so the zip contributes
+  // nothing to those *match* metrics — no TP, no FP, no FN, and precision/recall stay null. A goldVersion-1 file
+  // therefore scores exactly as before. What it does NOT mean is that the run produced nothing: `predicted`,
+  // `segments` and `conversationsPredicted` always report what the pipeline actually emitted (DECISIONS I16 — the
+  // live extract.v9 run reported `loops.predicted = 0` on a run that produced 12 loops, and 0 conversations on 22
+  // segments; both lies pointed the same way, at "the feature is dead").
+  const loopsAnnotated = gold.loops !== undefined
+  const conversationsAnnotated = gold.conversations !== undefined
+  const goldLoops = gold.loops ?? []
+  const predLoops = pred.loops ?? []
+  counts.interaction.loopsAnnotated = loopsAnnotated ? 1 : 0
+  counts.interaction.conversationsAnnotated = conversationsAnnotated ? 1 : 0
 
   // ---- persons
   const goldKeys = new Set(gold.persons.map((p) => p.key))
@@ -164,6 +253,8 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     }),
     dates: pred.dates.map((d, i) => ({ type: 'dates', index: i, person: mapPerson(d.person), text: `${d.kind} ${d.month ?? '?'}-${d.day ?? '?'} ${d.calendar}${d.isLeapMonth ? ' leap' : ''}`, sensitiveText: null, evidence: d.evidence, windowIndex: d.windowIndex })),
     events: pred.events.map((e, i) => ({ type: 'events', index: i, person: e.participants.map(mapPerson)[0] ?? UNKNOWN_PERSON, text: e.summary, sensitiveText: e.summary, evidence: e.evidence, windowIndex: e.windowIndex })),
+    // loop text is checked for sensitive content with the segments below (mechanical, independent of gold)
+    loops: predLoops.map((l, i) => ({ type: 'loops', index: i, person: mapPerson(l.person), text: `${l.kind}/${l.direction}: ${l.text}`, sensitiveText: l.text, evidence: l.evidence, windowIndex: l.windowIndex })),
   }
   const relEnds = pred.relations.map((r) => ({ from: mapPerson(r.from), to: mapPerson(r.to), type: r.type }))
   /** the item names a duplicate-of-sender person (any relation end / event participant) */
@@ -174,13 +265,14 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   }
 
   // ---- matching: predIndex → match, per type
-  const tp: Record<TypeName, Map<number, { goldId: string; verdict: Verdict }>> = { claims: new Map(), relations: new Map(), handles: new Map(), dates: new Map(), events: new Map() }
+  const tp: Record<TypeName, Map<number, { goldId: string; verdict: Verdict }>> = { claims: new Map(), relations: new Map(), handles: new Map(), dates: new Map(), events: new Map(), loops: new Map() }
   const goldText: Record<TypeName, Map<string, { text: string; evidence: number[]; optional: boolean }>> = {
     claims: new Map(gold.claims.map((g) => [g.id, { text: g.statement, evidence: g.evidence, optional: !!g.optional }])),
     handles: new Map(gold.handles.map((g) => [g.id, { text: `${g.kind}:${g.value}`, evidence: g.evidence, optional: !!g.optional }])),
     relations: new Map(gold.relations.map((g) => [g.id, { text: `${g.from} —${g.type}${g.label ? `/${g.label}` : ''}→ ${g.to}`, evidence: g.evidence, optional: !!g.optional }])),
     dates: new Map(gold.dates.map((g) => [g.id, { text: `${g.kind} ${g.month ?? '?'}-${g.day ?? '?'} ${g.calendar}`, evidence: g.evidence, optional: !!g.optional }])),
     events: new Map(gold.events.map((g) => [g.id, { text: g.summary, evidence: g.evidence, optional: !!g.optional }])),
+    loops: new Map(goldLoops.map((g) => [g.id, { text: `${g.kind}/${g.direction}: ${g.text}`, evidence: g.evidence, optional: !!g.optional }])),
   }
 
   /** deterministic one-to-one: predictions in order, required gold preferred over optional */
@@ -256,8 +348,116 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     assignJudged('events', gold.events.map((g) => g.id), out)
   }
 
+  // ---- loops (§7.3): same person key AND judge step A over `text`, one-to-one greedy. Same prompt and client as
+  // claims; the person key is prefixed so a loop call can never collide with that person's claim call in the cache.
+  const loopPersons = [...new Set(goldLoops.map((l) => l.person))]
+  for (const key of loopPersons) {
+    const goldList = goldLoops.filter((l) => l.person === key)
+    const predList = items.loops.filter((l) => l.person === key)
+    if (!predList.length) continue
+    const out = await judge.matchClaims({
+      person: { key: `loops:${key}`, label: `${labelOf(key, key)}·未结事项` },
+      gold: goldList.map((g) => ({ id: g.id, statement: g.text, category: 'other' as const })),
+      pred: predList.map((p) => ({ index: p.index, statement: predLoops[p.index].text, category: 'other' as const })),
+    })
+    assignJudged('loops', goldList.map((g) => g.id), out)
+  }
+  for (const [i, m] of tp.loops) {
+    const g = goldLoops.find((l) => l.id === m.goldId)!
+    const p = predLoops[i]
+    if (g.kind !== p.kind || g.direction !== p.direction) {
+      counts.interaction.loopKindMismatch++
+      details.interaction.loopKindMismatch.push({ goldId: g.id, predIndex: i, gold: `${g.kind}/${g.direction}`, pred: `${p.kind}/${p.direction}` })
+    }
+  }
+
+  // ---- loop closes. `loopCloseRecall` reads the loop's own resolved `closedIdx`, not the `closes[]` events: that
+  // field is the state the app would store (`loops.closed_message_id`) after every window's closes were applied and
+  // the invalid ones dropped, so the harness scores what a user would see. `closes[]` is the raw event list — it can
+  // hold several closes for one loop — and is used only for the mechanical check below, which is about the event.
+  if (loopsAnnotated) {
+    const predByGold = new Map([...tp.loops].map(([i, m]) => [m.goldId, i]))
+    for (const g of goldLoops) {
+      if (g.closedBy === undefined || g.optional) continue
+      counts.interaction.goldCloses++
+      const i = predByGold.get(g.id)
+      const predClosedByIdx = i === undefined ? null : predLoops[i].closedIdx ?? null
+      const matched = predClosedByIdx === g.closedBy
+      if (matched) counts.interaction.goldClosesMatched++
+      details.interaction.closes.push({ goldId: g.id, closedBy: g.closedBy, predClosedByIdx, matched })
+    }
+  }
+  counts.interaction.predictedCloses = predLoops.filter((l) => l.closedIdx !== null && l.closedIdx !== undefined).length
+
+  // `loopFalseClose` counts ONLY mechanically impossible closes (DECISIONS I13, ARCHITECTURE §7.4): a close of a loop
+  // that was never shown to that window, or closing evidence that is not strictly after the opening message.
+  // `validateOutput` drops both (`unknown_close`), so a survivor here is a pipeline or harness bug — which is what
+  // makes the 0 gate safe. Closing something gold leaves open is a MODEL mistake: it lowers loop precision instead.
+  const predCloses = pred.closes ?? []
+  const checkedLoops = new Set<number>()
+  for (const c of predCloses) {
+    const l = predLoops[c.loopIndex]
+    checkedLoops.add(c.loopIndex)
+    const first = c.evidence.length ? Math.min(...c.evidence) : null
+    const reason = !l
+      ? `closes[].loopIndex ${c.loopIndex} is not a loop of this run`
+      : c.windowIndex < l.windowIndex
+        ? `window ${c.windowIndex} closed a loop first produced in window ${l.windowIndex}: it was never shown to that window`
+        : first === null
+          ? 'close has no evidence'
+          : first <= l.openedIdx
+            ? `close evidence idx ${first} is not after the opening message idx ${l.openedIdx}`
+            : null
+    if (reason) {
+      counts.interaction.falseCloses++
+      details.interaction.falseCloses.push({ predIndex: c.loopIndex, closedIdx: first, reason })
+    }
+  }
+  // a resolved close with no event behind it (older result shape) still has to sit after the opening message
+  predLoops.forEach((l, i) => {
+    if (l.closedIdx === null || l.closedIdx === undefined || checkedLoops.has(i)) return
+    if (l.closedIdx <= l.openedIdx) {
+      counts.interaction.falseCloses++
+      details.interaction.falseCloses.push({ predIndex: i, closedIdx: l.closedIdx, reason: `closedIdx ${l.closedIdx} is not after the opening message idx ${l.openedIdx}` })
+    }
+  })
+
+  // ---- conversations (§7.3): fully deterministic, no judge call
+  const predSegments = pred.segments ?? []
+  counts.interaction.segments = predSegments.length
+  // The grouping runs on every run, annotated or not: `conversationsPredicted` is what `groupSegments` makes of the
+  // run's own segments, and that number exists whether or not gold has conversations to match it against (I16).
+  const grouped: PredConversation[] = groupRunSegments(predSegments, args.messages)
+  counts.interaction.conversationsPredicted = grouped.length
+  {
+    const conv = matchConversations(conversationsAnnotated ? gold.conversations ?? [] : [], grouped)
+    details.interaction.conversations = conv
+    counts.interaction.conversationsGold = conversationsAnnotated ? (gold.conversations ?? []).filter((c) => !c.optional).length : 0
+    counts.interaction.conversationsMatched = conv.matches.filter((m) => !m.optional).length
+    for (const m of conv.matches) {
+      const g = (gold.conversations ?? []).find((c) => c.id === m.goldId)!
+      counts.interaction.topicCoverageSum += m.topicCoverage
+      counts.interaction.topicCoverageN++
+      counts.interaction.topicsGold += g.topics.length
+      counts.interaction.topicsCovered += g.topics.length - m.missingTopics.length
+    }
+  }
+
+  // ---- mechanical interaction checks: run over every predicted segment/loop, annotated or not (gate = 0, §7.4)
+  for (const l of predLoops) {
+    if (invalidEvidence(l.evidence, l.windowIndex)) counts.interaction.segmentInvalidEvidence++
+    if (sensitiveHits(l.text, gold.sensitiveValues).length) counts.sensitiveInStatement++
+  }
+  for (const s of predSegments) {
+    const spanBad = !Number.isInteger(s.startIdx) || !Number.isInteger(s.endIdx) || s.startIdx < 0 || s.endIdx < s.startIdx || s.endIdx >= n
+    if (spanBad || invalidEvidence(s.evidence, s.windowIndex)) counts.interaction.segmentInvalidEvidence++
+    if (sensitiveHits([s.summary, ...s.topics].join(' '), gold.sensitiveValues).length) counts.sensitiveInStatement++
+  }
+
   // ---- whole-output checks (TPs included)
   for (const t of TYPES) {
+    // loops and segments have their own counter (`segmentInvalidEvidence`), counted above
+    if (t === 'loops') continue
     for (const it of items[t]) {
       if (invalidEvidence(it.evidence, it.windowIndex)) counts.invalidEvidencePost++
       if ((t === 'claims' || t === 'handles' || t === 'events') && it.sensitiveText && sensitiveHits(it.sensitiveText, gold.sensitiveValues).length) counts.sensitiveInStatement++
@@ -280,8 +480,13 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     return false
   }
   const toJudge: (PredItem & { fpId: string })[] = []
+  /** loop FPs go into their own batches, so the five round-1 types keep the exact batches (and judge-cache keys) they had before goldVersion 2 */
+  const toJudgeLoops: (PredItem & { fpId: string })[] = []
   const fpRows: FpDetail[] = []
   for (const t of TYPES) {
+    // A predicted loop is a false positive only against gold that says what the loops are. With no `loops` key the
+    // zip is not scored for loops at all (no TP, no FP, no judge call); `predicted` above still reports every one.
+    if (t === 'loops' && !loopsAnnotated) continue
     for (const it of items[t]) {
       if (tp[t].has(it.index)) continue
       const fpId = `${t}#${it.index}`
@@ -290,7 +495,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
       else if (it.sensitiveText && sensitiveHits(it.sensitiveText, gold.sensitiveValues).length) fpRows.push({ ...base, label: 'sensitive_leak', reason: `matched ${sensitiveHits(it.sensitiveText, gold.sensitiveValues).join(',')}` })
       else if (duplicateOf(it) !== null) fpRows.push({ ...base, label: 'wrong_person', reason: `duplicate person of sender ${duplicateOf(it)} (name matches its gold label/alias)` })
       else if (wrongPersonDet(it)) fpRows.push({ ...base, label: 'wrong_person', reason: 'same value exists in gold under another person' })
-      else toJudge.push({ ...it, fpId })
+      else (t === 'loops' ? toJudgeLoops : toJudge).push({ ...it, fpId })
     }
   }
   const evidenceWindow = (ev: number[]) => {
@@ -300,21 +505,25 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     const chosen = [...dist.entries()].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 30).map(([k]) => k).sort((a, b) => a - b)
     return chosen.map((k) => ({ idx: k, sentAt: args.messages[k].sentAt, senderName: args.messages[k].senderName, body: args.messages[k].body, isEvidence: valid.includes(k) }))
   }
-  for (let b = 0; b < toJudge.length; b += 10) {
-    const batch = toJudge.slice(b, b + 10)
-    const input: FpClassifyInput = {
-      zip: args.zipLabel,
-      persons: gold.persons.map((p) => ({ key: p.key, label: p.label, aliases: p.aliases ?? [] })),
-      goldClaims: gold.claims.map((c) => ({ id: c.id, person: c.person, statement: c.statement })),
-      negatives: gold.negatives.map((x) => ({ id: x.id, kind: x.kind, description: x.description, forbidden: x.forbidden ?? null })),
-      items: batch.map((it) => ({ fpId: it.fpId, type: SINGULAR[it.type], person: it.person, text: it.text, evidenceWindow: evidenceWindow(it.evidence) })),
-    }
-    const out = await judge.classifyFps(input)
-    for (const it of batch) {
-      const l = out.labels.find((x) => x.fpId === it.fpId)!
-      fpRows.push({ type: it.type, fpId: it.fpId, predIndex: it.index, person: it.person, text: it.text, evidence: it.evidence, label: l.label, subLabel: l.subLabel, goldId: l.goldId, negativeId: l.negativeId, reason: l.reason })
+  const classifyBatches = async (list: (PredItem & { fpId: string })[]) => {
+    for (let b = 0; b < list.length; b += 10) {
+      const batch = list.slice(b, b + 10)
+      const input: FpClassifyInput = {
+        zip: args.zipLabel,
+        persons: gold.persons.map((p) => ({ key: p.key, label: p.label, aliases: p.aliases ?? [] })),
+        goldClaims: gold.claims.map((c) => ({ id: c.id, person: c.person, statement: c.statement })),
+        negatives: gold.negatives.map((x) => ({ id: x.id, kind: x.kind, description: x.description, forbidden: x.forbidden ?? null })),
+        items: batch.map((it) => ({ fpId: it.fpId, type: SINGULAR[it.type], person: it.person, text: it.text, evidenceWindow: evidenceWindow(it.evidence) })),
+      }
+      const out = await judge.classifyFps(input)
+      for (const it of batch) {
+        const l = out.labels.find((x) => x.fpId === it.fpId)!
+        fpRows.push({ type: it.type, fpId: it.fpId, predIndex: it.index, person: it.person, text: it.text, evidence: it.evidence, label: l.label, subLabel: l.subLabel, goldId: l.goldId, negativeId: l.negativeId, reason: l.reason })
+      }
     }
   }
+  await classifyBatches(toJudge)
+  await classifyBatches(toJudgeLoops)
   for (const row of fpRows) {
     counts.errors[row.type][row.label]++
     if (row.subLabel) counts.subLabels[row.subLabel]++
@@ -326,6 +535,7 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
   for (const t of TYPES) {
     const c = counts.types[t]
     c.predicted = items[t].length
+    c.scored = t === 'loops' && !loopsAnnotated ? 0 : items[t].length
     const matchedStrict = new Set<string>()
     const matchedLenient = new Set<string>()
     for (const [i, m] of tp[t]) {
@@ -357,6 +567,8 @@ export async function scoreZip(args: { zipLabel: string; messages: ScoreMessage[
     counts.droppedInvalidEvidence += w.droppedInvalidEvidence
     counts.windows.attemptMs.push(...w.attemptMs)
     if (w.dedup === 'skipped_deadline') counts.windows.dedupSkipped++
+    if (w.interaction === 'failed') counts.windows.interactionFailed++
+    if (w.interaction === 'skipped_deadline') counts.windows.interactionSkipped++
     if (w.outcome !== 'done') {
       counts.windows.failed++
       const code = w.code ?? w.outcome

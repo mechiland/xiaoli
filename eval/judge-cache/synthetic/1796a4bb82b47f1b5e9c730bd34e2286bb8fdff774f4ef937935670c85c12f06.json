@@ -1,0 +1,26 @@
+{
+  "inputHash": "1796a4bb82b47f1b5e9c730bd34e2286bb8fdff774f4ef937935670c85c12f06",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:12:34.524Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#12",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c15",
+        "negativeId": null,
+        "reason": "标准答案只说报名半马，未提四月跑"
+      },
+      {
+        "fpId": "claims#13",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c16",
+        "negativeId": null,
+        "reason": "标准答案只记每天跑五公里，瘦八斤是额外细节"
+      }
+    ]
+  }
+}

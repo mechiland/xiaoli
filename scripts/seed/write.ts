@@ -35,6 +35,9 @@ const TABLES: Record<keyof SeedTables, SQLiteTable> = {
   eventParticipants: schema.eventParticipants,
   importantDates: schema.importantDates,
   relations: schema.relations,
+  conversationSegments: schema.conversationSegments,
+  segmentParticipants: schema.segmentParticipants,
+  loops: schema.loops,
   evidence: schema.evidence,
   extractionJobs: schema.extractionJobs,
   reviewLog: schema.reviewLog,
@@ -43,7 +46,7 @@ const TABLES: Record<keyof SeedTables, SQLiteTable> = {
 }
 
 /** Children before parents; messages before handles (avoids SET NULL updates), persons before imports. */
-export const DELETE_ORDER: (keyof SeedTables)[] = ['evidence', 'claimMentions', 'eventParticipants', 'attachments', 'importMessages', 'llmCalls', 'reviewLog', 'extractionJobs', 'claims', 'events', 'importantDates', 'relations', 'messages', 'handles', 'persons', 'imports', 'chats', 'userSettings']
+export const DELETE_ORDER: (keyof SeedTables)[] = ['evidence', 'claimMentions', 'eventParticipants', 'segmentParticipants', 'attachments', 'importMessages', 'llmCalls', 'reviewLog', 'extractionJobs', 'claims', 'events', 'importantDates', 'relations', 'loops', 'conversationSegments', 'messages', 'handles', 'persons', 'imports', 'chats', 'userSettings']
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -138,7 +141,7 @@ export async function seedAccounts(db: Db, r2: R2Bucket, owners: Partial<Record<
   const datasets: SeedResult['datasets'] = {}
   if (owners.seed) datasets.seed = buildMainAccount(owners.seed, ids, opts)
   if (owners.seed2) datasets.seed2 = buildIsolationAccount(owners.seed2, ids, opts)
-  if (owners.empty) datasets.empty = { tables: (await import('./dataset')).emptyTables(), r2: [], refs: { persons: {}, imports: {}, chats: {}, claims: {} }, counts: { visiblePersons: 0 } }
+  if (owners.empty) datasets.empty = { tables: (await import('./dataset')).emptyTables(), r2: [], refs: { persons: {}, imports: {}, chats: {}, claims: {}, segments: {}, loops: {} }, counts: { visiblePersons: 0 } }
   const t2 = performance.now()
 
   let statements = 0

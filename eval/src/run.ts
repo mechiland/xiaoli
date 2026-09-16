@@ -6,10 +6,11 @@ import type { ExtractApi, LlmApi, LlmClient, LlmMode, Loaded, OfflineExtractionR
 import { parseGold, type GoldFile, type GoldLock } from './gold-schema'
 import { JudgeCache, llmJudge, type JudgeClient } from './judge'
 import { goldStatus, lockKeyFor, readLock, sha256Hex } from './lock'
-import { gatesPassed, INVALID_EVIDENCE_PRE_WARN, metricsFromCounts, p95, sourceGates, type Gate } from './metrics'
+import { CONVERSATION_COVERAGE_WARN, gatesPassed, INVALID_EVIDENCE_PRE_WARN, metricsFromCounts, p95, sourceGates, THRESHOLDS, type Gate } from './metrics'
 import { fileTimestamp, goldPathFor, SOURCES, zipBase, type EvalPaths, type Source } from './paths'
-import { combinedReport, compareReports, summaryLines, writeCompare, writeEvalReports, type EvalReport, type GoldReportEntry, type SourceMetrics, type ZipReport } from './report'
+import { combinedReport, compareLines, compareReports, summaryLines, writeCompare, writeEvalReports, type EvalReport, type GoldReportEntry, type SourceMetrics, type ZipReport } from './report'
 import { addCounts, emptyCounts, scoreZip, type ZipCounts } from './score'
+import { addUsageByBucket, tallyingClient, zeroUsageByBucket, type UsageByBucket } from './usage'
 
 export const PERF_ZIP = 'perf-5000.zip'
 /**
@@ -92,7 +93,7 @@ export function discoverZips(paths: EvalPaths, opts: Pick<RunOptions, 'source' |
   return plans
 }
 
-const zeroUsage = () => ({ inputTokens: 0, outputTokens: 0, calls: 0, judgeInputTokens: 0, judgeOutputTokens: 0, judgeCalls: 0, judgeCacheHits: 0, judgeFallbacks: 0 })
+const zeroUsage = () => ({ inputTokens: 0, outputTokens: 0, calls: 0, byCall: zeroUsageByBucket(), judgeInputTokens: 0, judgeOutputTokens: 0, judgeCalls: 0, judgeCacheHits: 0, judgeFallbacks: 0 })
 
 async function defaultMakeLlm(paths: EvalPaths, env: Record<string, unknown>, source: Source, mode: LlmMode, runId: string, api: LlmApi | null) {
   if (!api) throw new Error('llm module unavailable')
@@ -114,9 +115,16 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
   const judgeFallbackBySource: Record<Source, boolean> = { synthetic: false, real: false }
   const warnings: string[] = []
   const usage = zeroUsage()
+  const tallies: ReturnType<typeof tallyingClient>[] = []
   let aborted: string | null = null
   let judgeVersions = { match: 'judge-match.v1', fp: 'judge-fp.v1' }
   const requested = opts.source === 'all' ? SOURCES : [opts.source]
+  // DECISIONS I17: the interaction layer is its own model call with its own prompt version. The report must carry
+  // both versions and both costs. The version the report prints is the one the run's calls actually carried; the
+  // module constant is only a fallback label for a run that issued no interaction call at all.
+  const configuredInteraction = extract.INTERACTION_PROMPT_VERSION ?? null
+  const interactionVersionsSeen: string[] = []
+  let byCall: UsageByBucket = zeroUsageByBucket()
 
   for (const source of requested) {
     const srcPlans = plans.filter((p) => p.source === source)
@@ -125,7 +133,12 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
     let clients: { extract: LlmClient; judge: LlmClient | null } | null = null
     let judge: JudgeWithVersions | null = null
     if (needsRun) {
-      clients = deps.makeLlm ? await deps.makeLlm(source, opts.mode, runId, llmApi) : await defaultMakeLlm(paths, deps.llmEnv, source, opts.mode, runId, llmApi)
+      const made = deps.makeLlm ? await deps.makeLlm(source, opts.mode, runId, llmApi) : await defaultMakeLlm(paths, deps.llmEnv, source, opts.mode, runId, llmApi)
+      // Every pipeline call goes through the tally, so the per-call cost split is what the run did, not what
+      // `extractOffline` remembered to report (§7.5 `usage.byCall`).
+      const tally = tallyingClient(made.extract, configuredInteraction)
+      clients = { extract: tally, judge: made.judge }
+      tallies.push(tally)
       judge = deps.makeJudge
         ? deps.makeJudge(source, opts.mode, clients.judge, runId)
         : llmJudge({ llm: clients.judge, cache: new JudgeCache(paths.judgeCache[source]), mode: opts.mode, promptsDir: paths.judgePrompts, evalRunId: runId })
@@ -176,17 +189,20 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
       usage.inputTokens += result.usage.inputTokens
       usage.outputTokens += result.usage.outputTokens
       usage.calls += result.usage.calls
+      if (result.interactionPromptVersion && !interactionVersionsSeen.includes(result.interactionPromptVersion)) interactionVersionsSeen.push(result.interactionPromptVersion)
       if (result.windows.some((w) => w.code === 'budget_exceeded')) aborted = 'budget_exceeded'
 
       const score = await scoreZip({ zipLabel: source === 'real' ? lockKey : plan.file, messages: parsed.messages, gold, pred: result, judge: judge! })
       counts[source] = counts[source] ? addCounts(counts[source]!, score.counts) : addCounts(emptyCounts(), score.counts)
       const metrics = metricsFromCounts(score.counts)
       if (metrics.invalidEvidencePreRate !== null && metrics.invalidEvidencePreRate > INVALID_EVIDENCE_PRE_WARN) warnings.push(`invalidEvidencePreRate ${metrics.invalidEvidencePreRate} > ${INVALID_EVIDENCE_PRE_WARN} for ${label}`)
+      const cov = metrics.interaction.conversationCoverage
+      if (cov !== null && cov < CONVERSATION_COVERAGE_WARN) warnings.push(`conversationCoverage ${cov} < ${CONVERSATION_COVERAGE_WARN} for ${label} (reported, not gated)`)
       zips.push({
         ...base,
         status: 'scored',
         messageCount: parsed.messages.length,
-        windows: { total: score.counts.windows.total, failed: score.counts.windows.failed, p95Ms: p95(score.counts.windows.attemptMs), dedupSkipped: score.counts.windows.dedupSkipped, failedCodes: score.counts.windows.failedCodes },
+        windows: { total: score.counts.windows.total, failed: score.counts.windows.failed, p95Ms: p95(score.counts.windows.attemptMs), dedupSkipped: score.counts.windows.dedupSkipped, interactionFailed: score.counts.windows.interactionFailed, interactionSkipped: score.counts.windows.interactionSkipped, failedCodes: score.counts.windows.failedCodes },
         metrics,
         errors: metrics.errors,
         details: score.details,
@@ -203,6 +219,29 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
     }
   }
 
+  for (const t of tallies) {
+    byCall = addUsageByBucket(byCall, t.usage)
+    for (const v of t.promptVersions.interaction) if (!interactionVersionsSeen.includes(v)) interactionVersionsSeen.push(v)
+  }
+  usage.byCall = byCall
+  const observedTotal = { inputTokens: 0, outputTokens: 0, calls: 0 }
+  for (const b of Object.values(byCall)) {
+    observedTotal.inputTokens += b.inputTokens
+    observedTotal.outputTokens += b.outputTokens
+    observedTotal.calls += b.calls
+  }
+  // The harness counted the calls itself; extractOffline also reports a total. If they disagree, one of the two
+  // calls is not in somebody's accounting — exactly the kind of silent under-report I16 is about — so say it.
+  if (tallies.length && (observedTotal.calls !== usage.calls || observedTotal.inputTokens !== usage.inputTokens)) {
+    warnings.push(
+      `usage mismatch: extractOffline reports ${usage.calls} calls / ${usage.inputTokens} input tokens, the harness observed ${observedTotal.calls} / ${observedTotal.inputTokens} (per call: ${Object.entries(byCall).map(([k, v]) => `${k} ${v.calls}`).join(', ')}). usage.byCall is the observed split.`,
+    )
+  }
+  const interactionPromptVersion = interactionVersionsSeen.length ? interactionVersionsSeen.join(', ') : configuredInteraction
+  if (configuredInteraction && !byCall.interaction.calls) {
+    warnings.push(`extract exports INTERACTION_PROMPT_VERSION ${configuredInteraction} but this run issued 0 interaction calls`)
+  }
+
   const sources = {} as Record<Source, SourceMetrics | null>
   const p95BySource = {} as Record<Source, number | null>
   const gates: Gate[] = []
@@ -211,6 +250,25 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
     const c = counts[s]
     const srcZips = zips.filter((z) => z.source === s)
     sources[s] = c ? { ...metricsFromCounts(c), zips: srcZips.filter((z) => z.status === 'scored').length } : null
+    // "0 loops" must never be ambiguous between "the model found none" and "the second call never landed" (I17).
+    if (c && (c.windows.interactionFailed || c.windows.interactionSkipped)) {
+      warnings.push(
+        `[${s}] the interaction call failed on ${c.windows.interactionFailed} and was skipped on ${c.windows.interactionSkipped} of ${c.windows.total} windows: those windows contributed no segment and no loops, and their claims landed as usual (ARCHITECTURE §6 failure isolation). The interaction numbers below are missing that much input.`,
+      )
+    }
+    const lm = sources[s]?.loops
+    // Predictions that gold cannot score are still predictions: say the number out loud instead of leaving a `-`
+    // to be read as "nothing came out" (DECISIONS I16).
+    if (lm && lm.predicted > 0 && lm.scored === 0) {
+      warnings.push(
+        `[${s}] the run produced ${lm.predicted} loops and ${sources[s]!.interaction.segments} segments (grouped into ${sources[s]!.interaction.conversationsPredicted} conversations), and NONE of them are scored: no gold file of this source has a \`loops\` key. loops precision/recall and conversationCoverage are '-' because nothing can be matched, NOT because the pipeline produced nothing (ARCHITECTURE §7.4, DECISIONS I16). Annotating a goldVersion-2 file (§7.6) is what turns these into measurements.`,
+      )
+    }
+    if (lm && lm.goldRequired > 0) {
+      warnings.push(
+        `[${s}] loops recallStrict ${lm.recallStrict} / recallLenient ${lm.recallLenient} (${lm.goldMatchedStrict}/${lm.goldRequired}) is REPORTED, NOT GATED in this round: 未结事项 is a new capability with no baseline (ARCHITECTURE §7.4, DECISIONS eval-synthetic E21). Only loops precision ≥ ${THRESHOLDS.loopsPrecisionLenient} is gated.`,
+      )
+    }
     p95BySource[s] = c ? p95(c.windows.attemptMs) : null
     gates.push(
       ...sourceGates({
@@ -232,6 +290,7 @@ export async function runOnce(opts: RunOptions & { promptVersion: string }, deps
     runId,
     createdAt: deps.now().toISOString(),
     promptVersion: opts.promptVersion,
+    interactionPromptVersion,
     model: opts.model,
     mode: opts.mode,
     deadlinePolicy: opts.deadlinePolicy,
@@ -284,7 +343,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps): Promise<RunResul
     if (opts.write) files.push(...writeEvalReports(deps.paths, baseline, `${stamp}-${opts.compare}`))
     const cmp = compareReports(baseline, report, deps.now().toISOString())
     if (opts.write) files.push(writeCompare(deps.paths, cmp, stamp))
-    deps.log(`compare ${opts.compare} → ${current}: claims P Δ ${cmp.sources.synthetic.delta['claims.precisionLenient'] ?? 'n/a'} (synthetic), ${cmp.sources.real.delta['claims.precisionLenient'] ?? 'n/a'} (real); R Δ ${cmp.sources.synthetic.delta['claims.recallStrict'] ?? 'n/a'} / ${cmp.sources.real.delta['claims.recallStrict'] ?? 'n/a'}`)
+    for (const line of compareLines(cmp)) deps.log(line)
   }
   for (const f of files) deps.log(`wrote ${path.relative(deps.paths.root, f)}`)
   return { exitCode: report.passed ? 0 : 1, message: report.passed ? 'eval gates passed' : 'eval gates failed', report, files }

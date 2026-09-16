@@ -80,7 +80,10 @@ async function main(): Promise<number> {
           async completeJson(req) {
             const r = await replay.completeJson(req)
             if (r.ok || r.code !== 'cassette_miss') return r
-            if (req.purpose === 'extract' && !allowExtractMisses) return r // never re-record extraction unless asked
+            // The interaction call (INTERACTION_PURPOSE, promptVersion interaction.*) is a window call like extraction:
+            // re-recording it costs the same live tokens, so it obeys the same flag.
+            const windowCall = req.purpose === 'extract' || req.promptVersion.startsWith('interaction.')
+            if (windowCall && !allowExtractMisses) return r // never re-record window calls unless asked
             return record.completeJson(req)
           },
         }

@@ -3,8 +3,9 @@ import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import type { HomeResponse } from '@/contracts'
 import { DEFAULT_TZ, todayInTz } from '@/lib/time'
 import { chats, claims, getUserSettings, importantDates, imports, owned, persons, type Db } from '@/server/db'
+import { getUpcomingPlans } from '@/server/interaction'
 import { listPeopleIndex } from '@/server/search'
-import { computeUpcoming } from './upcoming'
+import { computeUpcoming, mergeUpcoming, UPCOMING_WINDOW_DAYS, type UpcomingPlanRow } from './upcoming'
 
 /** "最近导入" rows and the imports whose confirmed items feed "最近有新信息的人". */
 export const RECENT_IMPORTS_LIMIT = 5
@@ -31,17 +32,35 @@ export interface HomeBlocksResult {
   today: string
 }
 
+/** `getUpcomingPlans` from `@/server/interaction`; injectable so unit tests never touch the interaction module. */
+export type UpcomingPlansFn = (db: Db, ownerId: string, days: number) => Promise<UpcomingPlanRow[]>
+
 export interface HomeOptions {
   tz?: string
   /** 'YYYY-MM-DD'; defaults to today in tz */
   today?: string
   /** development-only failure injection for the showcase (page passes it only when NEXTJS_ENV=development) */
   fail?: readonly HomeBlockKey[]
+  /** test seam for the 约定 rows; defaults to `@/server/interaction`'s `getUpcomingPlans` */
+  plans?: UpcomingPlansFn
 }
 
 const visiblePerson = (ownerId: string) => and(eq(persons.ownerId, ownerId), isNull(persons.mergedIntoId), eq(persons.isSelf, false))
 
-export async function loadUpcoming(db: Db, ownerId: string, today: string): Promise<HomeResponse['upcoming']> {
+/**
+ * The 约定 half of 即将到来. The interaction module is a separate deployment unit from home's point of view: if it
+ * cannot answer, the block still renders its dates rather than failing whole (ARCHITECTURE §3, DECISIONS home H14).
+ */
+async function loadUpcomingPlans(db: Db, ownerId: string, fetchPlans: UpcomingPlansFn): Promise<UpcomingPlanRow[]> {
+  try {
+    return await fetchPlans(db, ownerId, UPCOMING_WINDOW_DAYS)
+  } catch (e) {
+    console.log(JSON.stringify({ level: 'warn', msg: 'upcoming plans unavailable', error: e instanceof Error ? e.message.slice(0, 200) : 'unknown' }))
+    return []
+  }
+}
+
+export async function loadUpcoming(db: Db, ownerId: string, today: string, fetchPlans: UpcomingPlansFn = getUpcomingPlans): Promise<HomeResponse['upcoming']> {
   const rows = await db
     .select({
       dateId: importantDates.id,
@@ -58,7 +77,8 @@ export async function loadUpcoming(db: Db, ownerId: string, today: string): Prom
     .innerJoin(persons, eq(persons.id, importantDates.personId))
     .where(owned(importantDates, ownerId, eq(importantDates.status, 'confirmed'), visiblePerson(ownerId)))
     .all()
-  return computeUpcoming(rows, today)
+  const dates = computeUpcoming(rows, today)
+  return mergeUpcoming(dates, await loadUpcomingPlans(db, ownerId, fetchPlans))
 }
 
 async function recentImportIds(db: Db, ownerId: string): Promise<number[]> {
@@ -140,7 +160,7 @@ export async function getHomeBlocks(db: Db, ownerId: string, opts: HomeOptions =
 
   const keys = ['upcoming', 'recentlyUpdated', 'pinned', 'index', 'recentImports', 'onboarding'] as const
   const settled = await Promise.allSettled([
-    run('upcoming', () => loadUpcoming(db, ownerId, today)),
+    run('upcoming', () => loadUpcoming(db, ownerId, today, opts.plans)),
     run('recentlyUpdated', () => loadRecentlyUpdated(db, ownerId)),
     run('pinned', () => loadPinned(db, ownerId)),
     run('index', () => listPeopleIndex(db, ownerId)),
@@ -172,7 +192,7 @@ export async function getHomeBlocks(db: Db, ownerId: string, opts: HomeOptions =
 export async function getHome(db: Db, ownerId: string, opts: Omit<HomeOptions, 'fail'> = {}): Promise<HomeResponse> {
   const today = opts.today ?? todayInTz(opts.tz ?? DEFAULT_TZ)
   const [upcoming, recentlyUpdated, pinned, index, recentImports, settings] = await Promise.all([
-    loadUpcoming(db, ownerId, today),
+    loadUpcoming(db, ownerId, today, opts.plans),
     loadRecentlyUpdated(db, ownerId),
     loadPinned(db, ownerId),
     listPeopleIndex(db, ownerId),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ClaimDTO, ImportReviewResponse, ReviewItem } from '@/contracts'
+import type { ClaimDTO, ImportReviewResponse, LoopDTO, ReviewItem } from '@/contracts'
 import {
   applyItemUpdate,
   applyStatus,
@@ -9,8 +9,13 @@ import {
   formatDateRange,
   formatImportantDate,
   formatPartialDate,
+  editableText,
   isLabelEcho,
   isWrappablePiece,
+  loopDueLabel,
+  loopOpenedLabel,
+  loopSentence,
+  loopStateLabel,
   lunarDayName,
   messagesReadBefore,
   peopleLine,
@@ -87,6 +92,7 @@ function review(): ImportReviewResponse {
         ],
         dates: [],
         events: [],
+        loops: [],
       },
     ],
     highConfidence: [
@@ -211,6 +217,7 @@ describe('personContext', () => {
       sections: over.claims ? [{ category: 'work', claims: over.claims }] : [],
       relations: [],
       events: [],
+      loops: [],
       history: [],
     }) as ProfileResponse
 
@@ -277,5 +284,84 @@ describe('emptyResultKind', () => {
   it('an extraction that ran and found nothing keeps the SPEC §9.9 copy', () => {
     expect(emptyResultKind({ newMessageCount: 120 }, prog(3))).toBe('no-output')
     expect(emptyResultKind({ newMessageCount: 120 }, { total: 3, done: 1, failed: 2, pending: 0, running: 0 })).toBe('no-output')
+  })
+})
+
+
+describe('未结事项', () => {
+  const loop = (over: Partial<LoopDTO> = {}): LoopDTO => ({
+    id: 40,
+    personId: 1,
+    direction: 'mine',
+    kind: 'promise',
+    text: '帮她看简历',
+    dueAt: null,
+    openedAt: '2026-09-13 21:04',
+    openedMessageId: 700,
+    closedAt: null,
+    closedMessageId: null,
+    closedReason: null,
+    state: 'open',
+    expired: false,
+    daysOpen: 3,
+    status: 'proposed',
+    importId: 7,
+    sourceKind: 'ai',
+    evidenceCount: 1,
+    createdAt: '2026-09-15T00:00:00.000Z',
+    ...over,
+  })
+
+  it('reads as a sentence, never as promise/mine', () => {
+    expect(loopSentence(loop(), '林知夏')).toBe('你答应帮她看简历')
+    expect(loopSentence(loop({ direction: 'theirs', text: '把装修合同发过来' }), '林知夏')).toBe('林知夏答应把装修合同发过来')
+    expect(loopSentence(loop({ direction: 'mutual', text: '春节前一起吃顿饭' }), '林知夏')).toBe('你们说好春节前一起吃顿饭')
+  })
+  it('does not say the verb twice when the extracted text already has it', () => {
+    expect(loopSentence(loop({ text: '答应帮她看简历' }), '林知夏')).toBe('你答应帮她看简历')
+    expect(loopSentence(loop({ kind: 'plan', direction: 'mutual', text: '约了下个月去成都' }), '林知夏')).toBe('约了下个月去成都')
+    expect(loopSentence(loop({ kind: 'question', direction: 'theirs', text: '问了周六几点出发还没回' }), '林知夏')).toBe('你问了周六几点出发还没回')
+  })
+  it('a question says who owes the answer (direction mine = the user owes it)', () => {
+    expect(loopSentence(loop({ kind: 'question', direction: 'mine', text: '国庆有没有空' }), '林知夏')).toBe('林知夏问你国庆有没有空，你没回')
+    expect(loopSentence(loop({ kind: 'question', direction: 'theirs', text: '周六几点出发' }), '林知夏')).toBe('你问周六几点出发，林知夏没回')
+  })
+  it('约定 without a verb of its own gets one', () => {
+    expect(loopSentence(loop({ kind: 'plan', direction: 'mutual', text: '下个月去成都' }), '林知夏')).toBe('约好下个月去成都')
+  })
+  it('an unnamed person is 对方; empty text stays empty', () => {
+    expect(loopSentence(loop({ direction: 'theirs' }), '')).toBe('对方答应帮她看简历')
+    expect(loopSentence(loop({ text: '  ' }), '林知夏')).toBe('')
+  })
+  it('the small type is the opening day, plus the day a 约定 is for', () => {
+    expect(loopOpenedLabel('2026-09-13 21:04')).toBe('2026年9月13日起')
+    expect(loopOpenedLabel('')).toBe('')
+    expect(loopDueLabel(loop({ kind: 'plan', dueAt: '2026-10-01' }))).toBe('约在2026年10月1日')
+    expect(loopDueLabel(loop({ kind: 'plan', dueAt: null }))).toBe(null)
+    expect(loopDueLabel(loop({ kind: 'promise', dueAt: '2026-10-01' }))).toBe(null)
+  })
+  it('a handled loop says what became of it', () => {
+    expect(loopStateLabel(loop({ state: 'done', status: 'confirmed' }))).toBe('已了结')
+    expect(loopStateLabel(loop({ state: 'dropped', status: 'confirmed' }))).toBe('不用管了')
+    expect(loopStateLabel(loop({ state: 'open', status: 'confirmed' }))).toBe(null)
+    // a rejected loop is struck through and reads 已划掉 like every other rejected row
+    expect(loopStateLabel(loop({ state: 'done', status: 'rejected' }))).toBe(null)
+  })
+  it('loops are reviewed like every other item: they count toward 已全部处理 and are editable', () => {
+    const r = review()
+    const l: ReviewItem = { type: 'loop', item: loop() }
+    r.sections[0].loops.push(l)
+    expect(deriveReview(r).allHandled).toBe(false)
+    const keys = new Set(['claim:11', 'claim:12', 'claim:13', 'claim:14', 'relation:5', 'loop:40'])
+    expect(deriveReview(applyStatus(r, keys, 'confirmed')).allHandled).toBe(true)
+    // and never in the bulk high-confidence set: a loop has no confidence score
+    expect(deriveReview(r).highConfidence.every((h) => h.type === 'claim')).toBe(true)
+    // the close answer lands in place
+    const closed = applyItemUpdate(r, 'loop', loop({ status: 'confirmed', state: 'done', closedReason: 'done' }))
+    expect(closed.sections[0].loops[0].item.status).toBe('confirmed')
+    expect(markIndexes(closed).get('1:loop:40')).toBe(7)
+  })
+  it('editableText gives the raw text, so a rewrite never saves the rendered sentence', () => {
+    expect(editableText({ type: 'loop', item: loop() })).toBe('帮她看简历')
   })
 })

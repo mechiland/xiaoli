@@ -49,7 +49,7 @@ export const llmCalls = sqliteTable(
     provider: text('provider').notNull(),
     model: text('model').notNull(),
     promptVersion: text('prompt_version').notNull(),
-    purpose: text('purpose', { enum: ['extract', 'dedup', 'judge', 'other'] }).notNull(),
+    purpose: text('purpose', { enum: ['extract', 'interaction', 'dedup', 'judge', 'other'] }).notNull(),
     importId: integer('import_id'),
     jobId: integer('job_id'),
     evalRunId: text('eval_run_id'),

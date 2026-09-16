@@ -5,9 +5,14 @@ import type { PeopleIndexResponse, SearchResponse } from '@/contracts'
 import { sortKey } from '@/lib/pinyin'
 import { claims, handles, owned, persons, withOwner, type Db } from '@/server/db'
 import { createTestApp, createTestDb, createTestUser } from '@/tests/helpers/test-db'
-import { listPeopleIndex, searchAll } from './index'
+import { listPeopleIndex, searchAll, type InteractionSearchFn } from './index'
 
 const NOW = '2026-09-15T08:00:00.000Z'
+
+/** Stands in for `searchInteraction`, which is the interaction module's to implement. */
+const fakeInteraction: InteractionSearchFn = async (_db, _ownerId, q) => [
+  { kind: 'segment', id: 501, person: null, chatId: 9, chatTitle: '装修群', at: '2026-08-12 21:04', text: `聊了${q}的排期`, href: '/chats/9?at=77', highlights: [[2, 2 + q.length]] },
+]
 const norm = (s: string) => s.normalize('NFKC').toLowerCase().trim()
 
 describe('search (D1 integration)', () => {
@@ -154,11 +159,30 @@ describe('search (D1 integration)', () => {
   it('types and limit are honoured; LIKE wildcards are literal', async () => {
     expect((await searchAll(db, a, '杭州', { types: 'people' })).claims).toEqual([])
     expect((await searchAll(db, a, '远哥', { types: 'claims' })).people).toEqual([])
+    const only = await searchAll(db, a, '杭州', { types: 'interaction', interaction: fakeInteraction })
+    expect([only.people, only.claims]).toEqual([[], []])
+    expect(only.interaction).toHaveLength(1)
+    expect((await searchAll(db, a, '杭州', { types: 'people', interaction: fakeInteraction })).interaction).toEqual([])
     expect((await searchAll(db, a, '杭州', { limit: 1 })).claims).toHaveLength(1)
     const wild = await searchAll(db, a, '%')
     expect(wild.people).toEqual([])
     expect(wild.claims).toEqual([])
     expect((await searchAll(db, a, '_')).claims).toEqual([])
+  })
+
+  // The 来往 group is produced by `@/server/interaction` (ARCHITECTURE §1.17); search passes it through as the last group.
+  it('来往 hits are passed through, and a failing interaction module still leaves people and claims', async () => {
+    const ok = await searchAll(db, a, '杭州', { interaction: fakeInteraction })
+    expect(ok.interaction.map((h) => h.id)).toEqual([501])
+    expect(ok.people.length + ok.claims.length).toBeGreaterThan(0)
+    const down = await searchAll(db, a, '杭州', {
+      interaction: async () => {
+        throw new Error('not_implemented')
+      },
+    })
+    expect(down.interaction).toEqual([])
+    expect(down.claims.map((c) => c.claimId)).toEqual(ok.claims.map((c) => c.claimId))
+    expect((await searchAll(db, a, '   ', { interaction: fakeInteraction })).interaction).toEqual([])
   })
 
   it('people index groups by letter, # last, excludes self/merged, per owner', async () => {

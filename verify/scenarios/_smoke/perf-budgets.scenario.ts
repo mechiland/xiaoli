@@ -17,5 +17,7 @@ export default defineScenario({
     await step('P3 GET /api/home', () => measure.api('P3 GET /api/home (Server-Timing)', '/api/home'))
     await step('P2 person page TTFB', () => measure.page('P2 page /p/:id long-profile (TTFB)', `/p/${person.id}`))
     await step('P2 GET /api/people/:id', () => measure.api('P2 GET /api/people/:id long-profile (Server-Timing)', `/api/people/${person.id}`))
+    // the 来往 section (SPEC §7 交互层) is a second request the person page fires; same 300 ms bar as the profile itself
+    await step('P2 GET /api/people/:id/interaction', () => measure.api('P2 GET /api/people/:id/interaction long-profile (Server-Timing)', `/api/people/${person.id}/interaction`))
   },
 })

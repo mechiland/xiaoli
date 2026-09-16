@@ -1,6 +1,6 @@
 // Ratios from raw counts and the PLAN §4 gates (ARCHITECTURE §7.4).
 import type { Source } from './paths'
-import { ERROR_CODES, TYPES, type ErrorCode, type TypeCounts, type TypeName, type ZipCounts } from './score'
+import { ERROR_CODES, TYPES, type ErrorCode, type InteractionCounts, type TypeCounts, type TypeName, type ZipCounts } from './score'
 import type { FpSubLabel } from './judge'
 
 export interface TypeStat extends TypeCounts {
@@ -29,6 +29,23 @@ export type TypeMetrics = Record<TypeName, TypeStat> & {
   categoryMismatch: number
   errors: Record<TypeName, Record<ErrorCode, number>>
   subLabels: Record<FpSubLabel, number>
+  /** interaction layer (ARCHITECTURE §7.4). Every ratio is null when no zip of this source annotated that type. */
+  interaction: InteractionMetrics
+}
+
+export interface InteractionMetrics extends InteractionCounts {
+  /** gold loops with `closedBy` that the run closed at that idx / gold loops with `closedBy` — reported, not gated */
+  loopCloseRecall: number | null
+  /** predicted closes on a matched loop that gold does not say was ever closed — gated = 0 */
+  loopFalseClose: number
+  /** matched gold conversations / non-optional gold conversations — reported, warning below 0.8 */
+  conversationCoverage: number | null
+  /** mean topic coverage over matched conversations */
+  topicCoverage: number | null
+  /** segments + loops with evidence out of range or outside their window — gated = 0 */
+  segmentInvalidEvidence: number
+  /** matched loop pairs whose kind/direction differs — reported, never counted as a miss */
+  loopKindMismatch: number
 }
 
 const round = (x: number) => Math.round(x * 10_000) / 10_000
@@ -42,12 +59,15 @@ export function metricsFromCounts(c: ZipCounts): TypeMetrics {
     const x = c.types[t]
     predictedTotal += x.predicted
     tpTotal += x.tpLenient
+    // `predicted` is what the run produced; `scored` is what gold could be matched against. They differ only for
+    // loops on gold that has no `loops` key, and there every ratio must be null — reporting 0/12 would say "the
+    // model got every loop wrong", which is as false as the `predicted = 0` it replaces (DECISIONS I16).
     types[t] = {
       ...x,
-      fp: x.predicted - x.tpLenient,
+      fp: x.scored - x.tpLenient,
       fn: x.goldRequired - x.goldMatchedLenient,
-      precisionStrict: ratio(x.tpStrict, x.predicted),
-      precisionLenient: ratio(x.tpLenient, x.predicted),
+      precisionStrict: ratio(x.tpStrict, x.scored),
+      precisionLenient: ratio(x.tpLenient, x.scored),
       recallStrict: ratio(x.goldMatchedStrict, x.goldRequired),
       recallLenient: ratio(x.goldMatchedLenient, x.goldRequired),
       yieldPer100: c.messages ? round((100 * x.predicted) / c.messages) : null,
@@ -71,6 +91,19 @@ export function metricsFromCounts(c: ZipCounts): TypeMetrics {
     categoryMismatch: c.categoryMismatch,
     errors: JSON.parse(JSON.stringify(c.errors)),
     subLabels: { ...c.subLabels },
+    interaction: interactionMetrics(c.interaction),
+  }
+}
+
+export function interactionMetrics(i: InteractionCounts): InteractionMetrics {
+  return {
+    ...i,
+    loopCloseRecall: ratio(i.goldClosesMatched, i.goldCloses),
+    loopFalseClose: i.falseCloses,
+    conversationCoverage: ratio(i.conversationsMatched, i.conversationsGold),
+    topicCoverage: i.topicCoverageN ? round(i.topicCoverageSum / i.topicCoverageN) : null,
+    segmentInvalidEvidence: i.segmentInvalidEvidence,
+    loopKindMismatch: i.loopKindMismatch,
   }
 }
 
@@ -90,8 +123,18 @@ export const THRESHOLDS = {
   invalidEvidencePost: 0,
   transactionalAsClaimRatio: 0.05,
   p95WindowMs: 30_000,
+  /**
+   * Interaction (§7.4). A wrong "you promised X" is worse than a missed one, so precision is gated and loop
+   * **recall is reported, not gated** in this first round: there is no baseline for a brand-new capability
+   * (DECISIONS eval-synthetic E21). Raise both once two eval runs exist.
+   */
+  loopsPrecisionLenient: 0.8,
+  loopFalseClose: 0,
+  segmentInvalidEvidence: 0,
 } as const
 export const INVALID_EVIDENCE_PRE_WARN = 0.05
+/** conversationCoverage below this is a warning, not a gate. */
+export const CONVERSATION_COVERAGE_WARN = 0.8
 
 export interface Gate {
   name: string
@@ -144,6 +187,13 @@ export function sourceGates(i: SourceGateInput): Gate[] {
   add('sensitiveInStatement', m?.sensitiveInStatement ?? null, '==', THRESHOLDS.sensitiveInStatement)
   add('invalidEvidencePost', m?.invalidEvidencePost ?? null, '==', THRESHOLDS.invalidEvidencePost)
   add('transactionalAsClaimRatio', m?.transactionalAsClaimRatio ?? null, '<=', THRESHOLDS.transactionalAsClaimRatio, { nullPasses: 'no predicted claims' })
+  // interaction (§7.4). Null = no zip of this source has gold loops / no predicted loops: the capability is not
+  // being measured here, which passes. Loop recall is reported in the report, never gated in this round.
+  add('loops.precisionLenient', m?.loops.precisionLenient ?? null, '>=', THRESHOLDS.loopsPrecisionLenient, {
+    nullPasses: m && m.loops.predicted > 0 ? `${m.loops.predicted} loops predicted, none scored: no gold zip of this source annotates loops` : 'no predicted loops with gold loops to match',
+  })
+  add('loopFalseClose', m?.interaction.loopFalseClose ?? null, '==', THRESHOLDS.loopFalseClose)
+  add('segmentInvalidEvidence', m?.interaction.segmentInvalidEvidence ?? null, '==', THRESHOLDS.segmentInvalidEvidence)
   add('zips.scored', i.scoredZips, '>=', 1, { note: `${i.scoredZips}/${i.zipsWithGold} zips with gold scored` })
   add('zips.unscoredWithGold', i.problemZips, '==', 0)
   add('gold.frozen', flag(i.gold.every((g) => g.frozen)), '==', 1)

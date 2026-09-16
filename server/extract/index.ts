@@ -1,9 +1,10 @@
 // Public entry `@/server/extract` (ARCHITECTURE §6). Worker-safe: no Node imports.
 export { packWindows, planWindows, type PlanOptions } from './windowing'
-export { PROMPT_VERSION, DEDUP_PROMPT_VERSION } from './prompt-version'
-export { renderExtractPrompt, renderDedupPrompt, getPrompt, listPromptVersions } from './prompt'
+export { PROMPT_VERSION, DEDUP_PROMPT_VERSION, INTERACTION_PROMPT_VERSION, INTERACTION_PURPOSE } from './prompt-version'
+export { renderExtractPrompt, renderInteractionPrompt, renderDedupPrompt, getPrompt, listPromptVersions } from './prompt'
 export { validateOutput } from './validate'
-export { applySensitiveGuard, detectSensitive } from './sensitive'
+export { validateInteraction, type ValidateInteractionResult } from './validate-interaction'
+export { applySensitiveGuard, applyInteractionSensitiveGuard, detectSensitive } from './sensitive'
 export { extractWindow, resolveExtractModel, type ExtractDeps } from './pipeline'
 export { d1Store } from './d1-store'
 export { memoryStore, type OfflineMapping } from './memory-store'

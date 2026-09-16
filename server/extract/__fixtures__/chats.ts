@@ -66,3 +66,10 @@ export const CEREMONY: Line[] = [
   { sender: '小羽毛', at: '2026-06-14 20:03', body: '周日下午' },
 ]
 export const CEREMONY_MAPPING = mappingFor('小羽毛', 'private', { 山野: 'me', 小羽毛: 'son' }, 'me')
+
+/** Private chat used by the interaction cassettes: one promise said out loud, nothing closed yet. */
+export const QUOTE_PROMISE: Line[] = [
+  { sender: '山野', at: '2026-06-05 20:00', body: '柜子的报价出来了吗' },
+  { sender: '阿明', at: '2026-06-05 20:02', body: '还在算，周五前发给你' },
+  { sender: '山野', at: '2026-06-05 20:03', body: '好，那我等你消息' },
+]

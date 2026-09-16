@@ -378,6 +378,122 @@
       "idx": [
         83
       ]
+    },
+    {
+      "id": "loop-lizhi",
+      "type": "loop",
+      "person": "dahai",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "给哥留了一箱荔枝等他来拿",
+      "note": "我答应留着，所以是 promise+mine；导出结束时没有取到的确认，未结",
+      "idx": [
+        125
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-book-room",
+      "type": "loop",
+      "person": "jingjing",
+      "loopKind": "promise",
+      "direction": "theirs",
+      "text": "订妈生日的包厢",
+      "note": "同一场景里被爸一句「别铺张，家里吃就行」取消，dropped；同一批消息也是 negative tx-box",
+      "idx": [
+        122
+      ],
+      "closedBy": 123,
+      "closedReason": "dropped",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-train-tickets",
+      "type": "loop",
+      "person": "jingjing",
+      "loopKind": "promise",
+      "direction": "theirs",
+      "text": "统一买国庆回家的高铁票",
+      "dueAt": "2026-10-01",
+      "note": "导出结束时未结",
+      "idx": [
+        173
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-rent-question",
+      "type": "loop",
+      "person": "jianguo",
+      "loopKind": "question",
+      "direction": "mine",
+      "text": "帮爸问一下房子的租金",
+      "note": "爸问了没人回，欠回答的是我这边，所以 mine；租金数字本身是 negative tx-agent，不进 claim",
+      "idx": [
+        201
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-midautumn",
+      "type": "loop",
+      "person": "dahai",
+      "loopKind": "plan",
+      "direction": "mutual",
+      "text": "中秋9月25日在店里一起吃饭",
+      "dueAt": "2026-09-25",
+      "note": "日期在导出结束之后，未结；同一批消息也是 negative coord-midautumn",
+      "idx": [
+        204,
+        205
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "conv-quit-job",
+      "type": "conversation",
+      "text": "大海宣布辞职开火锅店",
+      "topics": [
+        "辞职",
+        "火锅店"
+      ],
+      "note": "会话边界由标注者判定，这里记的是剧本场景的首尾",
+      "idx": [
+        69,
+        75
+      ],
+      "startIdx": 69,
+      "endIdx": 75
+    },
+    {
+      "id": "conv-open-day",
+      "type": "conversation",
+      "text": "火锅店开业当天",
+      "topics": [
+        "开业",
+        "火锅店"
+      ],
+      "idx": [
+        138,
+        145
+      ],
+      "startIdx": 138,
+      "endIdx": 145
+    },
+    {
+      "id": "conv-move",
+      "type": "conversation",
+      "text": "爸妈要搬到大海家对面",
+      "topics": [
+        "搬家",
+        "出租"
+      ],
+      "idx": [
+        196,
+        201
+      ],
+      "startIdx": 196,
+      "endIdx": 201
     }
   ],
   "negatives": [

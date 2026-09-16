@@ -8,7 +8,10 @@ export interface ManifestRef {
   label?: string
   title?: string
   personId?: number
+  chatId?: number
   statement?: string
+  /** loop 正文 (SPEC §7 交互层) */
+  text?: string
 }
 
 export interface AccountManifest {
@@ -19,11 +22,16 @@ export interface AccountManifest {
   imports: Record<string, ManifestRef>
   chats: Record<string, ManifestRef>
   claims: Record<string, ManifestRef>
+  /** 段落 (conversation_segments) tags, SPEC §7 交互层 */
+  segments: Record<string, ManifestRef>
+  /** 未结事项 (loops) tags */
+  loops: Record<string, ManifestRef>
   counts: Record<string, number>
 }
 
 export interface SeedManifest {
-  version: 1
+  /** 2 = accounts carry `segments` / `loops` tags (interaction layer) */
+  version: 2
   generatedAt: string
   /** 'YYYY-MM-DD' in Asia/Shanghai used for "upcoming" dates */
   today: string
@@ -49,7 +57,7 @@ export function writeManifest(update: { today: string; accounts: Partial<Record<
   const file = manifestPath(root)
   const prev = readManifest(root)
   const next: SeedManifest = {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     today: update.today,
     accounts: { ...(prev?.accounts ?? {}), ...update.accounts },

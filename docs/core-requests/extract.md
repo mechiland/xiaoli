@@ -93,3 +93,76 @@
 - workaround: implemented inside server/extract; recorded in DECISIONS ## extract X31
 - blocking: no
 - Resolution (integrator, wave 4, 2026-09-16): Done (text only). ARCHITECTURE §6 has a new "Safe item defaults" paragraph after the extract.v7 rules, covering (a) the defaults and the non-defaulted fields, (b) `DroppedItem.fields` and the per-window warn log, and (c) extract.v8 registered with v7's `promptFeatures`. The code block adds `export interface DroppedItem { path; reason; fields? }`, and the `promptFeatures` comment notes v8. §7.5 notes that registered versions are run with `--prompt`. The requested "Before the strict parse" X4 sentence does not exist in ARCHITECTURE, so the text went in as a new paragraph. Checked against `server/extract/{validate,types,jobs,prompt-version}.ts`. Additive, no other module affected. DECISIONS integrator I19.
+
+## #7 `owned()` / `withOwner()` do not accept the wave-5 interaction tables
+- status: done (landed while this wave was in flight)
+- requested-by: extract, wave 5 (interaction layer), 2026-09-16
+- kind: contract (types in core-owned code)
+- paths: server/db/owned.ts (`OwnedTable`, `OwnedLinkTable`)
+- change: add `typeof schema.conversationSegments` and `typeof schema.loops` to `OwnedTable`, and `typeof schema.segmentParticipants` to `OwnedLinkTable`.
+- why: `server/db/schema/interaction.ts` exists and is migrated (`drizzle/0002_swift_butterfly.sql`), but the two unions in `server/db/owned.ts` still list only the wave-1 tables. Every owner-scoped query on the interaction tables — `owned(loops, ownerId, …)` in `d1Store.loadWindow` / `findSimilarLoops` / `countProposed`, `owned(segmentParticipants, …)` for `lastContact` — fails to typecheck, and `withOwner<typeof loops>(…)` fails the same way in tests. The interaction module (§1.17) will hit exactly the same wall on every one of its reads.
+- workaround: a local `ownedInteraction()` cast; **removed again** — core landed the two unions during this wave, and `server/extract/{d1-store,jobs,jobs.test}.ts` now call `owned()` / `withOwner<>()` directly.
+- blocking: no
+- Resolution (extract, wave 5, 2026-09-16): `server/db/owned.ts` now lists `conversationSegments` and `loops` in `OwnedTable` and `segmentParticipants` in `OwnedLinkTable`. Nothing left to do.
+
+## #8 ARCHITECTURE wording for the interaction layer inside the extraction pipeline
+- status: obsolete — superseded by #10 (extract, 2026-09-16). It described the interaction layer folded into the
+  extraction call (`promptFeatures(...).interaction`, `validateOutput(..., { interaction })`, `PROMPT_VERSION =
+  extract.v9`). That version measured worse than extract.v8 on the same frozen gold and was retired (DECISIONS I15,
+  I17). Do not apply (a) or (f). (b)–(e) are still true and are repeated in #10.
+- status-was: open
+- requested-by: extract, wave 5 (interaction layer), 2026-09-16
+- kind: contract (documentation only)
+- paths: ARCHITECTURE.md §6 (promptFeatures signature, `WindowInput`/`LoadedWindow`, `validateOutput` opts, `ExtractStore`, `OfflineExtractionResult`)
+- change:
+  (a) `promptFeatures(version)` returns `{ packMaxMessages, gapMarkers, milestoneRules, interaction }`; `interaction` is true from `extract.v9`. `validateOutput(json, input, opts?: { milestoneRules?, interaction? })`; `extractWindow` passes both from the version.
+  (b) `LoadedWindow` = `WindowInput & { seqMap; chatId: number; span: { startSeq; endSeq; startedAt; endedAt } }`. The span is the window's own first/last message `seq` and `sentAt`; it is the segment's natural key together with `chatId`.
+  (c) `ExtractStore` gains optional `findSimilarLoops(personId, importId): Promise<{ id: number; text: string }[]>` — the loop dedup candidates that ride the one dedup call.
+  (d) `ResolvedItems.loops` / `.closes` are required arrays (`segment` stays optional); their element shapes are `ResolvedLoop` / `ResolvedClose` in `server/extract/types.ts`.
+  (e) `OfflineExtractionResult` gains `segments`, `loops`, `closes` with the shapes in `server/extract/memory-store.ts` (`OfflineItems`); message refs are parsed-export idx, and `closes[].loopIndex` points into `loops` the way a claim's `supersedes` points into `claims`.
+  (f) `PROMPT_VERSION` is now `extract.v9` (see DECISIONS ## extract X33 for the eval consequence).
+- why: §6 already describes the interaction extraction in prose; these are the exact signatures the code now has.
+- workaround: implemented inside server/extract; recorded in DECISIONS ## extract X33
+- blocking: no
+
+## #9 `LlmPurposeSchema` has no value for the interaction call
+
+**status: done** (integrator, 2026-09-16). `LlmPurposeSchema` and the `llm_calls.purpose` column enum both gained `interaction`; `INTERACTION_PURPOSE` now returns it. No migration (SQLite text enums are a TS-level constraint).
+- status: open
+- requested-by: extract, wave 5 fix round (the split), 2026-09-16
+- kind: contract
+- paths: contracts/llm.ts (`LlmPurposeSchema`), eval/src/entries.ts (the mirrored `LlmJsonRequest.purpose` union, eval-synthetic)
+- change: add `'interaction'` to `z.enum(['extract', 'dedup', 'judge', 'other'])`, and the same literal to the mirror in `eval/src/entries.ts`.
+- why: since the interaction layer became its own model call (ARCHITECTURE §6, DECISIONS I17), every window makes two model calls. `llm_calls.purpose` is what cost and latency are grouped by (`server/llm/usage.ts` `byPurpose`), so the second call needs a purpose of its own or its tokens are invisible next to the extraction call's. The enum is core-owned and the value is also validated on read: `CassetteSchema.purpose` is `LlmPurposeSchema`, so a hand-written cassette carrying `purpose: 'interaction'` fails to parse until the enum grows. `llm_calls.purpose` is a plain `text NOT NULL` column, so no migration is needed.
+- workaround: **in place now** — `INTERACTION_PURPOSE` in `server/extract/prompt-version.ts` is `'other'`, which is still distinct from `extract` and `dedup`, and the call carries `promptVersion: 'interaction.v1'`, which identifies it exactly. Everything that needs to tell the two apart already does so by prompt version. Changing the constant to `'interaction'` is the only edit on extract's side once the enum lands; the hand-written cassettes then need one `pnpm extract:cassettes`.
+- blocking: no (cost is readable today; the purpose name is just wrong)
+
+## #10 ARCHITECTURE §6: the interaction layer is a second, parallel call (replaces the pending #8)
+
+**status: done** (integrator, 2026-09-16). ARCHITECTURE §6 now documents the fourth `WindowOutcome.interaction` value `not_needed` and the attempt-clock rule for two concurrent calls (`latencyMs` sums the cost, `attemptMs` takes the max, because p95WindowMs is a wall-clock budget).
+- status: open
+- requested-by: extract, wave 5 fix round (the split), 2026-09-16
+- kind: contract (documentation only)
+- paths: ARCHITECTURE.md §6
+- change: §6 already describes the split in prose (the "Interaction extraction" paragraph). These are the exact signatures the code now has, and they differ from #8, which described the folded-in version and is obsolete:
+  (a) `promptFeatures(version)` returns `{ packMaxMessages, gapMarkers, milestoneRules }` — **no `interaction` flag**; `validateOutput(json, input, opts?: { milestoneRules?: boolean })` is back to its extract.v8 signature and behaviour, and `segment`/`loops`/`closes` fail it as unknown top-level keys like any other.
+  (b) `ExtractDeps` gains `interactionPromptVersion?: string` (default `INTERACTION_PROMPT_VERSION`).
+  (c) `WindowOutcome` (done branch) gains `interaction: 'ok' | 'skipped_deadline' | 'failed' | 'not_needed'`. **`not_needed` is a fourth value beyond the three §6 names**: it is the empty-window early return, where no call is made at all, and it matches `dedup`'s vocabulary.
+  (d) `OfflineExtractionResult` gains `interactionPromptVersion: string` and `windows[].interaction?: string`; `extractOffline` gains `interactionPromptVersion?: string`.
+  (e) Attempt time with two concurrent calls: the pair is charged **once, as `max`**, not as the sum — in `live`/`record` the window waited for the slower call, and in `replay` the recorded latencies of two calls that ran at the same time must not be added. §6's "Σ recorded `latencyMs` of the calls replayed in that attempt" now means Σ over *stages*, max within a stage. `WindowOutcome.latencyMs` still sums both calls: that is what they cost, not how long the window waited.
+  (f) `ResolvedItems.loops` / `.closes` stay required arrays and `segment` optional; `ExtractStore.findSimilarLoops?` is unchanged; loop dedup still rides the one dedup call per window.
+- why: keeps the binding document in line with `@/server/extract` after the split; no other module changes.
+- workaround: implemented inside server/extract; recorded in DECISIONS ## extract X40–X44
+- blocking: no
+
+## #11 `tests/integration/m7-interaction.test.ts` still answers both calls with one JSON (routed to the interaction module)
+
+**status: done** (integrator, 2026-09-16). `tests/integration/m7-interaction.test.ts` is integrator-owned; its fake model now dispatches on the prompt (the extraction call rejects unknown top-level keys, so one combined reply failed every window). 3/3 green again.
+- status: open
+- requested-by: extract, wave 5 fix round (the split), 2026-09-16
+- kind: test fix in another module's file
+- paths: tests/integration/m7-interaction.test.ts (untracked; not extract-owned)
+- change: its `base` constant is `{ newPersons, handles, relations, claims, events, dates, segment: null, loops: [], closes: [] }` and its fake LLM answers every non-dedup request with it. A window is two calls now, so the extraction call gets `segment`/`loops`/`closes` — unknown top-level keys — and fails validation, and the interaction call gets the six extraction keys and fails too. Fix: branch on the request, e.g. `const isInteraction = (req) => req.promptVersion.startsWith('interaction.')`, answer it with `{ segment, loops, closes }` and answer the extraction call with the six-key object. `opensLoop` / `closesLoop` become interaction answers; `closesLoop` keeps parsing the loop id out of the rendered prompt, which is now the **interaction** prompt (`server/extract/prompt.ts` renders `- [loop N] …` there).
+- why: 3 failing tests in `pnpm test`, all in that one file; every other suite is green. The same pattern is already applied in `server/extract/{offline,jobs}.test.ts` and in `eval/tests/offline-contract.test.ts` (which the eval builder updated during this round), so there is a worked example to copy.
+- workaround: none; the file is not extract-owned so extract did not touch it.
+- blocking: yes for a green `pnpm test`

@@ -1,9 +1,9 @@
 // GET /api/imports/:id/review — this import's items grouped by person (SPEC §9.9, ARCHITECTURE §2.4).
 import { count, eq, inArray, max } from 'drizzle-orm'
-import type { Category, ChatDTO, ClaimDTO, ImportDTO, ImportReviewResponse, Progress, ReviewItem } from '@/contracts'
-import { chats, claims, events, extractionJobs, getUserSettings, handles, importantDates, imports, messages, owned, persons, relations, type Db } from '@/server/db'
+import type { Category, ChatDTO, ClaimDTO, ImportDTO, ImportReviewResponse, LoopDTO, Progress, ReviewItem } from '@/contracts'
+import { chats, claims, events, extractionJobs, getUserSettings, handles, importantDates, imports, loops, messages, owned, persons, relations, type Db } from '@/server/db'
 import { errors } from '@/server/errors'
-import { claimDTOs, dateDTOs, eventDTOs, handleDTOs, loadRows, relationDTOs, type ClaimRow } from './dto'
+import { claimDTOs, dateDTOs, eventDTOs, handleDTOs, loadRows, loopDTOs, relationDTOs, type ClaimRow } from './dto'
 import { chunk, IN_CHUNK, uniq } from './util'
 
 const CATEGORY_ORDER: Category[] = ['work', 'location', 'education', 'family', 'preference', 'life_event', 'other']
@@ -82,13 +82,17 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
   const relationRows = await db.select().from(relations).where(owned(relations, ownerId, eq(relations.importId, importId), eq(relations.sourceKind, 'ai')))
   const eventRows = await db.select().from(events).where(owned(events, ownerId, eq(events.importId, importId), eq(events.sourceKind, 'ai')))
   const dateRows = await db.select().from(importantDates).where(owned(importantDates, ownerId, eq(importantDates.importId, importId), eq(importantDates.sourceKind, 'ai')))
+  // Loops this import opened. An older loop that this import *closed* keeps its own import_id, so it is not in here
+  // — it appears as a line in 「这次聊了什么」 instead, with nothing to confirm (SPEC §9.9).
+  const loopRows = await db.select().from(loops).where(owned(loops, ownerId, eq(loops.importId, importId), eq(loops.sourceKind, 'ai')))
 
-  const [claimDtos, handleDtos, relationDtos, eventDtos, dateDtos] = await Promise.all([
+  const [claimDtos, handleDtos, relationDtos, eventDtos, dateDtos, loopDtos] = await Promise.all([
     claimDTOs(db, ownerId, claimList),
     handleDTOs(db, ownerId, handleRows),
     relationDTOs(db, ownerId, relationRows),
     eventDTOs(db, ownerId, eventRows),
     dateDTOs(db, ownerId, dateRows),
+    loopDTOs(db, ownerId, loopRows),
   ])
 
   // replaced claims ("变化")
@@ -103,6 +107,7 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
     ...relationDtos.flatMap((r) => [r.fromPersonId, r.toPersonId]),
     ...eventDtos.flatMap((e) => e.participants.map((p) => p.id)),
     ...dateDtos.map((d) => d.personId),
+    ...loopDtos.map((l) => l.personId),
   ])
   const personRows = new Map<number, { id: number; label: string; labelSort: string; isSelf: boolean; importId: number | null }>()
   for (const part of chunk(personIds, IN_CHUNK)) {
@@ -118,7 +123,7 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
     let s = sections.get(personId)
     if (!s) {
       const p = personRows.get(personId)
-      s = { person: { id: personId, label: p?.label ?? '', isNew: p?.importId === importId }, newCount: 0, newClaims: [], changes: [], aliasesAndRelations: [], dates: [], events: [] }
+      s = { person: { id: personId, label: p?.label ?? '', isNew: p?.importId === importId }, newCount: 0, newClaims: [], changes: [], aliasesAndRelations: [], dates: [], events: [], loops: [] }
       sections.set(personId, s)
     }
     return s
@@ -135,6 +140,7 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
   }
   for (const h of handleDtos) if (h.personId != null) section(h.personId).aliasesAndRelations.push({ type: 'handle', item: h })
   for (const d of dateDtos) section(d.personId).dates.push({ type: 'date', item: d })
+  for (const l of loopDtos) section(l.personId).loops.push({ type: 'loop', item: l })
 
   // Relations/events touch several persons: prefer a person new in this import, then one that already has a section.
   const pick = (ids: number[]): number => {
@@ -160,7 +166,10 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
     s.aliasesAndRelations.sort(handlesFirst)
     s.dates.sort((a, b) => a.item.id - b.item.id)
     s.events.sort((a, b) => a.item.id - b.item.id)
-    s.newCount = s.newClaims.length + s.changes.length + s.aliasesAndRelations.length + s.dates.length + s.events.length
+    // every entry of this group is a loop; the union needs narrowing before openedAt can be read
+    const openedAt = (x: ReviewItem) => (x.type === 'loop' ? x.item.openedAt : '')
+    s.loops.sort((a, b) => openedAt(a).localeCompare(openedAt(b)) || a.item.id - b.item.id)
+    s.newCount = s.newClaims.length + s.changes.length + s.aliasesAndRelations.length + s.dates.length + s.events.length + s.loops.length
   }
   const ordered = [...sections.values()].sort(
     (a, b) =>
@@ -174,7 +183,9 @@ export async function getImportReview(db: Db, ownerId: string, importId: number)
     .filter((c) => c.status === 'proposed' && !c.sensitive && c.confidence != null && c.confidence >= settings.highConfidenceThreshold)
     .map((c) => ({ type: 'claim' as const, id: c.id }))
   // Only items the page shows: a handle without a person has no section, so it must not keep allHandled false.
-  const all = [...claimDtos, ...handleDtos.filter((h) => h.personId != null), ...relationDtos, ...eventDtos.filter((e) => e.participants.length > 0), ...dateDtos]
+  // Loops have no confidence, so like handles/relations/dates/events they are never in highConfidence (DECISIONS A6),
+  // but they are shown, so they do count towards newCount, allHandled and empty.
+  const all = [...claimDtos, ...handleDtos.filter((h) => h.personId != null), ...relationDtos, ...eventDtos.filter((e) => e.participants.length > 0), ...dateDtos, ...loopDtos]
 
   return {
     import: importDTO(imp),

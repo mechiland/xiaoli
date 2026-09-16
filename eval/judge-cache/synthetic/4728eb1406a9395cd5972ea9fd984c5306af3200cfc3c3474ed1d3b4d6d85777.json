@@ -1,0 +1,26 @@
+{
+  "inputHash": "4728eb1406a9395cd5972ea9fd984c5306af3200cfc3c3474ed1d3b4d6d85777",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:50:14.714Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "offer入职时间属于事务信息"
+      },
+      {
+        "fpId": "claims#4",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c10",
+        "negativeId": null,
+        "reason": "朵朵是小满的女儿，不是朵朵本人的信息"
+      }
+    ]
+  }
+}

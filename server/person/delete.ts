@@ -9,10 +9,12 @@ import {
   evidence,
   handles,
   importantDates,
+  loops,
   messages,
   owned,
   persons,
   relations,
+  segmentParticipants,
   type Db,
 } from '@/server/db'
 import { errors } from '@/server/errors'
@@ -32,6 +34,12 @@ async function idsIn<T>(parts: number[][], q: (part: number[]) => Promise<T[]>):
  * (events left without participants are deleted), claim mentions and the evidence rows of every deleted item.
  * Messages stay; their sender handle is cleared so the chat shows the raw sender name. reviewLog rows stay.
  * Persons merged into this one are deleted the same way. Self → 409.
+ *
+ * Interaction layer (core request review#3): the person's loops go with them, like claims, and their evidence
+ * rows are deleted explicitly — the FK cascade would take the loop but leave the evidence orphaned. Its
+ * `segment_participants` rows go too, but the segments themselves stay: a 段落 belongs to a chat, not a person
+ * (SPEC §7 删除语义), and every message in it is still there, so its counts are not recomputed either. Loops of
+ * OTHER persons that happen to be opened or closed by a message this person sent are untouched.
  */
 export async function deletePerson(db: Db, r2: R2Bucket | undefined, ownerId: string, personId: number): Promise<{ deleted: true }> {
   const person = await db.select().from(persons).where(owned(persons, ownerId, eq(persons.id, personId))).get()
@@ -80,13 +88,18 @@ export async function deletePerson(db: Db, r2: R2Bucket | undefined, ownerId: st
     db.select({ id: events.id, importId: events.importId }).from(events).where(owned(events, ownerId, inArray(events.id, part))),
   )
 
+  const loopRows = await idsIn(pParts, (part) =>
+    db.select({ id: loops.id, importId: loops.importId }).from(loops).where(owned(loops, ownerId, inArray(loops.personId, part))),
+  )
+
   const claimIds = claimRows.map((r) => r.id)
   const dateIds = dateRows.map((r) => r.id)
   const relationIds = uniq(relationRows.map((r) => r.id))
   const orphanEventIds = orphanEventRows.map((r) => r.id)
+  const loopIds = loopRows.map((r) => r.id)
 
   const stmts: Stmt[] = []
-  const evidenceOf = (type: 'handle' | 'claim' | 'date' | 'relation' | 'event', ids: number[]) => {
+  const evidenceOf = (type: 'handle' | 'claim' | 'date' | 'relation' | 'event' | 'loop', ids: number[]) => {
     for (const part of chunk(ids, IN_CHUNK)) stmts.push(db.delete(evidence).where(owned(evidence, ownerId, eq(evidence.targetType, type), inArray(evidence.targetId, part))))
   }
   evidenceOf('claim', claimIds)
@@ -94,6 +107,7 @@ export async function deletePerson(db: Db, r2: R2Bucket | undefined, ownerId: st
   evidenceOf('relation', relationIds)
   evidenceOf('handle', handleIds)
   evidenceOf('event', orphanEventIds)
+  evidenceOf('loop', loopIds)
   for (const part of chunk(claimIds, IN_CHUNK)) stmts.push(db.delete(claimMentions).where(owned(claimMentions, ownerId, inArray(claimMentions.claimId, part))))
   // other people's claims that mention this person lose the link
   for (const part of pParts) stmts.push(db.delete(claimMentions).where(owned(claimMentions, ownerId, inArray(claimMentions.personId, part))))
@@ -110,6 +124,9 @@ export async function deletePerson(db: Db, r2: R2Bucket | undefined, ownerId: st
   for (const part of chunk(claimIds, IN_CHUNK)) stmts.push(db.delete(claims).where(owned(claims, ownerId, inArray(claims.id, part))))
   for (const part of chunk(dateIds, IN_CHUNK)) stmts.push(db.delete(importantDates).where(owned(importantDates, ownerId, inArray(importantDates.id, part))))
   for (const part of chunk(relationIds, IN_CHUNK)) stmts.push(db.delete(relations).where(owned(relations, ownerId, inArray(relations.id, part))))
+  for (const part of chunk(loopIds, IN_CHUNK)) stmts.push(db.delete(loops).where(owned(loops, ownerId, inArray(loops.id, part))))
+  // segments are kept — they belong to the chat, not to this person, and all their messages are still there
+  for (const part of pParts) stmts.push(db.delete(segmentParticipants).where(owned(segmentParticipants, ownerId, inArray(segmentParticipants.personId, part))))
   for (const part of chunk(handleIds, IN_CHUNK)) {
     stmts.push(db.update(messages).set({ senderHandleId: null }).where(owned(messages, ownerId, inArray(messages.senderHandleId, part))))
     stmts.push(db.delete(handles).where(owned(handles, ownerId, inArray(handles.id, part))))
@@ -137,7 +154,7 @@ export async function deletePerson(db: Db, r2: R2Bucket | undefined, ownerId: st
 
   // imports whose remaining items are no longer proposed move reviewing → done (review R6)
   const importIds = uniq(
-    [...claimRows, ...dateRows, ...relationRows, ...orphanEventRows, ...handleImports].map((r) => r.importId).filter((x): x is number => x != null),
+    [...claimRows, ...dateRows, ...relationRows, ...orphanEventRows, ...loopRows, ...handleImports].map((r) => r.importId).filter((x): x is number => x != null),
   )
   if (importIds.length) await syncImportStatus(db, ownerId, importIds)
   return { deleted: true }

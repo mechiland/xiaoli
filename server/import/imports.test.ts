@@ -351,7 +351,7 @@ describe('import routes', () => {
     expect(await json(res)).toEqual({
       deletedMessages: 207 - 32,
       reassignedMessages: 32,
-      deletedItems: { handle: 0, relation: 0, claim: 1, event: 0, date: 0 },
+      deletedItems: { handle: 0, relation: 0, claim: 1, event: 0, date: 0, loop: 0, segment: 0 },
       detachedEvidence: 1,
       deletedPersons: 0,
     })

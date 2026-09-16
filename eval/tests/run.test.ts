@@ -194,6 +194,68 @@ describe('runEval scoring', () => {
     expect(r.files.some((f) => f.endsWith(file))).toBe(true)
   })
 
+  /**
+   * The cost half of the two-call split (DECISIONS I17). The stub extractor issues the calls a real window issues —
+   * an extraction call, an interaction call with its own prompt version, and a dedup call — through the client the
+   * harness handed it. The report must then carry both prompt versions and a per-call cost split, and it must do so
+   * even though extract sends the interaction call with `purpose: 'other'` (INTERACTION_PURPOSE), i.e. the split
+   * cannot rest on the purpose field.
+   */
+  it('report carries both prompt versions and the per-call cost split', async () => {
+    const root = tempRoot()
+    await makeSource(root, 'synthetic', SYN_ZIP, '在云杉医院当护士', evalPaths(root).lock)
+    const calling: Loaded<ExtractApi> = {
+      ok: true,
+      api: {
+        PROMPT_VERSION: 'extract.v8',
+        INTERACTION_PROMPT_VERSION: 'interaction.v1',
+        extractOffline: async (args) => {
+          await args.llm.completeJson({ purpose: 'extract', promptVersion: args.promptVersion ?? 'extract.v8', model: 'deepseek-flash', messages: [], maxTokens: 10 })
+          await args.llm.completeJson({ purpose: 'other', promptVersion: 'interaction.v1', model: 'deepseek-flash', messages: [], maxTokens: 10 })
+          await args.llm.completeJson({ purpose: 'dedup', promptVersion: 'dedup.v2', model: 'deepseek-flash', messages: [], maxTokens: 10 })
+          return basePred({ promptVersion: args.promptVersion, interactionPromptVersion: 'interaction.v1', usage: { inputTokens: 300, outputTokens: 30, calls: 3 } })
+        },
+      },
+    }
+    const usageLlm: LlmClient = {
+      completeJson: async () => ({ ok: true, json: {}, raw: '{}', usage: { inputTokens: 100, outputTokens: 10, cacheHitTokens: null }, latencyMs: 1, model: 'deepseek-flash', finishReason: 'stop', fromCassette: true }),
+    }
+    const d = deps(root, calling, { makeLlm: async () => ({ extract: usageLlm, judge: null }) })
+    const rep = (await runEval(opts({ write: false }), d)).report!
+    expect(rep.promptVersion).toBe('extract.v8')
+    expect(rep.interactionPromptVersion).toBe('interaction.v1')
+    expect(rep.usage.byCall.extract).toEqual({ inputTokens: 100, outputTokens: 10, calls: 1, failedCalls: 0 })
+    expect(rep.usage.byCall.interaction).toEqual({ inputTokens: 100, outputTokens: 10, calls: 1, failedCalls: 0 })
+    expect(rep.usage.byCall.dedup).toEqual({ inputTokens: 100, outputTokens: 10, calls: 1, failedCalls: 0 })
+    // the two totals agree, so no honesty warning; the console prints the split
+    expect(rep.warnings.filter((w) => w.includes('usage mismatch'))).toEqual([])
+    expect(d.logs.join('\n')).toContain('by call: extract in 100 out 10 (1 calls) · interaction in 100 out 10 (1 calls)')
+  })
+
+  it('says so when the pipeline`s own token total and the calls the harness saw disagree', async () => {
+    const root = tempRoot()
+    await makeSource(root, 'synthetic', SYN_ZIP, '在云杉医院当护士', evalPaths(root).lock)
+    const underReporting: Loaded<ExtractApi> = {
+      ok: true,
+      api: {
+        PROMPT_VERSION: 'extract.v8',
+        INTERACTION_PROMPT_VERSION: 'interaction.v1',
+        extractOffline: async (args) => {
+          await args.llm.completeJson({ purpose: 'extract', promptVersion: 'extract.v8', model: 'deepseek-flash', messages: [], maxTokens: 10 })
+          await args.llm.completeJson({ purpose: 'other', promptVersion: 'interaction.v1', model: 'deepseek-flash', messages: [], maxTokens: 10 })
+          // …but only counts the first one, which is exactly how a second call disappears from a cost report
+          return basePred({ promptVersion: args.promptVersion, usage: { inputTokens: 100, outputTokens: 10, calls: 1 } })
+        },
+      },
+    }
+    const usageLlm: LlmClient = {
+      completeJson: async () => ({ ok: true, json: {}, raw: '{}', usage: { inputTokens: 100, outputTokens: 10, cacheHitTokens: null }, latencyMs: 1, model: 'deepseek-flash', finishReason: 'stop', fromCassette: true }),
+    }
+    const rep = (await runEval(opts({ write: false }), deps(root, underReporting, { makeLlm: async () => ({ extract: usageLlm, judge: null }) }))).report!
+    expect(rep.warnings.join(' ')).toContain('usage mismatch: extractOffline reports 1 calls / 100 input tokens, the harness observed 2 / 200')
+    expect(rep.usage.byCall.interaction.calls).toBe(1)
+  })
+
   it('compareReports refuses runs with different gold', async () => {
     const root = tempRoot()
     await makeSource(root, 'synthetic', SYN_ZIP, '在云杉医院当护士', evalPaths(root).lock)

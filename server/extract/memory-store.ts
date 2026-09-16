@@ -1,8 +1,8 @@
 // In-memory ExtractStore for the eval harness (ARCHITECTURE §6 offline entry). Mirrors d1Store semantics:
 // message ids = idx + 1, seq = idx; proposed claims of this run are dedup candidates; handles unique per (kind, value);
 // relations unique per (from, to, type) incl. the inverse; dates per (person, kind, calendar, month, day).
-import type { ChatKind, ParsedExport, Status } from '@/contracts'
-import type { ExtractStore, KnownPerson, LoadedWindow, ResolvedItems, WindowRef } from './types'
+import type { ChatKind, LoopCloseReason, LoopDirection, LoopKind, ParsedExport, Status } from '@/contracts'
+import type { ExtractStore, KnownPerson, LoadedWindow, OpenLoopInput, ResolvedItems, WindowRef } from './types'
 import { normName } from './validate'
 
 export interface OfflineMapping {
@@ -18,7 +18,28 @@ export interface OfflineItems {
   claims: { person: string; statement: string; category: import('@/contracts').Category; validFrom?: string; confidence: number; sensitive: boolean; supersedes?: number; evidence: number[]; windowIndex: number }[]
   events: { summary: string; happenedAt?: string; place?: string; participants: string[]; evidence: number[]; windowIndex: number }[]
   dates: { person: string; kind: string; day?: number; month?: number; year?: number; calendar: 'solar' | 'lunar'; isLeapMonth?: boolean; evidence: number[]; windowIndex: number }[]
+  /** interaction layer (SPEC §8.8); message refs are parsed-export idx, like every other type */
+  segments: { startIdx: number; endIdx: number; startedAt: string; endedAt: string; messageCount: number; summary: string; topics: string[]; participants: { person: string; messageCount: number }[]; evidence: number[]; windowIndex: number }[]
+  loops: {
+    person: string
+    direction: LoopDirection
+    kind: LoopKind
+    text: string
+    dueAt?: string
+    openedAt: string
+    openedIdx: number
+    closedIdx: number | null
+    closedAt: string | null
+    closedReason: LoopCloseReason | null
+    evidence: number[]
+    windowIndex: number
+  }[]
+  /** `loopIndex` points into `loops`, the way a claim's `supersedes` points into `claims` */
+  closes: { loopIndex: number; reason: LoopCloseReason; evidence: number[]; windowIndex: number }[]
 }
+
+/** Cap mirroring d1Store.KNOWN_OPEN_LOOPS_PER_PERSON, so offline and in-app show the model the same shape. */
+const OPEN_LOOPS_PER_PERSON = 12
 
 const INVERSE: Record<string, string> = { parent: 'child', child: 'parent', service_provider: 'client', client: 'service_provider' }
 const SYMMETRIC = new Set(['spouse', 'sibling', 'friend', 'colleague', 'classmate', 'relative'])
@@ -77,6 +98,39 @@ export function memoryStore(parsed: ParsedExport, mapping: OfflineMapping): Extr
   const dates = new Map<string, OfflineItems['dates'][number] & { personId: number; messageIds: Set<number> }>()
   const events = new Map<string, { summary: string; happenedAt?: string; place?: string; participantIds: number[]; messageIds: Set<number>; windowIndex: number }>()
 
+  // Interaction layer (SPEC §8.8). Segments are keyed by their span so re-extracting one overwrites, as in D1.
+  interface Segment {
+    startSeq: number
+    endSeq: number
+    startedAt: string
+    endedAt: string
+    messageCount: number
+    summary: string
+    topics: string[]
+    participants: { personId: number; messageCount: number }[]
+    messageIds: Set<number>
+    windowIndex: number
+  }
+  const segments = new Map<string, Segment>()
+  interface Loop {
+    id: number
+    personId: number
+    direction: LoopDirection
+    kind: LoopKind
+    text: string
+    dueAt?: string
+    openedMessageId: number
+    openedAt: string
+    closedMessageId: number | null
+    closedAt: string | null
+    closedReason: LoopCloseReason | null
+    status: Status
+    messageIds: Set<number>
+    windowIndex: number
+  }
+  const loops: Loop[] = []
+  const closeLog: { loopId: number; reason: LoopCloseReason; messageIds: Set<number>; windowIndex: number }[] = []
+
   // Window range (message ids) per window index. Evidence merged into an item from a later window is kept only when it
   // lies inside the item's own window, because the harness checks every item's evidence against its windowIndex.
   const windowRange = new Map<number, [number, number]>()
@@ -105,8 +159,29 @@ export function memoryStore(parsed: ParsedExport, mapping: OfflineMapping): Extr
         seqMap.set(i + 1, m.idx + 1)
         return { localSeq: i + 1, sentAt: m.sentAt, senderName: m.senderName, senderPersonId: senderPerson.get(m.senderName) ?? null, kind: m.kind, body: m.body }
       })
-      const known: KnownPerson[] = persons.map((p) => ({ personId: p.id, label: p.label, handles: p.handles, claims: [] }))
-      return { chat: mapping.chat, selfPersonId: selfId, messages, known, seqMap }
+      // Interaction input side, from what this run has produced so far, so offline sees exactly the in-app shape.
+      const firstSentAt = messages[0]?.sentAt ?? ''
+      const lastContactOf = (personId: number): KnownPerson['lastContact'] => {
+        const before = [...segments.values()].filter((sg) => sg.startedAt < firstSentAt && sg.participants.some((x) => x.personId === personId))
+        const latest = before.sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))[0]
+        return latest ? { at: latest.startedAt, summary: latest.summary } : null
+      }
+      const openLoopsOf = (personId: number): OpenLoopInput[] =>
+        loops
+          .filter((l) => l.personId === personId && l.closedMessageId === null && l.status !== 'rejected')
+          .sort((a, b) => (a.openedAt === b.openedAt ? b.id - a.id : a.openedAt < b.openedAt ? 1 : -1))
+          .slice(0, OPEN_LOOPS_PER_PERSON)
+          .map((l) => ({ id: l.id, kind: l.kind, direction: l.direction, text: l.text, openedAt: l.openedAt }))
+      const known: KnownPerson[] = persons.map((p) => ({ personId: p.id, label: p.label, handles: p.handles, claims: [], lastContact: lastContactOf(p.id), openLoops: openLoopsOf(p.id) }))
+      return {
+        chat: mapping.chat,
+        selfPersonId: selfId,
+        messages,
+        known,
+        seqMap,
+        chatId: 1,
+        span: { startSeq: msgs[0]?.idx ?? ref.startSeq, endSeq: msgs[msgs.length - 1]?.idx ?? ref.endSeq, startedAt: msgs[0]?.sentAt ?? '', endedAt: msgs[msgs.length - 1]?.sentAt ?? '' },
+      }
     },
 
     async proposeItems(_importId: number, items: ResolvedItems, ctx: { jobId: number | null; windowIndex: number }) {
@@ -163,11 +238,69 @@ export function memoryStore(parsed: ParsedExport, mapping: OfflineMapping): Extr
         events.set(key, { ...e, messageIds: new Set(e.messageIds), windowIndex: ctx.windowIndex })
         created++
       }
+      const seg = items.segment
+      if (seg && seg.messageIds.length) {
+        const key = `${seg.startSeq}|${seg.endSeq}`
+        const before = segments.get(key)
+        segments.set(key, {
+          startSeq: seg.startSeq,
+          endSeq: seg.endSeq,
+          startedAt: seg.startedAt,
+          endedAt: seg.endedAt,
+          messageCount: seg.messageCount,
+          summary: seg.summary,
+          topics: seg.topics,
+          participants: seg.participants,
+          messageIds: new Set(seg.messageIds),
+          windowIndex: ctx.windowIndex,
+        })
+        if (!before) created++
+      }
+      for (const l of items.loops) {
+        if (!l.messageIds.length) continue
+        const existing =
+          l.duplicateOf !== undefined
+            ? loops.find((x) => x.id === l.duplicateOf)
+            : loops.find((x) => x.personId === l.personId && normName(x.text) === normName(l.text) && x.closedMessageId === null && x.status !== 'rejected')
+        if (existing) {
+          mergedEvidence += addAll(existing.messageIds, l.messageIds, existing.windowIndex)
+          continue
+        }
+        loops.push({
+          id: loops.length + 1,
+          personId: l.personId,
+          direction: l.direction,
+          kind: l.kind,
+          text: l.text,
+          ...(l.dueAt ? { dueAt: l.dueAt } : {}),
+          openedMessageId: l.openedMessageId,
+          openedAt: l.openedAt,
+          closedMessageId: null,
+          closedAt: null,
+          closedReason: null,
+          status: 'proposed',
+          messageIds: new Set(l.messageIds),
+          windowIndex: ctx.windowIndex,
+        })
+        created++
+      }
+      for (const c of items.closes) {
+        const target = loops.find((x) => x.id === c.loopId && x.closedMessageId === null)
+        if (!target) continue
+        target.closedMessageId = c.closedMessageId
+        target.closedAt = c.closedAt
+        target.closedReason = c.reason
+        closeLog.push({ loopId: c.loopId, reason: c.reason, messageIds: new Set([c.closedMessageId]), windowIndex: ctx.windowIndex })
+      }
       return { created, mergedEvidence }
     },
 
     async findSimilarClaims(personId: number) {
       return claims.filter((c) => c.personId === personId && (c.status === 'proposed' || c.status === 'confirmed')).map((c) => ({ id: c.id, statement: c.statement, status: c.status }))
+    },
+
+    async findSimilarLoops(personId: number) {
+      return loops.filter((l) => l.personId === personId && l.closedMessageId === null && l.status !== 'rejected').map((l) => ({ id: l.id, text: l.text }))
     },
 
     async resolveTempPerson(_importId: number, label: string, evidenceMessageIds: number[]) {
@@ -212,6 +345,36 @@ export function memoryStore(parsed: ParsedExport, mapping: OfflineMapping): Extr
         })),
         events: [...events.values()].map((e) => ({ summary: e.summary, ...(e.happenedAt ? { happenedAt: e.happenedAt } : {}), ...(e.place ? { place: e.place } : {}), participants: e.participantIds.map(key), evidence: idx(e.messageIds), windowIndex: e.windowIndex })),
         dates: [...dates.values()].map((d) => ({ person: key(d.personId), kind: d.kind, ...(d.day ? { day: d.day } : {}), ...(d.month ? { month: d.month } : {}), ...(d.year ? { year: d.year } : {}), calendar: d.calendar, ...(d.isLeapMonth ? { isLeapMonth: true } : {}), evidence: idx(d.messageIds), windowIndex: d.windowIndex })),
+        segments: [...segments.values()].map((sg) => ({
+          startIdx: sg.startSeq,
+          endIdx: sg.endSeq,
+          startedAt: sg.startedAt,
+          endedAt: sg.endedAt,
+          messageCount: sg.messageCount,
+          summary: sg.summary,
+          topics: sg.topics,
+          participants: sg.participants.map((x) => ({ person: key(x.personId), messageCount: x.messageCount })),
+          evidence: idx(sg.messageIds),
+          windowIndex: sg.windowIndex,
+        })),
+        loops: loops.map((l) => ({
+          person: key(l.personId),
+          direction: l.direction,
+          kind: l.kind,
+          text: l.text,
+          ...(l.dueAt ? { dueAt: l.dueAt } : {}),
+          openedAt: l.openedAt,
+          openedIdx: l.openedMessageId - 1,
+          closedIdx: l.closedMessageId === null ? null : l.closedMessageId - 1,
+          closedAt: l.closedAt,
+          closedReason: l.closedReason,
+          evidence: idx(l.messageIds),
+          windowIndex: l.windowIndex,
+        })),
+        closes: closeLog.flatMap((c) => {
+          const at = loops.findIndex((l) => l.id === c.loopId)
+          return at < 0 ? [] : [{ loopIndex: at, reason: c.reason, evidence: idx(c.messageIds), windowIndex: c.windowIndex }]
+        }),
       }
     },
   }

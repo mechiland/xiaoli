@@ -10,6 +10,7 @@ import type {
   ImportReviewResponse,
   JobsNextResponse,
   JobsRetryResponse,
+  LoopResponse,
   MergePersonResponse,
   ProfileRedirectResponse,
   ProfileResponse,
@@ -121,6 +122,8 @@ function personIdsOf(it: ReviewItem): number[] {
       return [it.item.personId]
     case 'event':
       return it.item.participants.map((p) => p.id)
+    case 'loop':
+      return [it.item.personId]
   }
 }
 
@@ -142,6 +145,28 @@ export function useReviewAction(importId: number) {
         r ? applyItemUpdate(r, it.type, res.item, res.superseded as ClaimDTO[] | undefined) : r,
       )
       invalidateAround(qc, [it])
+      scheduleReviewRefetch(qc, importId)
+    },
+  })
+}
+
+type LoopItem = Extract<ReviewItem, { type: 'loop' }>
+
+/**
+ * "已经了结了" (SPEC §9.9): one click that confirms and closes. Closing *is* confirming server-side
+ * (`server/interaction/write.ts`, DECISIONS I4), so this is a single request — no accept-then-close pair whose
+ * order could leave the row half-handled. The answer carries the loop with `status: 'confirmed'` and its new
+ * state, and is written into the review cache, so the row shows as handled at once.
+ */
+export function useCloseLoop(importId: number) {
+  const qc = useQueryClient()
+  return useMutation<LoopResponse, ApiClientError, { it: LoopItem }>({
+    mutationFn: ({ it }) => request<LoopResponse>('POST', `/api/loops/${it.item.id}/close`, { reason: 'done' }),
+    onSuccess: (res, { it }) => {
+      qc.setQueryData<ImportReviewResponse>(queryKeys.importReview(importId), (r) => (r ? applyItemUpdate(r, 'loop', res.loop) : r))
+      invalidateAround(qc, [it])
+      // the same loop is read by the person page's 来往 section and by the home page's 即将到来 (interaction's own key prefix)
+      void qc.invalidateQueries({ queryKey: ['interaction'] })
       scheduleReviewRefetch(qc, importId)
     },
   })

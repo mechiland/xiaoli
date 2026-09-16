@@ -22,7 +22,13 @@ export const MatchOutputSchema = z
   .strict()
 export type MatchOutput = z.infer<typeof MatchOutputSchema>
 
-export const FpItemType = z.enum(['claim', 'handle', 'relation', 'date', 'event'])
+/**
+ * `loop` is additive (goldVersion 2). Loop FPs are classified in their own batches, so the batches — and therefore
+ * the judge-cache keys — of the five round-1 types are byte-identical to before. `judge-fp.v1.md` is deliberately
+ * left untouched: bumping its version would invalidate every committed cache entry and force a judge fallback in
+ * replay (DECISIONS eval-synthetic E21).
+ */
+export const FpItemType = z.enum(['claim', 'handle', 'relation', 'date', 'event', 'loop'])
 export const FpClassifyInputSchema = z.object({
   zip: z.string(),
   persons: z.array(z.object({ key: z.string(), label: z.string(), aliases: z.array(z.string()) })),

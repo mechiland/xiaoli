@@ -6,6 +6,7 @@
 import Link from 'next/link'
 import { useRef, useState } from 'react'
 import { AttachmentUploadStatus } from '@/components/import-overlay'
+import { ImportConversations } from '@/components/interaction'
 import { BlockBoundary, BlockError, Data, PageTitle, Skeleton } from '@/components/loam'
 import type { ImportDetailResponse, ImportReviewResponse, Progress } from '@/contracts'
 import { cn } from '@/lib/cn'
@@ -108,6 +109,13 @@ function ResultPage({
 
       {review && imp && !extracting && <FailedWindows importId={importId} progress={progress ?? review.progress} />}
       {review && <BulkHighConfidence importId={importId} review={review} />}
+
+      {/* SPEC §9.9「这次聊了什么」 — the narrative of this import, above the per-person review groups.
+          It has no confirm buttons and is deliberately outside the review query, so it never touches progress
+          or allHandled. The interaction module fetches its own data and renders nothing when there is none. */}
+      <BlockBoundary>
+        <ImportConversations importId={importId} />
+      </BlockBoundary>
 
       <BlockBoundary className="min-h-[40vh]">
         {reviewError ? (

@@ -252,6 +252,113 @@
         34,
         35
       ]
+    },
+    {
+      "id": "loop-dinner-plan",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "mutual",
+      "text": "下周四晚上一起吃饭",
+      "dueAt": "2025-11-06",
+      "note": "2025-10-28 约定，2025-11-06 见面兑现；同一批消息也是 negative coord-dinner-plan —— 按 §8.8 分流，不进 claim，进 loop",
+      "idx": [
+        13,
+        14
+      ],
+      "closedBy": 22,
+      "closedReason": "done",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-pick-place",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "订吃饭的地方",
+      "dueAt": "2025-11-06",
+      "note": "承诺 2025-10-28 说出口，9 天后 2025-11-06 报出订好的桌号才算了结",
+      "idx": [
+        14
+      ],
+      "closedBy": 25,
+      "closedReason": "done",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-tea-ship",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "theirs",
+      "text": "寄龙井茶过来",
+      "note": "两次导出里都没有寄到的确认，始终未结",
+      "idx": [
+        64
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-interview-later",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "回头细说面试安排的看法",
+      "note": "在两次导出的重叠区间里",
+      "idx": [
+        181
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-move-shenzhen",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "theirs",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "note": "第一次导出结束时仍未结；第二次导出里 2026-04-28「到深圳了」了结",
+      "idx": [
+        198,
+        200
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "conv-susu",
+      "type": "conversation",
+      "text": "一舟说他和苏苏在一起了",
+      "topics": [
+        "苏苏",
+        "女朋友",
+        "插画"
+      ],
+      "note": "会话边界由标注者判定，这里记的是剧本场景的首尾",
+      "idx": [
+        43,
+        49
+      ],
+      "startIdx": 43,
+      "endIdx": 49
+    },
+    {
+      "id": "conv-job-change",
+      "type": "conversation",
+      "text": "一舟在看新机会",
+      "topics": [
+        "换工作",
+        "蓝鲸出行",
+        "深圳"
+      ],
+      "idx": [
+        169,
+        174
+      ],
+      "startIdx": 169,
+      "endIdx": 174
     }
   ],
   "negatives": [

@@ -10,6 +10,10 @@ import {
   ImportStatus,
   IsoString,
   JobStatus,
+  LoopCloseReason,
+  LoopDirection,
+  LoopKind,
+  LoopState,
   MessageKind,
   MsgTime,
   PartialDate,
@@ -252,6 +256,83 @@ export const SettingsDTOSchema = z.object({
   onboardedAt: IsoString.nullable(),
 })
 export type SettingsDTO = z.infer<typeof SettingsDTOSchema>
+
+// Interaction layer (SPEC §7 交互层)
+
+export const SegmentDTOSchema = z.object({
+  id: Id,
+  chatId: Id,
+  chatTitle: z.string(),
+  startSeq: z.number().int(),
+  endSeq: z.number().int(),
+  startedAt: MsgTime,
+  endedAt: MsgTime,
+  messageCount: z.number().int().nonnegative(),
+  summary: z.string(),
+  topics: z.array(z.string()),
+  hidden: z.boolean(),
+  /** anchor for "在聊天中查看" */
+  firstMessageId: Id.nullable(),
+  participants: z.array(PersonRefDTOSchema),
+  importId: Id.nullable(),
+  sourceKind: SourceKind,
+  createdAt: IsoString,
+})
+export type SegmentDTO = z.infer<typeof SegmentDTOSchema>
+
+/** Derived, never stored: segments of one chat less than SESSION_GAP_HOURS apart. */
+export const ConversationDTOSchema = z.object({
+  chatId: Id,
+  chatTitle: z.string(),
+  chatKind: ChatKind,
+  startedAt: MsgTime,
+  endedAt: MsgTime,
+  messageCount: z.number().int().nonnegative(),
+  segments: z.array(SegmentDTOSchema),
+  /** union of the segments' topics, deduped, in order */
+  topics: z.array(z.string()),
+  firstMessageId: Id.nullable(),
+})
+export type ConversationDTO = z.infer<typeof ConversationDTOSchema>
+
+export const LoopDTOSchema = z.object({
+  id: Id,
+  personId: Id,
+  direction: LoopDirection,
+  kind: LoopKind,
+  text: z.string(),
+  dueAt: PartialDate.nullable(),
+  openedAt: MsgTime,
+  openedMessageId: Id.nullable(),
+  closedAt: z.string().nullable(),
+  closedMessageId: Id.nullable(),
+  closedReason: LoopCloseReason.nullable(),
+  /** derived from closedMessageId/closedReason, never stored */
+  state: LoopState,
+  /** derived at read time from dueAt/openedAt, never stored */
+  expired: z.boolean(),
+  daysOpen: z.number().int().nonnegative(),
+  status: Status,
+  importId: Id.nullable(),
+  sourceKind: SourceKind,
+  evidenceCount: z.number().int().nonnegative(),
+  createdAt: IsoString,
+})
+export type LoopDTO = z.infer<typeof LoopDTOSchema>
+
+export const RhythmDTOSchema = z.object({
+  conversationCount: z.number().int().nonnegative(),
+  conversationCountThisYear: z.number().int().nonnegative(),
+  lastAt: MsgTime.nullable(),
+  daysSinceLast: z.number().int().nonnegative().nullable(),
+  /** null below MIN_RHYTHM_CONVERSATIONS — three chats are not a rhythm */
+  medianGapDays: z.number().nullable(),
+  /** both null when the only shared chats are groups: who spoke first is not meaningful there */
+  initiatedByMe: z.number().int().nonnegative().nullable(),
+  initiatedByThem: z.number().int().nonnegative().nullable(),
+  privateOnly: z.boolean(),
+})
+export type RhythmDTO = z.infer<typeof RhythmDTOSchema>
 
 export const EvidenceMessageDTOSchema = MessageDTOSchema.extend({ isEvidence: z.boolean() })
 export type EvidenceMessageDTO = z.infer<typeof EvidenceMessageDTOSchema>

@@ -1,0 +1,34 @@
+{
+  "inputHash": "6961ed48d06273e25ae31172140db573a89ac5aee5e6c38912cfc2d6e3f7326d",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:09:40.351Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "通勤半小时属于居住事务细节，非人物核心信息"
+      },
+      {
+        "fpId": "claims#12",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": "n16",
+        "reason": "初六回杭州的返程日期属于行程协调"
+      },
+      {
+        "fpId": "claims#13",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说带了苏苏、妈妈喜欢她，未说带苏苏回九江老家"
+      }
+    ]
+  }
+}

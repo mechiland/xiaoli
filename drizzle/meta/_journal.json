@@ -15,6 +15,13 @@
       "when": 1789461928887,
       "tag": "0001_handles_unique_chat_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789526959793,
+      "tag": "0002_swift_butterfly",
+      "breakpoints": true
     }
   ]
 }

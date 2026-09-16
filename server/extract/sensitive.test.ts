@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { ExtractionOutput } from '@/contracts'
-import { applySensitiveGuard, detectSensitive, neutraliseLabel, softenDayNumbers } from './sensitive'
+import type { ExtractionOutput, InteractionOutput } from '@/contracts'
+import { applyInteractionSensitiveGuard, applySensitiveGuard, detectSensitive, neutraliseLabel, softenDayNumbers } from './sensitive'
 
 // All values are invented test data.
 const empty = (): ExtractionOutput => ({ newPersons: [], handles: [], relations: [], claims: [], events: [], dates: [] })
+const emptyInteraction = (): InteractionOutput => ({ segment: null, loops: [], closes: [] })
 const claim = (statement: string) => ({ person: { personId: 1 }, statement, category: 'other' as const, confidence: 0.9, sensitive: false, evidence: [1] })
 
 describe('detectSensitive', () => {
@@ -82,5 +83,40 @@ describe('applySensitiveGuard', () => {
     expect(output.events).toEqual([{ summary: '一起吃饭', participants: [{ personId: 1 }], evidence: [2] }])
     expect(rewritten).toBe(2)
     for (const p of output.newPersons) expect(detectSensitive(p.label)).toBeNull()
+  })
+})
+
+// Interaction layer (SPEC §8.8; eval gate sensitiveInStatement = 0 over loop text and segment summary/topics).
+// Its own guard since the split: the interaction output is a separate call's output (DECISIONS ## extract X40).
+describe('applyInteractionSensitiveGuard', () => {
+  const loop = (text: string) => ({ person: { personId: 2 } as const, direction: 'theirs' as const, kind: 'promise' as const, text, evidence: [1] })
+  const segment = (summary: string, topics: string[] = []) => ({ summary, topics, speakers: [{ personId: 2 } as const], evidence: [1] })
+
+  it('drops a loop whose text carries a phone number or a detailed address, keeps the rest', () => {
+    const r = applyInteractionSensitiveGuard({ ...emptyInteraction(), loops: [loop('把13800001111这个号码存一下'), loop('周五前把报价发过来'), loop('寄到枫叶路12号3栋2单元501室')] })
+    expect(r.output.loops.map((l) => l.text)).toEqual(['周五前把报价发过来'])
+    expect(r.rewritten).toBe(2)
+  })
+
+  it('a bare day number in a loop is a date, not a house number', () => {
+    const r = applyInteractionSensitiveGuard({ ...emptyInteraction(), loops: [loop('5号之前把合同签了')] })
+    expect(r.output.loops.map((l) => l.text)).toEqual(['5日之前把合同签了'])
+  })
+
+  it('drops the whole segment when its summary is sensitive, and cuts sensitive topics from a clean one', () => {
+    const bad = applyInteractionSensitiveGuard({ ...emptyInteraction(), segment: segment('聊了收货地址，枫叶路12号3栋2单元501室') })
+    expect(bad.output.segment).toBeNull()
+    expect(bad.rewritten).toBe(1)
+
+    const good = applyInteractionSensitiveGuard({ ...emptyInteraction(), segment: segment('对了装修的报价和工期', ['装修', '13800001111']) })
+    expect(good.output.segment).toEqual({ ...segment('对了装修的报价和工期', ['装修']) })
+    expect(good.rewritten).toBe(1)
+  })
+
+  it('closes carry no free text and pass through untouched', () => {
+    const closes = [{ loopId: 7, reason: 'done' as const, evidence: [1] }]
+    const r = applyInteractionSensitiveGuard({ ...emptyInteraction(), closes })
+    expect(r.output.closes).toEqual(closes)
+    expect(r.rewritten).toBe(0)
   })
 })

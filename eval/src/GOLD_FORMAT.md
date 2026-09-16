@@ -25,7 +25,7 @@ chat in `fixtures/`; do not copy them into gold.
 
 | field | type | notes |
 |---|---|---|
-| `goldVersion` | `1` | |
+| `goldVersion` | `1` \| `2` | `2` adds the optional `loops` / `conversations` arrays; the template writes `2`. A `1` file stays valid forever and scores exactly as it did. |
 | `zip` | string | ZIP file name **including** `.zip`, no directory |
 | `annotator` | string | agent role id (e.g. `annotator`); never a real name |
 | `annotatedAt` | ISO string | |
@@ -34,6 +34,7 @@ chat in `fixtures/`; do not copy them into gold.
 | `mapping` | object | see below |
 | `persons` | array | everyone that any item refers to |
 | `handles`, `relations`, `claims`, `dates`, `events` | arrays | expected pipeline output |
+| `loops`, `conversations` | arrays? | goldVersion 2 only; **leaving the key out means "I did not annotate this type"**, which is not the same as `[]` |
 | `negatives` | array | things that must **not** be recorded |
 | `sensitiveValues` | string[] | literal strings that must never appear in output text |
 
@@ -116,6 +117,45 @@ optional. `kind`: `birthday|anniversary|memorial|other`.
 ```json
 { "id": "e1", "summary": "球队去青岚湖露营", "participants": ["p0", "p2"], "evidence": [120] }
 ```
+
+## `loops` — 未结事项 (goldVersion 2, SPEC §7 交互层)
+
+A loop is something that is still open between you and one other person: a promise, an unanswered question, or a
+plan that has not happened yet. Only what the messages actually say out loud — never "they probably meant to".
+
+```json
+{ "id": "k1", "person": "p2", "direction": "theirs", "kind": "promise",
+  "text": "把球衣尺码发过来", "dueAt": "2026-05", "evidence": [140],
+  "closedBy": 178, "closedReason": "done" }
+```
+
+| field | notes |
+|---|---|
+| `person` | the **other** person the loop is with (never `self`) |
+| `kind` | `promise` (someone committed) \| `question` (asked, not answered) \| `plan` (agreed, not happened) |
+| `direction` | who has to move next, seen from the user: `mine` = the user owes the action or the answer, `theirs` = the other person does, `mutual` = both agreed to it together. So a question **they** asked and the user never answered is `question` + `mine`. |
+| `text` | the thing itself, **without a subject** ("把球衣尺码发过来"). The interface builds the sentence from `kind` + `direction`. |
+| `dueAt` | `YYYY`, `YYYY-MM` or `YYYY-MM-DD`, only when the messages give one |
+| `evidence` | the message(s) that **open** it |
+| `closedBy` | idx of the message that closes it, when this export contains one; must come after the opening message |
+| `closedReason` | `done` (it happened / was answered) or `dropped` (explicitly cancelled). Only with `closedBy`. |
+
+Scoring: a prediction matches when it is about the same person and the judge calls the two `text`s the same fact.
+A wrong `kind` or `direction` on a matched pair is **reported, not counted against the run**. `closedBy` is scored
+separately (`loopCloseRecall`): the run has to close the loop at that exact idx.
+
+## `conversations` (goldVersion 2, SPEC §7 交互层)
+
+One stretch of chat that hangs together — segments less than 3 hours apart. Conversations are never stored by the
+app; they are regrouped on every read, so gold only needs the span and the topics a decent summary has to mention.
+
+```json
+{ "id": "v1", "startIdx": 120, "endIdx": 148, "topics": ["露营", "借帐篷"] }
+```
+
+Spans must not overlap each other. A prediction matches when it covers at least half of the gold span; its summary
+is then scored only on how many of the `topics` strings appear in it (substring, whitespace and case ignored). Pick
+topic words a one-sentence summary would naturally contain, and two or three of them, not ten.
 
 ## `negatives`
 

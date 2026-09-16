@@ -1,15 +1,20 @@
 import type { Route } from 'playwright'
 import { defineScenario } from '@/verify/lib'
+import type { EvidenceResponse } from '@/contracts'
 import {
   allHandledReview,
   clone,
+  closedLoopBody,
   compactReview,
   detailUrl,
   elementShot,
   fulfillJson,
+  guardInteraction,
   guardJobs,
+  importConversations,
   longContentReview,
   reviewUrl,
+  withLoops,
   type Detail,
   type Review,
 } from './_support'
@@ -18,7 +23,7 @@ import {
 // jobs/next call is answered by a route stub, so the seed data and the LLM budget are untouched.
 export default defineScenario({
   id: 'import-result/showcase',
-  description: '导入结果页：完整分组（新人物、变化）、自己显示为「我」、消息在已删除的导入里读过、读取中逐步出现、失败窗口与重试、全部处理、没有产出、未完成导入、批量确认第一步、删除对话框、加载中、区块出错、长内容、窄屏变化上下排列',
+  description: '导入结果页：完整分组（新人物、变化、未结事项）、未结事项四种状态与「已经了结了」、「这次聊了什么」在与不在、自己显示为「我」、消息在已删除的导入里读过、读取中逐步出现、失败窗口与重试、全部处理、没有产出、未完成导入、批量确认第一步、删除对话框、加载中、区块出错、长内容、窄屏变化上下排列',
   account: 'seed',
   requiredTags: ['import:review-mixed', 'import:review-empty', 'import:in-progress', 'import:failed-windows', 'import:unfinished', 'person:long-label', 'person:self'],
   expectedFailures: [
@@ -37,8 +42,28 @@ export default defineScenario({
     const selfLabel = self.label ?? ''
 
     const fullMixed = (await api.get<Review>(`/api/imports/${mixed.id}/review`)).json!
-    const compact = compactReview(fullMixed)
-    await guardJobs(page)
+    // Loops and conversation summaries are injected into the stubbed answers: the seed imports predate the
+    // interaction layer, so `GET /api/imports/:id/interaction` has nothing to give and the review carries no loops.
+    const compact = withLoops(compactReview(fullMixed))
+    const firstClaim = compact.sections.flatMap((s) => s.newClaims).find((i) => i.type === 'claim')
+    const loopEvidence = firstClaim
+      ? { ...(await api.get<EvidenceResponse>(`/api/evidence/claim/${firstClaim.item.id}`)).json!, target: { type: 'loop' as const, id: 990_401 } }
+      : undefined
+    const chat = { id: fullMixed.chat?.id ?? 1, title: fullMixed.chat?.title ?? '聊天' }
+    const conversations = importConversations(chat.id, chat.title)
+
+    /** jobs/next + the interaction endpoints. Re-installed after every `clearRoutes`, like `guardJobs` alone was. */
+    const stubs = async (body: unknown = { conversations: [] }) => {
+      await guardJobs(page)
+      await guardInteraction(page, body, loopEvidence)
+    }
+
+    const realInteraction = await api.get<{ conversations?: unknown[] }>(`/api/imports/${mixed.id}/interaction`)
+    check('GET /api/imports/:id/interaction answers (its data is stubbed below either way)', realInteraction.status === 200, {
+      status: realInteraction.status,
+      conversations: realInteraction.json?.conversations?.length ?? null,
+    })
+    await stubs()
 
     // ---- normal: every group ----------------------------------------------------------------------------------
     await step('normal: all groups', async () => {
@@ -50,7 +75,7 @@ export default defineScenario({
       const first = page.locator('[data-person-section]').first()
       check('new person first, marked 新', (await first.locator('h2').textContent())?.trim().endsWith('新') === true)
       check('新人物 group with label input and 其实是……', (await first.locator('[data-person-label-input]').count()) === 1 && (await first.getByRole('button', { name: '其实是……' }).count()) === 1)
-      for (const g of ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events']) check(`group ${g} present`, (await page.locator(`[data-group="${g}"]`).count()) > 0)
+      for (const g of ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events', 'loops']) check(`group ${g} present`, (await page.locator(`[data-group="${g}"]`).count()) > 0)
       check('every item has an evidence mark', (await page.locator('[data-review-item]').count()) <= (await page.locator('[data-evidence-mark]').count()))
       check('proposed items show 确认 / 不对 / 改写', (await page.locator('[data-row-actions]').first().textContent())?.replace(/\s/g, '') === '确认不对改写')
       check('本节全部确认 on sections', (await page.locator('[data-section-accept]').count()) > 0)
@@ -88,6 +113,125 @@ export default defineScenario({
     })
     await elementShot(ctx, 'relation-row', '[data-review-item^="relation:"]')
 
+    // ---- 未结事项 (SPEC §9.9) ------------------------------------------------------------------------------------
+    const loopRow = (id: number) => page.locator(`[data-review-item="loop:${id}"]`)
+    const loopText = async (id: number) => ((await loopRow(id).locator('span').first().textContent()) ?? '').trim()
+
+    await step('未结事项: proposed / confirmed / rejected / already closed', async () => {
+      const label = compact.sections[0].person.label
+      check('group 未结事项 present, titled', ((await page.locator('[data-group="loops"] h3').first().textContent()) ?? '').trim() === '未结事项')
+      check('gutter says what kind it is, not the enum', ((await page.locator('[data-group="loops"]').first().textContent()) ?? '').includes('承诺'))
+      check('mine promise: 你答应…', (await loopText(990_401)) === '你答应帮她看简历', { t: await loopText(990_401) })
+      const q = await loopText(990_402)
+      check('question: who asked, and that the answer is on the user', q === `${label}问你国庆有没有空，你没回`, { q })
+      check('plan: 约好…', (await loopText(990_403)) === '约好下个月去成都', { t: await loopText(990_403) })
+      check('theirs promise names the person', (await loopText(990_411)).startsWith(compact.sections[1].person.label), { t: await loopText(990_411) })
+      const group = ((await page.locator('[data-group="loops"]').first().textContent()) ?? '') + ((await page.locator('[data-group="loops"]').last().textContent()) ?? '')
+      check('no raw enum on the page', !/promise|question|plan|mine|theirs|mutual/i.test(group), { group })
+      check('opening day in small type', ((await loopRow(990_401).textContent()) ?? '').includes('2026年9月13日起'))
+      check('a 约定 also carries the day it is for', ((await loopRow(990_403).textContent()) ?? '').includes('约在2026年10月4日'))
+      check('evidence mark like every other item', (await loopRow(990_401).locator('[data-evidence-mark]').count()) === 1)
+      check(
+        'proposed loop: 确认 / 不对 / 改写 / 已经了结了',
+        ((await loopRow(990_401).locator('[data-row-actions]').textContent()) ?? '').replace(/\s/g, '') === '确认不对改写已经了结了',
+      )
+      check('confirmed loop reads 已确认', ((await loopRow(990_411).locator('[data-row-state]').textContent()) ?? '').trim() === '已确认')
+      const rejected = loopRow(990_412)
+      check(
+        'rejected loop stays in place, struck through, 已划掉',
+        ((await rejected.locator('[data-row-state]').textContent()) ?? '').trim() === '已划掉' &&
+          ((await rejected.locator('span').first().getAttribute('class')) ?? '').includes('line-through'),
+      )
+      const done = loopRow(990_413)
+      check(
+        'a loop already closed by a later message reads 已了结 and has nothing left to close',
+        ((await done.locator('[data-row-state]').textContent()) ?? '').trim() === '已了结' && (await done.locator('[data-row-close]').count()) === 0,
+      )
+      check('SPEC §9.3: no counts, no badges, no red dots in the group', !/\d+\s*条未/.test(group))
+    })
+    await elementShot(ctx, 'loops-group', '[data-group="loops"]')
+
+    await step('未结事项 are not in the bulk "确认所有可信度高的条目" set', async () => {
+      check('the payload keeps loops out of highConfidence', compact.highConfidence.every((h) => h.type === 'claim'), { highConfidence: compact.highConfidence.length })
+      await page.locator('[data-bulk-button]').click()
+      const text = ((await page.locator('[data-bulk-high-confidence]').textContent()) ?? '').replace(/\s+/g, ' ')
+      const shown = Number(/将确认 (\d+) 条/.exec(text)?.[1] ?? -1)
+      const proposedLoops = await page.locator('[data-review-item^="loop:"][data-status="proposed"]').count()
+      check('the count before confirming is the claims only', shown === compact.highConfidence.length && proposedLoops > 0, { shown, expected: compact.highConfidence.length, proposedLoops })
+      await page.locator('[data-bulk-high-confidence]').getByRole('button', { name: '取消' }).click()
+    })
+
+    await step('已经了结了: one click confirms and closes', async () => {
+      const first = compact.sections[0].loops[0]
+      check('the fixture starts with a proposed, open loop', first?.type === 'loop' && first.item.status === 'proposed' && first.item.state === 'open')
+      if (first?.type !== 'loop') return
+      const answer = closedLoopBody(first)
+      let posted: { url: string; body: unknown } | null = null
+      let closed = false
+      // what the next GET /review returns once the close landed, so the coalesced refetch cannot undo it
+      const after = clone(compact)
+      after.sections[0].loops[0] = { type: 'loop', item: answer.loop }
+      await helpers.clearRoutes()
+      await stubs()
+      await page.route(reviewUrl(mixed.id), (r: Route) => fulfillJson(r, closed ? after : compact))
+      await page.route(/\/api\/loops\/\d+\/close$/, async (r: Route) => {
+        posted = { url: r.request().url(), body: r.request().postDataJSON() as unknown }
+        closed = true
+        await fulfillJson(r, answer)
+      })
+      await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
+      await loopRow(990_401).locator('[data-row-close]').click()
+      await page.locator('[data-review-item="loop:990401"][data-status="confirmed"]').waitFor({ timeout: 10_000 })
+      const sent = posted as { url: string; body: unknown } | null
+      check('one request, to the interaction endpoint, with reason done', !!sent && sent.url.endsWith('/api/loops/990401/close') && JSON.stringify(sent.body) === '{"reason":"done"}', { sent })
+      check('the row is handled, not still pending', (await loopRow(990_401).locator('[data-row-actions]').count()) === 0)
+      check('and says 已了结, not 已确认', ((await loopRow(990_401).locator('[data-row-state]').textContent()) ?? '').trim() === '已了结')
+      // the coalesced review refetch lands ~900 ms later: the row must not flip back to pending
+      await helpers.settle()
+      check('still handled after the review refetch', (await loopRow(990_401).locator('[data-row-close]').count()) === 0)
+    })
+    await elementShot(ctx, 'loop-closed', '[data-review-item="loop:990401"]')
+
+    // ---- 这次聊了什么 (SPEC §9.9: narrative, never a review queue) --------------------------------------------------
+    await step('这次聊了什么: present, above the sections, with no confirm affordance', async () => {
+      await helpers.clearRoutes()
+      await stubs(conversations)
+      await helpers.stubJson(reviewUrl(mixed.id), compact)
+      await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-block="import-conversations"]' })
+      const block = page.locator('[data-block="import-conversations"]')
+      check('heading', ((await block.locator('h2').textContent()) ?? '').trim() === '这次聊了什么')
+      check('one row per conversation', (await block.locator('[data-conversation]').count()) === 2)
+      check(
+        'above the per-person sections',
+        await page.evaluate(() => {
+          const b = document.querySelector('[data-block="import-conversations"]')
+          const s = document.querySelector('[data-person-section]')
+          return !!b && !!s && (b.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+        }),
+      )
+      check('no 确认 / 不对 inside', (await block.getByRole('button', { name: '确认' }).count()) === 0 && (await block.getByRole('button', { name: '不对' }).count()) === 0)
+      check('not a reviewable item', (await block.locator('[data-review-item]').count()) === 0 && (await block.locator('[data-row-actions]').count()) === 0)
+      check('only 改写 / 隐藏 on a summary', ((await block.locator('[data-segment]').first().textContent()) ?? '').includes('改写'))
+      check('no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    })
+    await shot('conversations')
+    await elementShot(ctx, 'conversations-block', '[data-block="import-conversations"]')
+
+    await step('这次聊了什么: no summaries → the block is not there at all', async () => {
+      await helpers.clearRoutes()
+      await stubs()
+      await helpers.stubJson(reviewUrl(mixed.id), compact)
+      await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
+      await helpers.settle()
+      check('block absent', (await page.locator('[data-block="import-conversations"]').count()) === 0)
+      check('the review body is unaffected', (await page.locator('[data-person-section]').count()) === compact.sections.length)
+    })
+
+    await helpers.clearRoutes()
+    await stubs()
+    await helpers.stubJson(reviewUrl(mixed.id), compact)
+    await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
+
     // The user's own person reads as 我, as on the person page: relation endpoints both ways and its section heading.
     await step('self reads as 我', async () => {
       const r = clone(compact)
@@ -111,6 +255,7 @@ export default defineScenario({
         aliasesAndRelations: [fromSelf],
         dates: [{ ...clone(date), item: { ...clone(date.item), id: 990_203, personId: me.id, status: 'proposed' } } as typeof date],
         events: [],
+        loops: [],
       })
       await helpers.stubJson(reviewUrl(mixed.id), r)
       await helpers.goto(`/imports/${mixed.id}`, { waitFor: `[data-person-section="${self.id}"]` })
@@ -127,7 +272,7 @@ export default defineScenario({
     await page.locator('[data-review-item="relation:990202"]').scrollIntoViewIfNeeded()
     await shot('self-relation-row', { fullPage: false })
     await helpers.clearRoutes()
-    await guardJobs(page)
+    await stubs()
     await helpers.stubJson(reviewUrl(mixed.id), compact)
     await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
 
@@ -175,7 +320,7 @@ export default defineScenario({
     // ---- extracting with partial results ------------------------------------------------------------------------
     await step('extracting: partial results, loop advances', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       const realDetail = (await api.get<Detail>(`/api/imports/${inProgress.id}`)).json!
       const realReview = (await api.get<Review>(`/api/imports/${inProgress.id}/review`)).json!
       const total = 8
@@ -207,7 +352,7 @@ export default defineScenario({
     await step('failed windows', async () => {
       await page.goto('about:blank')
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.goto(`/imports/${failed.id}`, { waitFor: '[data-failed-windows]' })
       check('failed count', ((await page.locator('[data-failed-windows]').textContent()) ?? '').includes('有 2 段对话没有读取成功'))
     })
@@ -227,13 +372,16 @@ export default defineScenario({
     await shot('failed-retrying', { fullPage: false })
 
     // ---- all handled / empty / unfinished / not found -----------------------------------------------------------
-    await step('all handled', async () => {
+    await step('all handled (with 这次聊了什么 still on the page)', async () => {
       await page.goto('about:blank')
       await helpers.clearRoutes()
-      await guardJobs(page)
+      // the only thing left un-actioned is the narrative block: it is outside progress and allHandled (DECISIONS I4)
+      await stubs(conversations)
       await helpers.stubJson(reviewUrl(mixed.id), allHandledReview(compact))
       await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-all-handled]' })
       check('已全部处理 with person links', (await page.locator('[data-all-handled] a').count()) === compact.sections.length)
+      check('未结事项 count toward it: none left pending', (await page.locator('[data-review-item^="loop:"][data-status="proposed"]').count()) === 0)
+      check('a conversation summary never blocks 已全部处理', (await page.locator('[data-block="import-conversations"] [data-conversation]').count()) === 2)
       check('no actions left', (await page.locator('[data-row-actions]').count()) === 0)
       check('struck rows stay', (await page.locator('[data-review-item][data-status="rejected"]').count()) > 0)
       check('bulk button hidden', (await page.locator('[data-bulk-high-confidence]').count()) === 0)
@@ -242,7 +390,7 @@ export default defineScenario({
 
     await step('empty output', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.goto(`/imports/${empty.id}`, { waitFor: '[data-empty-result]' })
       check('no-output message', ((await page.locator('[data-empty-result]').textContent()) ?? '').includes('这段聊天里没有找到需要记下来的信息'))
     })
@@ -250,7 +398,7 @@ export default defineScenario({
 
     await step('nothing new (re-export: 0 new messages, no windows)', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       const realDetail = (await api.get<Detail>(`/api/imports/${empty.id}`)).json!
       const realReview = (await api.get<Review>(`/api/imports/${empty.id}/review`)).json!
       check('seed review-empty did run windows (keeps the SPEC copy above)', realReview.progress.total > 0, { progress: realReview.progress })
@@ -272,7 +420,7 @@ export default defineScenario({
 
     await step('read before (earlier import deleted: messages handed over, no windows)', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       const realDetail = (await api.get<Detail>(`/api/imports/${empty.id}`)).json!
       const realReview = (await api.get<Review>(`/api/imports/${empty.id}/review`)).json!
       const none = { total: 0, done: 0, failed: 0, pending: 0, running: 0 }
@@ -322,7 +470,7 @@ export default defineScenario({
     await step('error: review block 500', async () => {
       await page.goto('about:blank')
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.simulateError(reviewUrl(mixed.id), { status: 500 })
       await page.goto(`/imports/${mixed.id}`)
       await page.locator('[data-review-error] [role=alert]').waitFor({ timeout: 20_000 })
@@ -332,7 +480,7 @@ export default defineScenario({
     await shot('error-review', { fullPage: false })
     await step('error: retry recovers', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.stubJson(reviewUrl(mixed.id), compact)
       await page.locator('[data-review-error]').getByRole('button', { name: '重试' }).click()
       await page.locator('[data-review-body]').waitFor({ timeout: 15_000 })
@@ -350,7 +498,7 @@ export default defineScenario({
     await step('long content', async () => {
       await page.goto('about:blank')
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.stubJson(reviewUrl(mixed.id), longContentReview(compact, longLabel))
       await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
       check('no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -359,7 +507,7 @@ export default defineScenario({
 
     await step('real long import (185 sections)', async () => {
       await helpers.clearRoutes()
-      await guardJobs(page)
+      await stubs()
       await helpers.goto(`/imports/${mixed.id}`, { waitFor: '[data-review-body]' })
       check('all sections render', (await page.locator('[data-person-section]').count()) === fullMixed.sections.length)
       await page.locator('footer [data-delete-import]').scrollIntoViewIfNeeded()

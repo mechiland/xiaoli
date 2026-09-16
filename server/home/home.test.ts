@@ -112,8 +112,8 @@ describe('home (D1 integration)', () => {
     expect(home.isEmpty).toBe(false)
     expect(home.needsOnboarding).toBe(true)
     expect(home.upcoming).toEqual([
-      { person: { id: id.lin, label: '林知夏' }, dateId: id.linBirthday, label: '生日', solar: '2026-09-18', lunarLabel: null, days: 3 },
-      { person: { id: id.xu, label: '许嘉禾' }, dateId: id.xuAnniv, label: '外婆的忌日', solar: '2026-10-01', lunarLabel: null, days: 16 },
+      { person: { id: id.lin, label: '林知夏' }, kind: 'date', dateId: id.linBirthday, loopId: null, label: '生日', solar: '2026-09-18', lunarLabel: null, days: 3 },
+      { person: { id: id.xu, label: '许嘉禾' }, kind: 'date', dateId: id.xuAnniv, loopId: null, label: '外婆的忌日', solar: '2026-10-01', lunarLabel: null, days: 16 },
     ])
     expect(home.recentlyUpdated).toEqual([
       { person: { id: id.lin, label: '林知夏' }, latest: { id: id.linNew, statement: 'statement linNew', category: 'work' } },
@@ -153,6 +153,30 @@ describe('home (D1 integration)', () => {
     expect(home.needsOnboarding).toBe(false)
     await imp(empty, 'onlyMapping', 1, 'mapping', null)
     expect((await getHome(db, empty, { today: TODAY })).isEmpty).toBe(true)
+  })
+
+  // The 约定 rows come from `@/server/interaction` (ARCHITECTURE §1.17); home only merges and sorts them (SPEC §9.4).
+  it('merges 约定 into 即将到来, sorted by day with the dates', async () => {
+    const plans = async () => [{ person: { id: id.deng, label: '邓一帆' }, loopId: 4242, label: '说好一起去看展', solar: '2026-09-20', days: 5 }]
+    const home = await getHome(db, a, { today: TODAY, plans })
+    expect(home.upcoming.map((u) => [u.kind, u.solar])).toEqual([
+      ['date', '2026-09-18'],
+      ['plan', '2026-09-20'],
+      ['date', '2026-10-01'],
+    ])
+    expect(home.upcoming[1]).toMatchObject({ dateId: null, loopId: 4242, label: '说好一起去看展' })
+    expect(() => HomeResponseSchema.parse(home)).not.toThrow()
+  })
+
+  it('still renders the dates when the interaction module cannot answer', async () => {
+    const plans = async () => {
+      throw new Error('not_implemented')
+    }
+    const home = await getHome(db, a, { today: TODAY, plans })
+    expect(home.upcoming.map((u) => u.kind)).toEqual(['date', 'date'])
+    const r = await getHomeBlocks(db, a, { today: TODAY, plans })
+    expect(r.failed).toEqual([])
+    expect(r.blocks.upcoming).toHaveLength(2)
   })
 
   it('a failing block leaves the others intact', async () => {

@@ -39,7 +39,7 @@ describe('people actions: create, merge, split, manual add, isolation', () => {
     const r = await api.post(`/api/people/${w.b.id}/merge`, { intoId: w.a.id })
     expect(r.status).toBe(200)
     expect(r.body.person.id).toBe(w.a.id)
-    expect(r.body.moved).toEqual({ handle: 2, claim: 4, date: 1, relation: 1, event: 1 })
+    expect(r.body.moved).toEqual({ handle: 2, claim: 4, date: 1, relation: 1, event: 1, loop: 0, segment: 0 })
     expect(await person(w.b.id)).toMatchObject({ mergedIntoId: w.a.id })
     const hs = await db.select().from(handles).where(owned(handles, uid, eq(handles.personId, w.a.id)))
     expect(hs.map((h) => h.id).sort()).toEqual([w.hA.id, w.hAp.id, w.hB.id, w.hBmention.id].sort())

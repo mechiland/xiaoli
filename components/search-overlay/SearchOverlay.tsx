@@ -5,9 +5,10 @@ import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import type { InteractionSearchHit } from '@/contracts'
 import { BlockError, SkeletonLines } from '@/components/loam'
 import { cn } from '@/lib/cn'
-import { personHref } from '@/lib/links'
+import { chatHref, personHref } from '@/lib/links'
 import { queryKeys } from '@/lib/query'
 import { splitTerms } from '@/server/search/text'
 import { createPerson, fetchSearch } from './lib/fetchers'
@@ -21,7 +22,26 @@ const RESULT_LIMIT = 20
 type Item =
   | { key: string; kind: 'person'; personId: number; label: string; alias: string | null }
   | { key: string; kind: 'claim'; personId: number; label: string; claimId: number; statement: string; highlights: [number, number][] }
+  | { key: string; kind: 'interaction'; hit: InteractionSearchHit }
   | { key: string; kind: 'create'; label: string }
+
+const MSG_DAY = /^(\d{4})-(\d{2})-(\d{2})/
+
+/** '8月12日', with the year when the hit is not from this year. */
+function hitDay(at: string): string {
+  const m = MSG_DAY.exec(at)
+  if (!m) return at
+  const thisYear = new Date().getFullYear()
+  const head = +m[1] === thisYear ? '' : `${+m[1]}年`
+  return `${head}${+m[2]}月${+m[3]}日`
+}
+
+/** SPEC §9.8: a 段落 goes to the chat at that message, a 未结事项 to the person page anchored at the loop. */
+function interactionHref(hit: InteractionSearchHit): string {
+  if (hit.href) return hit.href
+  if (hit.kind === 'loop' && hit.person) return personHref(hit.person.id, { type: 'loop', id: hit.id })
+  return hit.chatId === null ? '/' : chatHref(hit.chatId)
+}
 
 /** Navigates in-app; a hash change on the current path goes through location.hash so `hashchange` fires for the person page. */
 function go(router: ReturnType<typeof useRouter>, href: string) {
@@ -127,6 +147,8 @@ function SearchPanel({ initialQ }: { initialQ: string }) {
         statement: c.statement,
         highlights: c.highlights,
       })),
+      // 来往 comes last: it matches more loosely than the other two groups (SPEC §9.8).
+      ...data.interaction.map((hit) => ({ key: `i${hit.kind}${hit.id}`, kind: 'interaction' as const, hit })),
     ]
     if (!list.length) list.push({ key: 'create', kind: 'create', label: data.q.trim().slice(0, 60) })
     return list
@@ -138,11 +160,13 @@ function SearchPanel({ initialQ }: { initialQ: string }) {
   const terms = data ? splitTerms(data.q) : []
   const people = items.filter((i): i is Extract<Item, { kind: 'person' }> => i.kind === 'person')
   const claimItems = items.filter((i): i is Extract<Item, { kind: 'claim' }> => i.kind === 'claim')
+  const interactionItems = items.filter((i): i is Extract<Item, { kind: 'interaction' }> => i.kind === 'interaction')
   const createItem = items.find((i): i is Extract<Item, { kind: 'create' }> => i.kind === 'create')
 
   function choose(item: Item) {
     if (item.kind === 'person') go(router, personHref(item.personId))
     else if (item.kind === 'claim') go(router, personHref(item.personId, { type: 'claim', id: item.claimId }))
+    else if (item.kind === 'interaction') go(router, interactionHref(item.hit))
     else if (!create.isPending) create.mutate(item.label)
   }
 
@@ -263,6 +287,27 @@ function SearchPanel({ initialQ }: { initialQ: string }) {
                   <span className="text-[14px] text-ink-2">{c.label}</span>
                   <span className="px-1.5 text-ink-3">·</span>
                   <Highlight text={c.statement} ranges={c.highlights} />
+                </p>,
+              ),
+            )}
+          </div>
+        )}
+        {interactionItems.length > 0 && (
+          <div role="group" aria-label="来往">
+            <GroupTitle>来往</GroupTitle>
+            {interactionItems.map((i) =>
+              row(
+                i,
+                <p className="line-clamp-2 text-[15px] leading-7 text-ink">
+                  <span className="whitespace-nowrap font-data text-[13px] tabular-nums text-ink-2">{hitDay(i.hit.at)}</span>
+                  {i.hit.chatTitle && (
+                    <>
+                      <span className="px-1.5 text-ink-3">·</span>
+                      <span className="text-[14px] text-ink-2">{i.hit.chatTitle}</span>
+                    </>
+                  )}
+                  <span className="px-1.5 text-ink-3">·</span>
+                  <Highlight text={i.hit.text} ranges={i.hit.highlights} />
                 </p>,
               ),
             )}

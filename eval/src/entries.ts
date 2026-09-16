@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import type { Category, ExtractModel, LlmErrorCode, MessageKind, ParsedExport, ParsedMessage } from '@/contracts'
+import type { Category, ExtractModel, LlmErrorCode, LoopCloseReason, LoopDirection, LoopKind, MessageKind, ParsedExport, ParsedMessage } from '@/contracts'
 import type { GoldMapping } from './gold-schema'
 
 // ---------------------------------------------------------------- parser (§1.2)
@@ -22,7 +22,8 @@ export interface LlmMessage {
   content: string
 }
 export interface LlmJsonRequest {
-  purpose: 'extract' | 'dedup' | 'judge' | 'other'
+  /** `contracts/llm.ts` `LlmPurpose`; the interaction call (DECISIONS I17) may arrive as `extract` or `interaction` */
+  purpose: 'extract' | 'dedup' | 'judge' | 'other' | 'interaction'
   promptVersion: string
   model: string
   messages: LlmMessage[]
@@ -70,10 +71,53 @@ export interface OfflineExtractionResult {
   claims: { person: string; statement: string; category: Category; validFrom?: string; confidence: number; sensitive: boolean; supersedes?: number; evidence: number[]; windowIndex: number }[]
   events: { summary: string; happenedAt?: string; place?: string; participants: string[]; evidence: number[]; windowIndex: number }[]
   dates: { person: string; kind: string; day?: number; month?: number; year?: number; calendar: 'solar' | 'lunar'; isLeapMonth?: boolean; evidence: number[]; windowIndex: number }[]
-  windows: { index: number; startIdx: number; endIdx: number; outcome: WindowOutcomeStatus; code?: string; attempts: number; attemptMs: number[]; latencyMs: number; rawItemCount: number; droppedInvalidEvidence: number; dedup?: string; rawOutputs: string[] }[]
+  /**
+   * Interaction layer (SPEC §8.8), produced from `prompts/extract.v9.md` on. **These names are extract's, copied
+   * from `OfflineItems` in `server/extract/memory-store.ts` (ARCHITECTURE §6); they are not the harness's to
+   * choose.** They are required, not optional, on purpose: `eval/tests/offline-contract.test.ts` assigns the real
+   * `OfflineExtractionResult` to this type, so a rename on extract's side fails a typecheck instead of silently
+   * making every interaction metric read `undefined` and report a healthy-looking zero.
+   * All message references are parsed-export idx, like every other type.
+   */
+  segments: {
+    startIdx: number
+    endIdx: number
+    startedAt: string
+    endedAt: string
+    messageCount: number
+    summary: string
+    topics: string[]
+    participants: { person: string; messageCount: number }[]
+    evidence: number[]
+    windowIndex: number
+  }[]
+  loops: {
+    person: string
+    direction: LoopDirection
+    kind: LoopKind
+    text: string
+    dueAt?: string
+    openedAt: string
+    openedIdx: number
+    /** resolved state after every window's `closes` were applied: null = still open */
+    closedIdx: number | null
+    closedAt: string | null
+    closedReason: LoopCloseReason | null
+    evidence: number[]
+    windowIndex: number
+  }[]
+  /** the close events themselves; `loopIndex` points into `loops` (§7.4 `loopFalseClose` is about the event) */
+  closes: { loopIndex: number; reason: LoopCloseReason; evidence: number[]; windowIndex: number }[]
+  windows: { index: number; startIdx: number; endIdx: number; outcome: WindowOutcomeStatus; code?: string; attempts: number; attemptMs: number[]; latencyMs: number; rawItemCount: number; droppedInvalidEvidence: number; dedup?: string; /** interaction call outcome of the last attempt: 'ok' | 'failed' | 'skipped_deadline' | 'not_needed' (DECISIONS I17) */ interaction?: string; rawOutputs: string[] }[]
   deadlinePolicy: 'app' | 'none'
   usage: { inputTokens: number; outputTokens: number; calls: number }
   promptVersion: string
+  /**
+   * The interaction call's own prompt version (DECISIONS I17). Optional because extract may not report it; the
+   * harness does not depend on it — it reads the prompt version off the calls the run actually made
+   * (`eval/src/usage.ts`) and uses this only as a fallback label.
+   */
+  interactionPromptVersion?: string | null
   model: string
 }
 export interface ExtractOfflineArgs {
@@ -88,6 +132,8 @@ export interface ExtractOfflineArgs {
 export interface ExtractApi {
   extractOffline(args: ExtractOfflineArgs): Promise<OfflineExtractionResult>
   PROMPT_VERSION: string
+  /** DECISIONS I17: the interaction layer's own prompt version. Optional — a build without the second call has none. */
+  INTERACTION_PROMPT_VERSION?: string
 }
 
 // ---------------------------------------------------------------- loading

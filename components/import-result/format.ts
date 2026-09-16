@@ -5,6 +5,8 @@ import type {
   HandleKind,
   ImportantDateDTO,
   ImportReviewResponse,
+  LoopDTO,
+  LoopKind,
   PartialDate,
   ProfileResponse,
   Progress,
@@ -16,9 +18,11 @@ import { DEFAULT_TZ, formatIsoDate } from '@/lib/time'
 
 export type Review = ImportReviewResponse
 export type ReviewSection = Review['sections'][number]
-export type GroupName = 'newClaims' | 'changes' | 'aliasesAndRelations' | 'dates' | 'events'
+export type GroupName = 'newClaims' | 'changes' | 'aliasesAndRelations' | 'dates' | 'events' | 'loops'
 
-export const GROUPS: GroupName[] = ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events']
+// SPEC §9.9 order: 新人物, 新信息, 变化, 别名与关系, 日期, (事件, IR4), 未结事项 last — it is the only group about
+// what happens next rather than who the person is.
+export const GROUPS: GroupName[] = ['newClaims', 'changes', 'aliasesAndRelations', 'dates', 'events', 'loops']
 
 export const GROUP_TITLE: Record<GroupName, string> = {
   newClaims: '新信息',
@@ -26,6 +30,7 @@ export const GROUP_TITLE: Record<GroupName, string> = {
   aliasesAndRelations: '别名与关系',
   dates: '日期',
   events: '事件',
+  loops: '未结事项',
 }
 
 export const CATEGORY_LABEL: Record<Category, string> = {
@@ -225,7 +230,28 @@ export function editableText(it: ReviewItem): string {
       return it.item.summary
     case 'date':
       return formatImportantDate(it.item)
+    // the raw text as the extraction wrote it ("把清单发过去"), not the rendered sentence: the direction is not
+    // part of the text and must not end up inside it when the user saves
+    case 'loop':
+      return it.item.text
   }
+}
+
+// ---- 未结事项 (SPEC §9.9, §7 交互层) -------------------------------------------------------------------------------
+
+// The loop wording lives in `@/lib/loop-text` so the person page words the same loop identically
+// (core-request import-result#4).
+export { LOOP_KIND_LABEL, loopSentence, loopStateLabel } from '@/lib/loop-text'
+
+/** "2026年9月13日起" — when the thing opened, in small type at the end of the row (SPEC §9.9). */
+export function loopOpenedLabel(openedAt: string): string {
+  const d = ymd(openedAt)
+  return d ? `${d[0]}年${d[1]}月${d[2]}日起` : ''
+}
+
+/** A 约定 also carries the day it is for; everything else is described by its own sentence. */
+export function loopDueLabel(loop: Pick<LoopDTO, 'kind' | 'dueAt'>): string | null {
+  return loop.kind === 'plan' && loop.dueAt ? `约在${formatPartialDate(loop.dueAt)}` : null
 }
 
 /**
@@ -310,6 +336,7 @@ export function applyItemUpdate(r: Review, type: TargetType, item: AnyItem, supe
       aliasesAndRelations: s.aliasesAndRelations.map(fix),
       dates: s.dates.map(fix),
       events: s.events.map(fix),
+      loops: s.loops.map(fix),
     })),
   }
 }
@@ -333,6 +360,7 @@ export function applyStatus(r: Review, keys: Set<string>, status: Status): Revie
       aliasesAndRelations: s.aliasesAndRelations.map(fix),
       dates: s.dates.map(fix),
       events: s.events.map(fix),
+      loops: s.loops.map(fix),
     })),
   }
 }

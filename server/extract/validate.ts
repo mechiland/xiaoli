@@ -29,13 +29,24 @@ const PARTNER = /伴侣|女朋友|男朋友|女友|男友|对象|恋人|未婚�
  */
 const RELATIVE_VOCATIVE = /^(爸|爸爸|老爸|爹|老爹|妈|妈妈|老妈|娘|老娘|儿子|女儿|闺女|儿)$/
 /** Time words that tie a statement to the moment ("这两天牙疼"): not a fact that is still useful a month later. */
-const MOMENTARY = /这两天|这几天|今天|昨天|明天|前天|后天|刚才|刚刚|这周|本周|这会儿|最近几天/
+const MOMENTARY_WORDS = ['这两天', '这几天', '今天', '昨天', '明天', '前天', '后天', '刚才', '刚刚', '这周', '本周', '这会儿', '最近几天']
+const MOMENTARY = new RegExp(MOMENTARY_WORDS.join('|'))
+/**
+ * The same vocabulary plus the spoken same-day markers that only ever turn up in a loop's text, never in a claim's
+ * statement ("晚上过去拿西瓜", "回头细说面试安排的事", "待会儿把东西放门口"). `validateInteraction` drops a loop that
+ * carries one of these and has no `dueAt` (SPEC §8.8, DECISIONS ## extract X41). It is built from `MOMENTARY_WORDS`
+ * on purpose: one list, so the claim rule and the loop rule cannot drift apart.
+ *
+ * Deliberately NOT here: 下周 / 下个月 / 周末 / 国庆. A loop pointing at a dated occasion ("下个月一起去看动画展")
+ * must survive — the third threshold is worth-remembering, not tense, and only the same-day end of it is mechanical.
+ */
+export const LOOP_MOMENTARY = new RegExp([...MOMENTARY_WORDS, '今晚', '晚上', '待会', '一会', '马上', '回头'].join('|'))
 /** Explicit not-yet-happened markers at the start of a statement ("将搬去…"): plans are not recorded (prompt rule). */
 const PLAN_MARKER = /^(将要|即将|将|准备|打算)/
-const INVISIBLE_KINDS = new Set<string>(['voice', 'image', 'video', 'animated_sticker', 'sticker_code', 'video_call', 'recall', 'transfer'])
+export const INVISIBLE_KINDS = new Set<string>(['voice', 'image', 'video', 'animated_sticker', 'sticker_code', 'video_call', 'recall', 'transfer'])
 /** An event that has not happened yet (a plan or an invitation), extract.v7 events rule (DECISIONS ## extract X30). */
 const FUTURE_EVENT = /明天|后天|下周|下星期|下个?月|明年|计划|打算|准备|将要|即将/
-const PARTIAL_DATE = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/
+export const PARTIAL_DATE = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/
 /**
  * Claims below this confidence are not proposed. Prompt scale: 0.9 直接陈述, 0.8 随口提到, 0.6 需要结合上下文. Calibration on
  * extract.v5 (DECISIONS ## extract X26): of the model's 0.6/0.8 claims on the synthetic eval nearly all were false positives
@@ -58,7 +69,7 @@ const SHARED_KINDS = new Set<string>(['channels', 'link', 'mini_program', 'forwa
 /** Past, planned or teaching statements that mention a school without saying the person studies there now. */
 const NOT_CURRENT_STUDY = /曾|之前|以前|原来|毕业|退学|休学|转回|计划|准备|打算|考上|教|老师|工作|上班|任职|校长/
 
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+export const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 /**
  * A statement that states current enrolment more specifically than the generic student status: a grade or class (X26),
@@ -189,7 +200,7 @@ function cleanEvidence(v: unknown): unknown {
 /** A lunar date as written in a message ("农历三月初八", "正月十五", "腊月廿三"); a grade like "初一" alone is not one. */
 const LUNAR_CUE = /农历|阴历|老历|正月|腊月|冬月|闰[一二三四五六七八九十冬腊正]月|[一二三四五六七八九十冬腊正]月(初|十|廿)[一二三四五六七八九十]/
 
-interface CleanCtx {
+export interface CleanCtx {
   input: WindowInput
   /** tempId → in-window evidence of the raw items that reference it */
   tempEvidence: Map<string, number[]>
@@ -218,13 +229,19 @@ function applyDefaults(key: Key, o: Record<string, unknown>, ctx: CleanCtx): voi
   }
 }
 
-function cleanItem(key: Key, raw: unknown, ctx: CleanCtx): unknown {
+/** `key === null` = an interaction item (validate-interaction.ts); the extraction path is untouched by the split. */
+export function cleanItem(key: Key | null, raw: unknown, ctx: CleanCtx): unknown {
   if (!isObj(raw)) return raw
   const o = dropNulls(raw)
   if ('evidence' in o) o.evidence = cleanEvidence(o.evidence)
   for (const k of ['person', 'from', 'to']) if (k in o) o[k] = cleanRef(o[k])
   if (Array.isArray(o.participants)) o.participants = o.participants.map(cleanRef)
-  applyDefaults(key, o, ctx)
+  if (key) {
+    applyDefaults(key, o, ctx)
+    return o
+  }
+  if (Array.isArray(o.speakers)) o.speakers = o.speakers.map(cleanRef)
+  if (typeof o.loopId === 'string' && /^\d+$/.test(o.loopId.trim())) o.loopId = Number(o.loopId.trim())
   return o
 }
 
@@ -246,16 +263,22 @@ function tempEvidenceOf(json: Record<string, unknown>, n: number): Map<string, n
 }
 
 /** Field paths and issue codes of a failed item parse; model-chosen key names at most 40 chars, never values. */
-function failingFields(issues: readonly { code: string; path: readonly PropertyKey[]; keys?: readonly string[] }[]): string[] {
+export function failingFields(issues: readonly { code: string; path: readonly PropertyKey[]; keys?: readonly string[] }[]): string[] {
   const out = issues.flatMap((is) =>
     is.code === 'unrecognized_keys' && is.keys?.length ? is.keys.map((k) => `${String(k).slice(0, 40)}:unrecognized_keys`) : [`${is.path.map(String).join('.') || '(item)'}:${is.code}`],
   )
   return [...new Set(out)].slice(0, 6)
 }
 
-const refKey = (r: PersonRef) => ('personId' in r ? `p:${r.personId}` : `t:${r.tempId}`)
+export const refKey = (r: PersonRef) => ('personId' in r ? `p:${r.personId}` : `t:${r.tempId}`)
 
-/** `opts.milestoneRules`: the extract.v7+ rules (promptFeatures, DECISIONS ## extract X30); off for earlier versions. */
+/**
+ * `opts.milestoneRules`: the extract.v7+ rules (promptFeatures, DECISIONS ## extract X30); off for earlier versions.
+ *
+ * This validates the EXTRACTION call only. The interaction layer (SPEC §8.8) is a separate call with its own
+ * `validateInteraction` (validate-interaction.ts): `segment` / `loops` / `closes` are not part of `ExtractionOutput`
+ * and, like any other unknown top-level key, fail the window here (DECISIONS ## extract X40).
+ */
 export function validateOutput(json: unknown, input: WindowInput, opts: { milestoneRules?: boolean } = {}): ValidateResult {
   const milestoneRules = opts.milestoneRules === true
   if (!isObj(json)) return { error: 'validation_failed', issues: ['output is not a JSON object'] }

@@ -5,7 +5,7 @@ import { parseServerEnv } from '@/server/env'
 import { memoryStore, type OfflineItems, type OfflineMapping } from './memory-store'
 import { extractWindow, resolveExtractModel } from './pipeline'
 import { getPrompt } from './prompt'
-import { PROMPT_VERSION, promptFeatures } from './prompt-version'
+import { INTERACTION_PROMPT_VERSION, PROMPT_VERSION, promptFeatures } from './prompt-version'
 import type { WindowOutcome } from './types'
 import { packWindows, planWindows } from './windowing'
 
@@ -19,6 +19,8 @@ export interface ExtractOfflineArgs {
   llm: LlmClient
   model?: ExtractModel
   promptVersion?: string
+  /** additive: the second, parallel call's prompt (ARCHITECTURE §6); defaults to INTERACTION_PROMPT_VERSION */
+  interactionPromptVersion?: string
   deadlinePolicy?: 'app' | 'none'
   onWindow?: (i: number, total: number, outcome: WindowOutcome) => void
   /** additive: llm_calls evalRunId */
@@ -38,11 +40,15 @@ export interface OfflineExtractionResult extends OfflineItems {
     rawItemCount: number
     droppedInvalidEvidence: number
     dedup?: string
+    /** interaction call outcome of the last attempt (ARCHITECTURE §6 failure isolation) */
+    interaction?: string
     rawOutputs: string[]
   }[]
   deadlinePolicy: 'app' | 'none'
   usage: { inputTokens: number; outputTokens: number; calls: number }
   promptVersion: string
+  /** the interaction layer's own prompt version: it is a separate call with a separate cassette stream */
+  interactionPromptVersion: string
   model: string
 }
 
@@ -50,7 +56,9 @@ export async function extractOffline(args: ExtractOfflineArgs): Promise<OfflineE
   const env = (globalThis as { process?: { env: Record<string, unknown> } }).process?.env ?? {}
   const model = args.model ?? resolveExtractModel(null, parseServerEnv(env))
   const promptVersion = args.promptVersion ?? PROMPT_VERSION
+  const interactionPromptVersion = args.interactionPromptVersion ?? INTERACTION_PROMPT_VERSION
   getPrompt(promptVersion) // unknown version → throw before any call
+  getPrompt(interactionPromptVersion)
   const policy = args.deadlinePolicy ?? 'app'
   const store = memoryStore(args.parsed, args.mapping)
   const n = args.parsed.messages.length
@@ -75,7 +83,7 @@ export async function extractOffline(args: ExtractOfflineArgs): Promise<OfflineE
       attempts++
       const deadlineAt = policy === 'app' ? Date.now() + APP_DEADLINE_MS : undefined
       try {
-        last = await extractWindow({ llm: args.llm, store, model, promptVersion, deadlineAt, context: { evalRunId: args.evalRunId ?? null } }, ref)
+        last = await extractWindow({ llm: args.llm, store, model, promptVersion, interactionPromptVersion, deadlineAt, context: { evalRunId: args.evalRunId ?? null } }, ref)
       } catch (e) {
         last = { status: 'retryable_error', code: 'llm_error', message: `internal: ${(e as Error).name}`, latencyMs: 0 }
       }
@@ -102,11 +110,11 @@ export async function extractOffline(args: ExtractOfflineArgs): Promise<OfflineE
       latencyMs,
       rawItemCount: last.status === 'done' ? last.rawItemCount : 0,
       droppedInvalidEvidence: last.status === 'done' ? last.droppedInvalidEvidence : 0,
-      ...(last.status === 'done' ? { dedup: last.dedup } : {}),
+      ...(last.status === 'done' ? { dedup: last.dedup, interaction: last.interaction } : {}),
       rawOutputs,
     })
     args.onWindow?.(i, plans.length, last)
   }
 
-  return { ...store.result(), windows, deadlinePolicy: policy, usage, promptVersion, model }
+  return { ...store.result(), windows, deadlinePolicy: policy, usage, promptVersion, interactionPromptVersion, model }
 }

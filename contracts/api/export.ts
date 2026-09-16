@@ -24,6 +24,10 @@ export const ExportDumpSchema = z.object({
   events: Rows,
   eventParticipants: Rows,
   importantDates: Rows,
+  /** interaction layer (SPEC §7 交互层) */
+  conversationSegments: Rows,
+  segmentParticipants: Rows,
+  loops: Rows,
   evidence: Rows,
   /** incl. rawOutput */
   extractionJobs: Rows,

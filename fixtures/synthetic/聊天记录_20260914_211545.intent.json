@@ -143,6 +143,95 @@
       "idx": [
         165
       ]
+    },
+    {
+      "id": "loop-interview-later",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "回头细说面试安排的看法",
+      "note": "在两次导出的重叠区间里",
+      "idx": [
+        6
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-move-shenzhen",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "theirs",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "note": "第一次导出结束时仍未结；第二次导出里 2026-04-28「到深圳了」了结",
+      "idx": [
+        23,
+        25
+      ],
+      "closedBy": 36,
+      "closedReason": "done",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-photo-question",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "question",
+      "direction": "mine",
+      "text": "婚纱照在哪拍的",
+      "note": "对方问了我而我没回，所以 direction 是 mine（欠回答的是我）",
+      "idx": [
+        69
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-wedding-plan",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "mutual",
+      "text": "10月3日中午去九江参加婚礼",
+      "dueAt": "2026-10-03",
+      "note": "婚期在导出结束之后，未结",
+      "idx": [
+        175,
+        178
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "conv-shenzhen",
+      "type": "conversation",
+      "text": "一舟到深圳安顿下来",
+      "topics": [
+        "深圳",
+        "南山"
+      ],
+      "idx": [
+        36,
+        40
+      ],
+      "startIdx": 36,
+      "endIdx": 40
+    },
+    {
+      "id": "conv-wedding-date",
+      "type": "conversation",
+      "text": "婚礼日期和地点定下来",
+      "topics": [
+        "婚礼",
+        "九江",
+        "份子钱"
+      ],
+      "idx": [
+        175,
+        182
+      ],
+      "startIdx": 175,
+      "endIdx": 182
     }
   ],
   "negatives": [

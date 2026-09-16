@@ -1,0 +1,33 @@
+{
+  "key": "0de0651c8c181ce246140bb352fe6ebd",
+  "recordedAt": "2026-09-16T08:08:25.384Z",
+  "model": "deepseek-flash",
+  "promptVersion": "dedup.v2",
+  "purpose": "dedup",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你在帮用户整理人物档案。对每个人，给你一组\"已有信息\"（candidates，带 id）和一组\"新信息\"（new，带 index）。找出与某条已有信息**说的是同一件事**的新信息，只输出一个 json 对象。\n\n判断规则：\n- 同一件事 = 同一个人、同一个事实，措辞可以不同（\"在成都当护士\"与\"成都某医院护士\"是同一件事）。\n- 新信息和已有信息说的是同一个事实，只是多了或少了一些细节（时间、地点、补充说明），**算**重复。\n- 说的是另一件事，或者是一个新的变化（换了工作、搬了家、升了学），**不是**重复。\n- 相互冲突的信息（\"住在杭州\"与\"搬到了苏州\"）不是重复。\n- 每条新信息最多对应一条已有信息；不确定时不要标为重复。\n- 只能使用输入里出现过的 index 和 id。\n\n输出格式（json 示例）：\n\n{ \"duplicates\": [ { \"newIndex\": 0, \"existingClaimId\": 42 } ] }"
+      },
+      {
+        "role": "user",
+        "content": "{\"persons\":[{\"personId\":1,\"label\":\"林建国\",\"candidates\":[{\"id\":10,\"statement\":\"提供过身份证号\"},{\"id\":1000000001,\"statement\":\"周末回家吃饭，把朵朵带上\"}],\"new\":[{\"index\":0,\"statement\":\"下个月搬到林大海那边的小区住，老房子租出去\"},{\"index\":1000000,\"statement\":\"问了谁有空帮忙问老房子的租金\"}]},{\"personId\":3,\"label\":\"林大海\",\"candidates\":[{\"id\":5,\"statement\":\"曾在顺达物流做调度约十年\"},{\"id\":6,\"statement\":\"跟朋友合伙开了个火锅店\"},{\"id\":7,\"statement\":\"火锅店开在老城区\"},{\"id\":1000000004,\"statement\":\"来拿留的一箱荔枝\"}],\"new\":[{\"index\":2,\"statement\":\"帮父母看好了房子，就在自己家对面楼\"},{\"index\":1000001,\"statement\":\"中秋25日在店里吃饭，大海安排包厢\"}]}]}\n\n请输出 json。"
+      }
+    ],
+    "maxTokens": 1024,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"duplicates\":[]}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 471,
+      "outputTokens": 6,
+      "cacheHitTokens": 256
+    },
+    "latencyMs": 851
+  },
+  "error": null
+}

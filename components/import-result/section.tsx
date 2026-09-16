@@ -1,5 +1,5 @@
 'use client'
-// One person's section: title link (+ "新"), "本节全部确认", groups 新人物 / 新信息 / 变化 / 别名与关系 / 日期 / 事件.
+// One person's section: title link (+ "新"), "本节全部确认", groups 新人物 / 新信息 / 变化 / 别名与关系 / 日期 / 事件 / 未结事项.
 
 import Link from 'next/link'
 import { useEffect, useId, useState, type ReactNode } from 'react'
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { cn } from '@/lib/cn'
 import { personHref } from '@/lib/links'
 import { useBulkAccept, useMergePerson, usePersonContexts, useRenamePerson } from './data'
-import { byCategory, CATEGORY_LABEL, dateKindLabel, formatPartialDate, GROUP_TITLE, GROUPS, isLabelEcho, isWrappablePiece, personLabel, proposedItems, reviewItemKey, sectionItems, type GroupName, type ReviewSection } from './format'
+import { byCategory, CATEGORY_LABEL, dateKindLabel, formatPartialDate, GROUP_TITLE, GROUPS, isLabelEcho, isWrappablePiece, LOOP_KIND_LABEL, personLabel, proposedItems, reviewItemKey, sectionItems, type GroupName, type ReviewSection } from './format'
 import { ItemRow } from './rows'
 import { useAppTz } from './tz'
 
@@ -30,6 +30,17 @@ function chunksOf(g: GroupName, items: ReviewItem[]): Chunk[] {
     const out: Chunk[] = []
     for (const it of items) {
       const label = it.type === 'handle' ? '别名' : '关系'
+      const last = out[out.length - 1]
+      if (last?.label === label) last.items.push(it)
+      else out.push({ label, items: [it] })
+    }
+    return out
+  }
+  if (g === 'loops') {
+    // the gutter says what kind of unfinished thing it is (承诺 / 问题 / 约定); the row itself says who it is on
+    const out: Chunk[] = []
+    for (const it of items) {
+      const label = it.type === 'loop' ? LOOP_KIND_LABEL[it.item.kind] : ''
       const last = out[out.length - 1]
       if (last?.label === label) last.items.push(it)
       else out.push({ label, items: [it] })

@@ -5,6 +5,7 @@ import type {
   EventDTO,
   HandleDTO,
   ImportantDateDTO,
+  LoopDTO,
   PersonDTO,
   PersonRefDTO,
   RelationDTO,
@@ -16,16 +17,21 @@ import {
   chats,
   claimMentions,
   claims,
+  conversationSegments,
   eventParticipants,
   events,
   evidence,
   handles,
   importantDates,
+  loops,
   owned,
   persons,
   relations,
+  segmentParticipants,
   type Db,
 } from '@/server/db'
+import { errors } from '@/server/errors'
+import { deriveLoop, type LoopRow } from './loops'
 import { chunk, IN_CHUNK, uniq } from './util'
 
 export type ClaimRow = typeof claims.$inferSelect
@@ -34,16 +40,44 @@ export type RelationRow = typeof relations.$inferSelect
 export type EventRow = typeof events.$inferSelect
 export type DateRow = typeof importantDates.$inferSelect
 export type PersonRow = typeof persons.$inferSelect
-export type ItemRow = ClaimRow | HandleRow | RelationRow | EventRow | DateRow
-export type ItemDTO = ClaimDTO | HandleDTO | RelationDTO | EventDTO | ImportantDateDTO
+export type { LoopRow }
+export type ItemRow = ClaimRow | HandleRow | RelationRow | EventRow | DateRow | LoopRow
+export type ItemDTO = ClaimDTO | HandleDTO | RelationDTO | EventDTO | ImportantDateDTO | LoopDTO
 
+/**
+ * One table per `TargetType`. `segment` is in here only so that indexing by a `TargetType` typechecks and so that
+ * `GET /api/evidence/segment/:id` can load the row — a segment is never reviewed (see `REVIEWABLE`).
+ */
 export const TABLES = {
   claim: claims,
   handle: handles,
   relation: relations,
   event: events,
   date: importantDates,
+  loop: loops,
+  segment: conversationSegments,
 } as const
+
+/**
+ * The tables review actually reviews: they all carry `status` + `import_id`, which `setStatus` and
+ * `syncImportStatus` need. `conversation_segments` has neither, because a 段落摘要 describes what was said that day
+ * rather than asserting anything about a person, so there is nothing to confirm (SPEC §9.9).
+ */
+export const REVIEWABLE = {
+  claim: claims,
+  handle: handles,
+  relation: relations,
+  event: events,
+  date: importantDates,
+  loop: loops,
+} as const
+
+export type ReviewableType = keyof typeof REVIEWABLE
+
+/** `applyReview` / `bulkReview` guard: segments are a log, not an assertion (SPEC §9.9). */
+export function assertReviewable(type: TargetType): asserts type is ReviewableType {
+  if (type === 'segment') throw errors.validation('段落摘要不需要确认，可以直接改写或隐藏')
+}
 
 export function personDTO(p: PersonRow): PersonDTO {
   return {
@@ -254,6 +288,31 @@ export async function dateDTOs(db: Db, ownerId: string, rows: DateRow[]): Promis
   }))
 }
 
+export async function loopDTOs(db: Db, ownerId: string, rows: LoopRow[]): Promise<LoopDTO[]> {
+  if (rows.length === 0) return []
+  const counts = await evidenceCounts(db, ownerId, 'loop', rows.map((r) => r.id))
+  const today = todayInTz()
+  return rows.map((r) => ({
+    id: r.id,
+    personId: r.personId,
+    direction: r.direction,
+    kind: r.kind,
+    text: r.text,
+    dueAt: r.dueAt,
+    openedAt: r.openedAt,
+    openedMessageId: r.openedMessageId,
+    closedAt: r.closedAt,
+    closedMessageId: r.closedMessageId,
+    closedReason: r.closedReason,
+    ...deriveLoop(r, today),
+    status: r.status,
+    importId: r.importId,
+    sourceKind: r.sourceKind,
+    evidenceCount: counts.get(r.id) ?? 0,
+    createdAt: r.createdAt,
+  }))
+}
+
 export async function itemDTOs(db: Db, ownerId: string, type: TargetType, rows: ItemRow[]): Promise<ItemDTO[]> {
   switch (type) {
     case 'claim':
@@ -266,6 +325,10 @@ export async function itemDTOs(db: Db, ownerId: string, type: TargetType, rows: 
       return eventDTOs(db, ownerId, rows as EventRow[])
     case 'date':
       return dateDTOs(db, ownerId, rows as DateRow[])
+    case 'loop':
+      return loopDTOs(db, ownerId, rows as LoopRow[])
+    case 'segment':
+      throw errors.validation('段落摘要不需要确认，可以直接改写或隐藏')
   }
 }
 
@@ -276,9 +339,16 @@ export async function itemDTO(db: Db, ownerId: string, type: TargetType, row: It
 
 /** Person ids an item belongs to (for query invalidation hints and section placement). */
 export async function personIdsOf(db: Db, ownerId: string, type: TargetType, row: ItemRow): Promise<number[]> {
-  if (type === 'claim' || type === 'date') return [(row as ClaimRow).personId]
+  if (type === 'claim' || type === 'date' || type === 'loop') return [(row as ClaimRow).personId]
   if (type === 'handle') return (row as HandleRow).personId ? [(row as HandleRow).personId!] : []
   if (type === 'relation') return [(row as RelationRow).fromPersonId, (row as RelationRow).toPersonId]
+  if (type === 'segment') {
+    const ps = await db
+      .select({ personId: segmentParticipants.personId })
+      .from(segmentParticipants)
+      .where(owned(segmentParticipants, ownerId, eq(segmentParticipants.segmentId, row.id)))
+    return ps.map((p) => p.personId)
+  }
   const ps = await db
     .select({ personId: eventParticipants.personId })
     .from(eventParticipants)

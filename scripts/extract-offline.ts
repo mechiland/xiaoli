@@ -1,5 +1,5 @@
 // pnpm extract:offline <zip> (--gold <gold.json> | --mapping <mapping.json>) [--live [--no-record]] [--prompt extract.vN]
-//   [--model deepseek-flash] [--deadline app|none] [--source synthetic|real]
+//   [--model deepseek-flash] [--interaction-prompt interaction.vN] [--deadline app|none] [--source synthetic|real]
 // Runs extractOffline on one export. Only the `mapping` object of a gold file is read (what a user types at mapping time).
 // Synthetic: prints the result JSON. Real: writes it to .dev/extract/offline/ (gitignored) and prints counts only.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -17,7 +17,7 @@ function flag(argv: string[], name: string): string | undefined {
 
 async function main() {
   const argv = process.argv.slice(2).filter((a) => a !== '--')
-  const valueFlags = new Set(['gold', 'mapping', 'prompt', 'model', 'deadline', 'source'])
+  const valueFlags = new Set(['gold', 'mapping', 'prompt', 'interaction-prompt', 'model', 'deadline', 'source'])
   const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && valueFlags.has(argv[i - 1].replace(/^--/, ''))))
   const zipPath = positional[0]
   const mappingFile = flag(argv, 'gold') ?? flag(argv, 'mapping')
@@ -42,6 +42,7 @@ async function main() {
     llm: cli.llm,
     model,
     promptVersion: flag(argv, 'prompt'),
+    interactionPromptVersion: flag(argv, 'interaction-prompt'),
     deadlinePolicy: deadline,
     onWindow: (i, total, o) => console.error(`window ${i + 1}/${total}: ${o.status}${o.status === 'done' ? ` +${o.itemsCreated}` : ` ${o.code}`}`),
   })
@@ -54,8 +55,12 @@ async function main() {
     claims: result.claims.length,
     events: result.events.length,
     dates: result.dates.length,
+    segments: result.segments.length,
+    loops: result.loops.length,
+    closes: result.closes.length,
     usage: result.usage,
     promptVersion: result.promptVersion,
+    interactionPromptVersion: result.interactionPromptVersion,
     model: result.model,
   }
   if (source === 'real') {

@@ -2,12 +2,12 @@ import { defineScenario } from '@/verify/lib'
 
 // Home (SPEC §9.4): seeded full home (200 people), first screen, search from the hero, letter jump, loading (client
 // fallback delayed 3 s), one block failing while the others render, showcase variants (>200 collapsed, lunar + solar
-// upcoming, no upcoming, long content, empty + onboarding hint), P3 budget at 1440.
+// upcoming, 约定 merged in, no upcoming, long content, empty + onboarding hint), P3 budget at 1440.
 const HOME_API = /\/api\/home(\?|$)/
 
 export default defineScenario({
   id: 'home/showcase',
-  description: '首页：种子数据、首屏、字母跳转、加载中、单块错误、>200 折叠、农历、无即将到来、长内容、窄屏',
+  description: '首页：种子数据、首屏、字母跳转、加载中、单块错误、>200 折叠、农历、约定、无即将到来、长内容、窄屏',
   account: 'seed',
   requiredTags: ['person:long-profile', 'person:long-label', 'person:lunar-birthday-soon'],
   expectedFailures: [{ urlPattern: '/api/home', status: 500, step: 'error-state', consoleText: 'Failed to load resource' }],
@@ -107,6 +107,23 @@ export default defineScenario({
       check('today / tomorrow wording and a lunar row', t.includes('今天') && t.includes('明天') && t.includes('农历'), { t })
     })
     await shot('lunar', { fullPage: false })
+
+    // SPEC §9.4: dated 约定 join 即将到来. The rows come from @/components/interaction's PlanRow (ARCHITECTURE §1.17).
+    await step('variant: 约定 merged into 即将到来', async () => {
+      await helpers.goto('/dev/home/showcase?variant=plans')
+      const texts = await section('即将到来').locator('li').allInnerTexts()
+      check('即将到来 still renders its date rows', texts.length > 2, { rows: texts.length })
+      const planRows = await section('即将到来').locator('[data-plan-row]').count()
+      const loopLinks = await section('即将到来').locator('a[href*="#loop-"]').count()
+      check('two 约定 rows, linking to the person page at the loop', planRows === 2 && loopLinks >= 2, { planRows, loopLinks })
+      check('约定 rows carry the small 约定 note', texts.filter((t) => t.includes('约定')).length === 2, { marked: texts.filter((t) => t.includes('约定')) })
+      // mixed into the date order, not appended: the first 约定 is 2 days out, among dates spanning today … +30
+      const i = texts.findIndex((t) => t.includes('说好周末一起去看新家的装修'))
+      check('约定 sits inside the date-sorted list', i > 0 && i < texts.length - 1, { i, rows: texts.length })
+      const all = await section('即将到来').innerText()
+      check('no counts or reminder wording (SPEC §9.3)', !/\d+\s*条|未结|好久没联系|提醒/.test(all), { all })
+    })
+    await shot('plans', { fullPage: false })
 
     await step('variant: no upcoming dates hides the block', async () => {
       await helpers.goto('/dev/home/showcase?variant=no-upcoming')

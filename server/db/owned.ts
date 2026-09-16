@@ -19,6 +19,8 @@ export type OwnedTable =
   | typeof schema.claims
   | typeof schema.events
   | typeof schema.importantDates
+  | typeof schema.conversationSegments
+  | typeof schema.loops
   | typeof schema.extractionJobs
   | typeof schema.reviewLog
 
@@ -27,6 +29,7 @@ export type OwnedLinkTable =
   | typeof schema.importMessages
   | typeof schema.claimMentions
   | typeof schema.eventParticipants
+  | typeof schema.segmentParticipants
   | typeof schema.evidence
 
 /** `and(eq(table.ownerId, ownerId), ...conds)` — use as the `where` of every business select/update/delete. */

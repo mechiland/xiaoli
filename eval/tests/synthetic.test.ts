@@ -18,7 +18,24 @@ type Intent = {
   chat: { kind: string }
   kinds: Record<string, number>
   edgeCases: Record<string, number[]>
-  planted: { id: string; type: string; supersedes?: string; idx: number[]; text: string; value?: string; label?: string }[]
+  planted: {
+    id: string
+    type: string
+    supersedes?: string
+    idx: number[]
+    text: string
+    value?: string
+    label?: string
+    loopKind?: 'promise' | 'question' | 'plan'
+    direction?: 'mine' | 'theirs' | 'mutual'
+    dueAt?: string
+    closedBy?: number
+    closedReason?: 'done' | 'dropped'
+    closedInExport?: boolean
+    topics?: string[]
+    startIdx?: number
+    endIdx?: number
+  }[]
   negatives: { kind: string; description: string; forbidden?: string }[]
   sensitiveValues: string[]
   media: { included: string[]; missing: string[]; unreferenced: string[] }
@@ -127,11 +144,46 @@ describe('coverage across the synthetic eval set', () => {
   })
 
   it('plants supersedes, all fact types, all negative kinds and sensitive values', () => {
-    expect(union((i) => i.planted.map((p) => p.type))).toEqual(new Set(['claim', 'handle', 'relation', 'date', 'event']))
+    expect(union((i) => i.planted.map((p) => p.type))).toEqual(new Set(['claim', 'handle', 'relation', 'date', 'event', 'loop', 'conversation']))
     expect(intents.some((i) => i.planted.some((p) => p.supersedes))).toBe(true)
     expect(union((i) => i.negatives.map((n) => n.kind))).toEqual(new Set(['transactional', 'coordination', 'inference_trap', 'sensitive', 'invisible_content']))
     expect(intents.every((i) => i.negatives.length > 0)).toBe(true)
     expect(union((i) => i.sensitiveValues).size).toBeGreaterThanOrEqual(5)
+  })
+
+  it('plants interaction material (SPEC §7 交互层) in at least two ZIPs: a kept promise, an open question, a dated plan, topics', () => {
+    const withLoops = intents.filter((i) => i.planted.some((p) => p.type === 'loop'))
+    const withConvs = intents.filter((i) => i.planted.some((p) => p.type === 'conversation'))
+    expect(withLoops.length).toBeGreaterThanOrEqual(2)
+    expect(withConvs.length).toBeGreaterThanOrEqual(2)
+    const loops = intents.flatMap((i) => i.planted.filter((p) => p.type === 'loop').map((p) => ({ zip: i, ...p })))
+    // a promise made and kept several days later, inside one export
+    const kept = loops.filter((l) => l.loopKind === 'promise' && l.closedBy !== undefined)
+    expect(kept.length).toBeGreaterThanOrEqual(1)
+    for (const l of kept) expect(l.closedBy!).toBeGreaterThan(Math.min(...l.idx))
+    // a question nobody answered, and a plan with a date
+    expect(loops.some((l) => l.loopKind === 'question' && l.closedBy === undefined)).toBe(true)
+    expect(loops.some((l) => l.loopKind === 'plan' && !!l.dueAt)).toBe(true)
+    expect(new Set(loops.map((l) => l.direction))).toEqual(new Set(['mine', 'theirs', 'mutual']))
+    expect(loops.some((l) => l.closedReason === 'dropped')).toBe(true)
+    // conversations carry topics and a span the annotator can compare against
+    for (const i of withConvs) {
+      for (const c of i.planted.filter((p) => p.type === 'conversation')) {
+        expect(c.topics!.length).toBeGreaterThanOrEqual(2)
+        expect(c.endIdx!).toBeGreaterThan(c.startIdx!)
+        expect(c.endIdx!).toBeLessThan(i.messageCount)
+      }
+    }
+  })
+
+  it('every planted loop id is a loop, and every close lands on a message of the same export', () => {
+    for (const i of intents) {
+      for (const l of i.planted.filter((p) => p.type === 'loop')) {
+        expect(l.idx.every((x) => x >= 0 && x < i.messageCount)).toBe(true)
+        if (l.closedBy !== undefined) expect(l.closedBy).toBeLessThan(i.messageCount)
+        else expect(l.closedReason).toBeUndefined()
+      }
+    }
   })
 
   it('the two private exports overlap with identical messages (incl. a same-minute duplicate) for dedup tests', () => {

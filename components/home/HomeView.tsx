@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import type { HomeResponse } from '@/contracts'
+import { PlanRow } from '@/components/interaction'
 import { BlockBoundary, BlockError, Skeleton } from '@/components/loam'
 import { SearchTrigger } from '@/components/search-overlay'
 import { api, unwrap } from '@/lib/api-client'
@@ -127,9 +128,14 @@ function UpcomingSection({ slot, today }: { slot: Slot<HomeResponse['upcoming']>
       <SlotView slot={slot} skeleton={<RowsSkeleton rows={3} />}>
         {(rows) => (
           <ul>
-            {rows.map((u) => (
-              <UpcomingRow key={u.dateId} u={u} today={today} />
-            ))}
+            {rows.map((u) =>
+              u.kind === 'plan' && u.loopId !== null ? (
+                // SPEC §9.4: the 约定 row belongs to interaction (ARCHITECTURE §1.17); home only supplies its data.
+                <PlanRow key={`plan-${u.loopId}`} person={u.person} loopId={u.loopId} label={u.label} solar={u.solar} days={u.days} today={today} />
+              ) : (
+                <UpcomingRow key={`date-${u.dateId ?? u.solar}`} u={u} today={today} />
+              ),
+            )}
           </ul>
         )}
       </SlotView>
@@ -142,7 +148,7 @@ function UpcomingRow({ u, today }: { u: HomeResponse['upcoming'][number]; today:
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 gap-y-0 border-b border-line py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_5.5rem]">
       <div className="col-start-1 row-start-1 min-w-0 text-[15px] leading-7">
-        <Link href={personHref(u.person.id, { type: 'date', id: u.dateId })} className={nameLink}>
+        <Link href={u.dateId === null ? personHref(u.person.id) : personHref(u.person.id, { type: 'date', id: u.dateId })} className={nameLink}>
           {u.person.label}
         </Link>
         <Sep className="px-1" />{' '}
