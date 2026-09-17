@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Home (SPEC §9.4): seeded full home (200 people), first screen, search from the hero, letter jump, loading (client
 // fallback delayed 3 s), one block failing while the others render, showcase variants (>200 collapsed, lunar + solar

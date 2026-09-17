@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { BrowserContext } from 'playwright'
-import { SEED_ACCOUNTS, SEED_PASSWORD } from '@/scripts/seed/accounts'
+import { SEED_ACCOUNTS, SEED_PASSWORD } from '~/scripts/seed/accounts'
 import type { AccountName } from './types'
 
 export interface FreshCredentials {

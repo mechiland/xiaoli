@@ -1,7 +1,7 @@
 // Playwright test global setup: the single dev server must answer and the seed manifest must exist.
 // Never starts a second server; `pnpm dev:ensure` is the only launcher.
 import { spawnSync } from 'node:child_process'
-import { readManifest } from '@/scripts/seed/manifest'
+import { readManifest } from '~/scripts/seed/manifest'
 
 export default async function globalSetup(): Promise<void> {
   const base = process.env.VERIFY_BASE_URL ?? 'http://localhost:3000'

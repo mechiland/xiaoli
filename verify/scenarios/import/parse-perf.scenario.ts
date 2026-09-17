@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { PERF_5000 } from './_support'
 
 // P1 (ARCHITECTURE §10): browser parse of a 5,000-message ZIP ≤ 3 s, from file set to preview rendered

@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { deleteImportOf, PRIVATE_1, PRIVATE_2, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // F5 (ARCHITECTURE §10): attachment uploads survive client-side navigation (count keeps rising), a reload shows

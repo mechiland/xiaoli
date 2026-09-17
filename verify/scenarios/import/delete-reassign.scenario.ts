@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { deleteImportOf, importViaApi, parseFixture, PRIVATE_1, PRIVATE_2, SELF_NAME, stubJobsNext } from './_support'
 
 // Overall critic r1: deleting an import whose messages a later overlapping import also contained reassigns those

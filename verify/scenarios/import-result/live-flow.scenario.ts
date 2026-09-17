@@ -1,6 +1,6 @@
 import path from 'node:path'
 import type { ImportReviewResponse } from '@/contracts'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // The one real end-to-end run (LIVE LLM): a throwaway account imports the smallest synthetic eval ZIP (178 messages)
 // through the overlay, the result page drives extraction through jobs/next, then confirm / reject / edit / section

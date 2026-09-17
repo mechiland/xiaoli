@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Small real account (seed2: 10 people, 1 import, no important dates): "即将到来" hidden, short index, isolation.
 export default defineScenario({

@@ -122,7 +122,7 @@ function writeJson(file: string, data: unknown) {
 /** Writes combined + per-source detail reports. Refuses to write real detail unless git confirms the path is ignored. */
 export function writeEvalReports(paths: EvalPaths, report: EvalReport, stamp: string, opts: { requireIgnoredReal?: boolean } = {}): string[] {
   const files: string[] = []
-  const combined = path.join(paths.reports, `${stamp}.json`)
+  const combined = path.join(paths.reportSummary, `${stamp}.json`)
   writeJson(combined, combinedReport(report))
   files.push(combined)
   for (const source of ['synthetic', 'real'] as const) {
@@ -274,7 +274,7 @@ export function deltaUsage(a: EvalUsage, b: EvalUsage): UsageByBucket {
 }
 
 export function writeCompare(paths: EvalPaths, cmp: CompareReport, stamp: string): string {
-  const file = path.join(paths.reports, `compare-${cmp.a.promptVersion}-vs-${cmp.b.promptVersion}-${stamp}.json`)
+  const file = path.join(paths.reportCompare, `compare-${cmp.a.promptVersion}-vs-${cmp.b.promptVersion}-${stamp}.json`)
   writeJson(file, cmp)
   return file
 }

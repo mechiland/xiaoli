@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Search overlay states on seed data: open (empty), person results, alias match, claim highlight + keyboard to #claim-,
 // the 来往 group (SPEC §9.8; stubbed — the hits come from the interaction module), long list, no results + 新建人物

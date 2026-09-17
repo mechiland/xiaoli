@@ -2,7 +2,7 @@
 
 从微信聊天记录里长出来的人物档案。Next.js (App Router) + Hono + Better Auth + Drizzle on Cloudflare D1/R2 (local via OpenNext dev bindings).
 
-- Product spec: `SPEC.md` · process: `PLAN.md` · module boundaries and contracts: `ARCHITECTURE.md` · decisions: `docs/DECISIONS.md`
+- Product spec: `docs/SPEC.md` · process: `docs/PLAN.md` · module boundaries, layout and contracts: `docs/ARCHITECTURE.md` · decisions: `docs/DECISIONS.md`
 
 ## Local development
 
@@ -63,4 +63,4 @@ See `docs/DEPLOY.md`. `pnpm tsx scripts/deploy/setup.ts` prints the plan; `--app
 | typescript | 5.9.3 |
 | tsx | 4.23.13 |
 
-Compatibility notes: @opennextjs/cloudflare 1.20.6 peers `next >=15.5.24 <16 || >=16.3.3` and `wrangler ^4.125.0`. No `proxy.ts`/middleware (Node middleware is unsupported on OpenNext Cloudflare); the auth gate lives in `app/(app)/layout.tsx` and in Hono's session middleware.
+Compatibility notes: @opennextjs/cloudflare 1.20.6 peers `next >=15.5.24 <16 || >=16.3.3` and `wrangler ^4.125.0`. No `proxy.ts`/middleware (Node middleware is unsupported on OpenNext Cloudflare); the auth gate lives in `src/app/(app)/layout.tsx` and in Hono's session middleware.

@@ -1,5 +1,5 @@
-import { readManifest } from '@/scripts/seed/manifest'
-import type { SeedAccountName } from '@/scripts/seed/accounts'
+import { readManifest } from '~/scripts/seed/manifest'
+import type { SeedAccountName } from '~/scripts/seed/accounts'
 import type { AccountName, ScenarioSeed, SeedRef } from './types'
 
 type Group = 'persons' | 'imports' | 'chats' | 'claims' | 'segments' | 'loops'

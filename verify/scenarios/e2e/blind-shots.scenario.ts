@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Screenshots for the blind comparison (ARCHITECTURE §12.2): synthetic seed account only, 1440, full page.
 export default defineScenario({

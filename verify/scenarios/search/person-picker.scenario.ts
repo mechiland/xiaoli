@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Shared PersonPicker at /dev/search/person-picker: select variant (我 / 推荐 / 新建), search + keyboard pick,
 // inline alias match, no results, loading, error, long list, narrow width.

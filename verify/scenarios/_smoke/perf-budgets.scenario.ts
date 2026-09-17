@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Alias: `pnpm verify perf`. 300 ms budgets P2/P3 (ARCHITECTURE §8, §10): 4 sequential loads, first discarded, median of 2–4.
 // Pages still showing core's placeholder and routes still answering 501 are reported as MISSING (never passing).

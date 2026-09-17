@@ -12,7 +12,7 @@ if (!entry || !owner || (sep !== undefined && sep !== '--')) {
 const args = sep === '--' ? rest : []
 const abs = path.resolve(process.cwd(), entry)
 if (!existsSync(abs)) {
-  console.error(`[xiaoli] ${entry} does not exist yet. It is owned by the "${owner}" module (ARCHITECTURE.md §1); run this script after that module lands.`)
+  console.error(`[xiaoli] ${entry} does not exist yet. It is owned by the "${owner}" module (docs/ARCHITECTURE.md §1); run this script after that module lands.`)
   process.exit(1)
 }
 const r = spawnSync(process.execPath, ['--import', 'tsx', abs, ...args], { stdio: 'inherit', env: process.env })

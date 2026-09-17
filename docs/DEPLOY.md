@@ -129,7 +129,7 @@ deploy): recompute stored message fingerprints so re-exports of the same chat al
 idempotent and prints counts only.
 
 ```bash
-npx tsx lib/wechat-export/scripts/backfill-fingerprints.ts --remote --env production
+npx tsx scripts/parser/backfill-fingerprints.ts --remote --env production
 ```
 
 ## 6. Smoke test

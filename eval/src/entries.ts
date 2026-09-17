@@ -152,8 +152,8 @@ async function loadEntry<T>(root: string, module: string, entry: string, require
   }
 }
 
-export const loadParser = (root: string) => loadEntry<ParserApi>(root, 'parser', 'lib/wechat-export/index.ts', ['parseExportZip', 'messagesDigest', 'fingerprint', 'PARSER_VERSION'])
-export const loadLlm = (root: string) => loadEntry<LlmApi>(root, 'llm', 'server/llm/index.ts', ['createLlmClient', 'jsonlCallLogger', 'fileBudget'])
-export const loadExtract = (root: string) => loadEntry<ExtractApi>(root, 'extract', 'server/extract/index.ts', ['extractOffline'])
+export const loadParser = (root: string) => loadEntry<ParserApi>(root, 'parser', 'src/lib/wechat-export/index.ts', ['parseExportZip', 'messagesDigest', 'fingerprint', 'PARSER_VERSION'])
+export const loadLlm = (root: string) => loadEntry<LlmApi>(root, 'llm', 'src/server/llm/index.ts', ['createLlmClient', 'jsonlCallLogger', 'fileBudget'])
+export const loadExtract = (root: string) => loadEntry<ExtractApi>(root, 'extract', 'src/server/extract/index.ts', ['extractOffline'])
 
 export type { ParsedExport, ParsedMessage }

@@ -13,7 +13,7 @@ import { deriveLoop } from '@/lib/loop-state'
 import { chats, handles, imports, loops, messages, persons, withOwner, type Db } from '@/server/db'
 import { createJobsForImport, processNextJob } from '@/server/extract'
 import { deleteImport } from '@/server/import'
-import { createTestDb, createTestUser, fakeLlm } from '@/tests/helpers/test-db'
+import { createTestDb, createTestUser, fakeLlm } from '~/tests/helpers/test-db'
 import type { LlmJsonResult } from '@/server/llm'
 
 const env = { EXTRACT_MODEL: undefined }

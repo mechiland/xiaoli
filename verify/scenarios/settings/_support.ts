@@ -1,7 +1,7 @@
 // Helpers for settings scenarios. Synthetic data and throwaway accounts only.
 import { request, type APIRequestContext } from 'playwright'
-import { SEED_PASSWORD } from '@/scripts/seed/accounts'
-import type { ScenarioContext } from '@/verify/lib'
+import { SEED_PASSWORD } from '~/scripts/seed/accounts'
+import type { ScenarioContext } from '~/verify/lib'
 import { parseFixture, SELF_NAME } from '../import/_support'
 
 export const EXPORT_TABLES = [

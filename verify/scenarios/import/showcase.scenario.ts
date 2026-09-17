@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { deleteImportOf, GROUP, importViaApi, PRIVATE_1, PRIVATE_2, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // Import overlay states (ARCHITECTURE §12 import/showcase): drop veil, step 1 pick / loading / preview / attachments,

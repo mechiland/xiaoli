@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Parse error reached from the empty home's "选择文件" (the first file a new user picks): the notice's example file name
 // is the synthetic stamp, never a sample's basename (overall critic r2 #1). Nothing is created.

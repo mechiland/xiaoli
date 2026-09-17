@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 type Evidence = { sourceKind: string; items: { chatId: number; chatTitle: string; messages: { isEvidence: boolean }[] }[] }
 

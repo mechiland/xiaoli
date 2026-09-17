@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // 来往 (SPEC §9.5), twice over:
 //  - on REAL seed rows (41 segments / 12 loops): the derivations that matter — a conversation that regroups across a
@@ -78,7 +78,7 @@ export default defineScenario({
   ],
   // two live steps ask for rows this account must not see, on purpose
   // one live step asks for a person that does not exist, on purpose (true two-account isolation is asserted in
-  // server/interaction/__tests__/interaction.test.ts, which can hold two seeded accounts at once)
+  // src/server/interaction/interaction.test.ts, which can hold two seeded accounts at once)
   expectedFailures: [{ urlPattern: '/api/people/99999999/interaction', status: 404, step: 'real rows: rhythm, loops and the timeline' }],
   async run({ page, step, shot, check, helpers, width, api, seed }) {
     const narrow = width < 1024

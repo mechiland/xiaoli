@@ -85,7 +85,7 @@ describe('runEval preconditions', () => {
   it('extract entry unavailable → clear message, exit 2, no report', async () => {
     const root = tempRoot()
     await makeSource(root, 'synthetic', SYN_ZIP, '在云杉医院当护士', evalPaths(root).lock)
-    const r = await runEval(opts(), deps(root, { ok: false, module: 'extract', entry: 'server/extract/index.ts', reason: 'server/extract/index.ts does not exist yet' }))
+    const r = await runEval(opts(), deps(root, { ok: false, module: 'extract', entry: 'src/server/extract/index.ts', reason: 'src/server/extract/index.ts does not exist yet' }))
     expect(r.exitCode).toBe(2)
     expect(r.message).toContain('extract')
     expect(r.report).toBeNull()
@@ -118,7 +118,7 @@ describe('runEval scoring', () => {
     expect(r.exitCode).toBe(1)
     expect(rep.usage).toMatchObject({ inputTokens: 1000, outputTokens: 200, calls: 1 })
 
-    const combined = readFileSync(path.join(paths.reports, '20260915-100000.json'), 'utf8')
+    const combined = readFileSync(path.join(paths.reportSummary, '20260915-100000.json'), 'utf8')
     expect(combined).not.toContain('在云杉医院当护士')
     expect(JSON.parse(combined).zips[0].details).toBeUndefined()
     const detail = JSON.parse(readFileSync(path.join(paths.reportDetail.synthetic, '20260915-100000.json'), 'utf8'))
@@ -137,7 +137,7 @@ describe('runEval scoring', () => {
     const r = await runEval(opts({ source: 'all' }), deps(root, stubExtract((_, file) => perfect(file))))
     expect(r.report!.passed).toBe(true)
     expect(r.exitCode).toBe(0)
-    const combined = readFileSync(path.join(paths.reports, '20260915-100000.json'), 'utf8')
+    const combined = readFileSync(path.join(paths.reportSummary, '20260915-100000.json'), 'utf8')
     expect(combined).not.toContain(REAL_ZIP)
     expect(combined).not.toContain(REAL_SECRET_STATEMENT)
     expect(JSON.parse(combined).zips.map((z: { zip: string }) => z.zip)).toContain('real-1')
@@ -185,8 +185,8 @@ describe('runEval scoring', () => {
         : { claims: [claim('a', '在云杉医院当护士', 'work', [1]), claim('b', '喜欢钓鱼', 'preference', [2])] },
     )
     const r = await runEval(opts({ compare: 'extract.v1' }), deps(root, byVersion))
-    const file = readdirSync(paths.reports).find((f) => f.startsWith('compare-extract.v1-vs-extract.v2-'))!
-    const cmp = JSON.parse(readFileSync(path.join(paths.reports, file), 'utf8'))
+    const file = readdirSync(paths.reportCompare).find((f) => f.startsWith('compare-extract.v1-vs-extract.v2-'))!
+    const cmp = JSON.parse(readFileSync(path.join(paths.reportCompare, file), 'utf8'))
     expect(cmp.sources.synthetic.a['claims.precisionLenient']).toBe(0.5)
     expect(cmp.sources.synthetic.b['claims.precisionLenient']).toBe(1)
     expect(cmp.sources.synthetic.delta['claims.precisionLenient']).toBe(0.5)

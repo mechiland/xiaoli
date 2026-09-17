@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Empty account (SPEC §9.12): drop zone instead of the search box, drag-over state, drop and "选择文件" open the import
 // overlay with the file (closed at the preview step: nothing is created), onboarding page and its inline error.

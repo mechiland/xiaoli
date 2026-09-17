@@ -1,5 +1,5 @@
 import { DEFAULT_TZ, todayInTz } from '@/lib/time'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import type { Dump } from './_support'
 
 // Settings page states (SPEC §9.11, ARCHITECTURE §12 showcase): filled, saving, saved, name/threshold validation,

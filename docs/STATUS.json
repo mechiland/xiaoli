@@ -48,7 +48,7 @@
       "score": 8.7,
       "passed": true,
       "openIssues": [
-        "core request parser#1 item 5 (optional hardening): server/import/mapping.ts trusts the client-computed payload fingerprint and the stored column. (a) Recompute `fingerprint()` server-side for incoming messages. (b) Recompute it for stored image/video rows when aligning. Then a stale staged payload or an unbackfilled row still aligns on re-import.",
+        "core request parser#1 item 5 (optional hardening): src/server/import/mapping.ts trusts the client-computed payload fingerprint and the stored column. (a) Recompute `fingerprint()` server-side for incoming messages. (b) Recompute it for stored image/video rows when aligning. Then a stale staged payload or an unbackfilled row still aligns on re-import.",
         "core request chat#1 item 2 (optional): the overlay image list may say 这张图片浏览器无法预览（HEIC） for image/heic|heif attachments, once parser sniffs the mime."
       ],
       "lastArtifacts": "artifacts/import__showcase/20260915-223715/, artifacts/import__flow/20260915-223627/, artifacts/import__upload-resume/20260915-223641/, artifacts/import__abandon-step2/20260915-223243/, artifacts/critic/import/"
@@ -62,7 +62,7 @@
         "OPEN: loops precisionLenient 0.625 vs the 0.80 gate (up from 0.556), recall 0.588 (down from 0.706), 9 should_ignore FPs left. Several of the 9 are judgement calls rather than clear errors (周末回家吃饭 / 订生日包厢 / 婚礼发请帖), so the remaining gap is partly an unsettled definition of what counts as a 未结事项.",
         "OPEN (DECISIONS I23): the mechanical momentary rule also drops 2 gold-required loops (k6 晚上看转过来的租房文章, k7 回头把在追的剧名发过去). No word list separates them from 晚上过去拿西瓜. The blind annotator and the new third threshold genuinely disagree, so loops recall has a ceiling neither prompt nor validator can lift while gold is frozen. Gold was NOT touched."
       ],
-      "lastArtifacts": "eval/reports/20260915-123434.json, eval/reports/synthetic/20260915-123434.json, artifacts/critic/extract/"
+      "lastArtifacts": "eval/reports/summary/20260915-123434.json, eval/reports/synthetic/20260915-123434.json, artifacts/critic/extract/"
     },
     "review": {
       "round": 3,
@@ -118,7 +118,7 @@
       "score": null,
       "passed": true,
       "openIssues": [
-        "deploy#3: integrator applied the turbopackIgnore line in server/llm/node/file-budget.ts (DECISIONS integrator I20); confirm the \"tracing of the whole project\" warning is gone in the next worktree build"
+        "deploy#3: integrator applied the turbopackIgnore line in src/server/llm/node/file-budget.ts (DECISIONS integrator I20); confirm the \"tracing of the whole project\" warning is gone in the next worktree build"
       ],
       "lastArtifacts": "docs/DEPLOY.md, scripts/deploy/ (local verification DECISIONS deploy D9: worktree build, wrangler dry-run, secret scan, preview smoke 20/20)"
     },
@@ -128,7 +128,7 @@
       "passed": true,
       "openIssues": [
         "Real chats still produce no events, so no person page ever shows 经历 (r3#2 not fixed)",
-        "下载原图 on a HEIC photo downloads with a .jpg name and image/heic type (regression after the parser mime fix) — server/chat/chat.test.ts now asserts ?download=1 names the file .heic; not re-checked by the critic",
+        "下载原图 on a HEIC photo downloads with a .jpg name and image/heic type (regression after the parser mime fix) — src/server/chat/chat.test.ts now asserts ?download=1 names the file .heic; not re-checked by the critic",
         "A term of address after @<display name> is stored as `mentioned`, shown as 被@的名字 and grouped under 群内显示名",
         "Relation rows on other people's pages name the user by the self label while the same row's note says 我"
       ],
@@ -145,14 +145,14 @@
     }
   },
   "eval": {
-    "latestReport": "eval/reports/20260916-080732.json",
+    "latestReport": "eval/reports/summary/20260916-080732.json",
     "passed": false,
     "note": "extract.v8 + interaction.v2 live on synthetic. All pre-existing gates PASS (claims 0.90/0.77, handles 1.00, relations 0.92, transactional 0.02) — the split achieved its purpose. Only loops precision fails: 0.625 vs 0.80, on the new capability. Interaction metrics: loops R 0.588, conversationCoverage 0.40, topicCoverage 0.83.",
     "baselines": {
-      "extract.v8 alone": "eval/reports/20260916-071221.json",
-      "extract.v9 combined": "eval/reports/20260916-070918.json",
-      "v8 + interaction.v1": "eval/reports/20260916-074900.json",
-      "v8 + interaction.v2": "eval/reports/20260916-080732.json"
+      "extract.v8 alone": "eval/reports/summary/20260916-071221.json",
+      "extract.v9 combined": "eval/reports/summary/20260916-070918.json",
+      "v8 + interaction.v1": "eval/reports/summary/20260916-074900.json",
+      "v8 + interaction.v2": "eval/reports/summary/20260916-080732.json"
     }
   },
   "llmUsage": {

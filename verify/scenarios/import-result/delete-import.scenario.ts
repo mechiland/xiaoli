@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { Route } from 'playwright'
 import { parseExportZip } from '@/lib/wechat-export'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { detailUrl, fulfillJson, guardJobs, reviewUrl, type Detail, type Review } from './_support'
 
 // F7 delete import from the UI, on a throwaway account (no seed data, no LLM):
