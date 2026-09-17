@@ -1,0 +1,66 @@
+{
+  "inputHash": "0ab4732a3f5c4882f9c98085887aa42bc8e8a906a7f0b7be1ce911f48137b3da",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:44:26.332Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#5",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说做机器人公司，未说与专业对口"
+      },
+      {
+        "fpId": "claims#11",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n14",
+        "reason": "老王儿子考上清华，不应为老王或其儿子建claim"
+      },
+      {
+        "fpId": "claims#17",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说房子看好了，未说帮父母看房"
+      },
+      {
+        "fpId": "claims#18",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n4",
+        "reason": "中介名片属于事务信息，不应记成claim"
+      },
+      {
+        "fpId": "relations#11",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n14",
+        "reason": "老王儿子属于不应建人物/claim的推断陷阱"
+      },
+      {
+        "fpId": "relations#16",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n4",
+        "reason": "中介名片属于事务信息，不应建关系"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日对应公历8月21日，不应记成公历生日"
+      }
+    ]
+  }
+}

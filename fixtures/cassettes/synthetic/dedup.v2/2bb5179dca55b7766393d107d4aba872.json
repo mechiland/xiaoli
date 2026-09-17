@@ -1,0 +1,33 @@
+{
+  "key": "2bb5179dca55b7766393d107d4aba872",
+  "recordedAt": "2026-09-16T08:07:40.932Z",
+  "model": "deepseek-flash",
+  "promptVersion": "dedup.v2",
+  "purpose": "dedup",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你在帮用户整理人物档案。对每个人，给你一组\"已有信息\"（candidates，带 id）和一组\"新信息\"（new，带 index）。找出与某条已有信息**说的是同一件事**的新信息，只输出一个 json 对象。\n\n判断规则：\n- 同一件事 = 同一个人、同一个事实，措辞可以不同（\"在成都当护士\"与\"成都某医院护士\"是同一件事）。\n- 新信息和已有信息说的是同一个事实，只是多了或少了一些细节（时间、地点、补充说明），**算**重复。\n- 说的是另一件事，或者是一个新的变化（换了工作、搬了家、升了学），**不是**重复。\n- 相互冲突的信息（\"住在杭州\"与\"搬到了苏州\"）不是重复。\n- 每条新信息最多对应一条已有信息；不确定时不要标为重复。\n- 只能使用输入里出现过的 index 和 id。\n\n输出格式（json 示例）：\n\n{ \"duplicates\": [ { \"newIndex\": 0, \"existingClaimId\": 42 } ] }"
+      },
+      {
+        "role": "user",
+        "content": "{\"persons\":[{\"personId\":1,\"label\":\"一舟\",\"candidates\":[{\"id\":1,\"statement\":\"在星禾互娱写前端\"},{\"id\":2,\"statement\":\"住在杭州滨江\"},{\"id\":3,\"statement\":\"吃不了香菜\"},{\"id\":4,\"statement\":\"1995年出生\"},{\"id\":5,\"statement\":\"毕业于武汉大学计算机系\"},{\"id\":7,\"statement\":\"和苏苏在一起了\"},{\"id\":1000000001,\"statement\":\"12月回武汉参加武大计算机系聚会\"},{\"id\":1000000002,\"statement\":\"这周寄龙井过来\"},{\"id\":1000000003,\"statement\":\"过年带苏苏来云杉见大家\"}],\"new\":[{\"index\":0,\"statement\":\"老家在九江\"},{\"index\":1,\"statement\":\"住在杭州\"},{\"index\":1000000,\"statement\":\"下次见面请喝奶茶\"}]}]}\n\n请输出 json。"
+      }
+    ],
+    "maxTokens": 1024,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"duplicates\":[{\"newIndex\":1,\"existingClaimId\":2}]}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 453,
+      "outputTokens": 17,
+      "cacheHitTokens": 256
+    },
+    "latencyMs": 867
+  },
+  "error": null
+}

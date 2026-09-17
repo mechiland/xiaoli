@@ -1,2 +1,31 @@
 .DS_Store
 *.zip
+# synthetic eval ZIPs are committed (core request architecture#3)
+!fixtures/synthetic/*.zip
+
+# secrets
+.env*.local
+.dev.vars
+
+# real data (PLAN.md 规则)
+fixtures/real/
+eval/gold/real/
+eval/reports/real/
+artifacts/
+fixtures/cassettes/real/
+
+# build
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.dev/
+*.tsbuildinfo
+next-env.d.ts
+
+# eval scratch / real judge cache (core request architecture#1)
+eval/judge-cache/real/
+eval/runs/
+# .dev/verify/ and .dev/annotate/ (annotation views of real chats) are covered by .dev/
+playwright-report/
+test-results/

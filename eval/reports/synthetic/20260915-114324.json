@@ -1,0 +1,2813 @@
+{
+  "reportVersion": 1,
+  "runId": "20260915-114324-extract.v4",
+  "createdAt": "2026-09-15T11:44:46.904Z",
+  "promptVersion": "extract.v4",
+  "model": "deepseek-flash",
+  "mode": "record",
+  "deadlinePolicy": "app",
+  "parserVersion": "wechat-export@1",
+  "judgePromptVersions": {
+    "match": "judge-match.v1",
+    "fp": "judge-fp.v1"
+  },
+  "judgeFallback": false,
+  "aborted": null,
+  "usage": {
+    "inputTokens": 144201,
+    "outputTokens": 10560,
+    "calls": 41,
+    "judgeInputTokens": 27911,
+    "judgeOutputTokens": 2309,
+    "judgeCalls": 29,
+    "judgeCacheHits": 3,
+    "judgeFallbacks": 0
+  },
+  "gold": [
+    {
+      "source": "synthetic",
+      "zip": "聊天记录_20260405_223012.zip",
+      "lockKey": "聊天记录_20260405_223012",
+      "goldSha256": "39f5ec7f20c0dd34d97e4032369ee52ca99753a1713aaa9da8646c1a8b22c31f",
+      "lockedSha256": "39f5ec7f20c0dd34d97e4032369ee52ca99753a1713aaa9da8646c1a8b22c31f",
+      "lockVersions": 2,
+      "frozen": true,
+      "changeRecorded": true,
+      "lockAppendOnly": null
+    },
+    {
+      "source": "synthetic",
+      "zip": "聊天记录_20260910_183020.zip",
+      "lockKey": "聊天记录_20260910_183020",
+      "goldSha256": "588eaea919f8900af618bcbea129f90a366ecb4e6f3e5b8901a6a08efcf4c3f0",
+      "lockedSha256": "588eaea919f8900af618bcbea129f90a366ecb4e6f3e5b8901a6a08efcf4c3f0",
+      "lockVersions": 2,
+      "frozen": true,
+      "changeRecorded": true,
+      "lockAppendOnly": null
+    },
+    {
+      "source": "synthetic",
+      "zip": "聊天记录_20260912_095501.zip",
+      "lockKey": "聊天记录_20260912_095501",
+      "goldSha256": "3c09cfc34534a35bf059d7248cd097065f5ac48d8977816075cc5671472d9b23",
+      "lockedSha256": "3c09cfc34534a35bf059d7248cd097065f5ac48d8977816075cc5671472d9b23",
+      "lockVersions": 1,
+      "frozen": true,
+      "changeRecorded": null,
+      "lockAppendOnly": null
+    },
+    {
+      "source": "synthetic",
+      "zip": "聊天记录_20260914_211545.zip",
+      "lockKey": "聊天记录_20260914_211545",
+      "goldSha256": "5608a639be7e3b069b07ae2d39b14e3cdf996ebf93b7d96ecf65cd98e3625b16",
+      "lockedSha256": "5608a639be7e3b069b07ae2d39b14e3cdf996ebf93b7d96ecf65cd98e3625b16",
+      "lockVersions": 1,
+      "frozen": true,
+      "changeRecorded": null,
+      "lockAppendOnly": null
+    }
+  ],
+  "p95WindowMs": {
+    "synthetic": 3715,
+    "real": 1886
+  },
+  "p95Valid": true,
+  "sources": {
+    "synthetic": {
+      "claims": {
+        "predicted": 65,
+        "tpStrict": 41,
+        "tpLenient": 48,
+        "goldRequired": 47,
+        "goldMatchedStrict": 38,
+        "goldMatchedLenient": 43,
+        "fp": 17,
+        "fn": 4,
+        "precisionStrict": 0.6308,
+        "precisionLenient": 0.7385,
+        "recallStrict": 0.8085,
+        "recallLenient": 0.9149,
+        "yieldPer100": 8.0846
+      },
+      "relations": {
+        "predicted": 34,
+        "tpStrict": 23,
+        "tpLenient": 23,
+        "goldRequired": 21,
+        "goldMatchedStrict": 19,
+        "goldMatchedLenient": 19,
+        "fp": 11,
+        "fn": 2,
+        "precisionStrict": 0.6765,
+        "precisionLenient": 0.6765,
+        "recallStrict": 0.9048,
+        "recallLenient": 0.9048,
+        "yieldPer100": 4.2289
+      },
+      "handles": {
+        "predicted": 14,
+        "tpStrict": 12,
+        "tpLenient": 12,
+        "goldRequired": 12,
+        "goldMatchedStrict": 8,
+        "goldMatchedLenient": 8,
+        "fp": 2,
+        "fn": 4,
+        "precisionStrict": 0.8571,
+        "precisionLenient": 0.8571,
+        "recallStrict": 0.6667,
+        "recallLenient": 0.6667,
+        "yieldPer100": 1.7413
+      },
+      "dates": {
+        "predicted": 7,
+        "tpStrict": 6,
+        "tpLenient": 6,
+        "goldRequired": 5,
+        "goldMatchedStrict": 5,
+        "goldMatchedLenient": 5,
+        "fp": 1,
+        "fn": 0,
+        "precisionStrict": 0.8571,
+        "precisionLenient": 0.8571,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 0.8706
+      },
+      "events": {
+        "predicted": 4,
+        "tpStrict": 3,
+        "tpLenient": 4,
+        "goldRequired": 12,
+        "goldMatchedStrict": 3,
+        "goldMatchedLenient": 4,
+        "fp": 0,
+        "fn": 8,
+        "precisionStrict": 0.75,
+        "precisionLenient": 1,
+        "recallStrict": 0.25,
+        "recallLenient": 0.3333,
+        "yieldPer100": 0.4975
+      },
+      "messages": 804,
+      "yieldPer100Total": 15.4229,
+      "transactionalAsClaimRatio": 0.0923,
+      "transactionalClaims": 6,
+      "sensitiveInStatement": 0,
+      "invalidEvidencePost": 0,
+      "invalidEvidencePreRate": 0,
+      "droppedInvalidEvidence": 0,
+      "rawItemCount": 181,
+      "evidenceOverlap": 0.9677,
+      "unmatchedNewPersons": 6,
+      "kindMismatch": 0,
+      "categoryMismatch": 4,
+      "errors": {
+        "claims": {
+          "factual_error": 2,
+          "wrong_person": 2,
+          "over_inference": 6,
+          "should_ignore": 7,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 6,
+          "over_inference": 1,
+          "should_ignore": 4,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 2,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 1,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "subLabels": {
+        "transactional": 8,
+        "coordination": 1,
+        "invisible_content": 0,
+        "not_about_person": 3
+      },
+      "zips": 4
+    },
+    "real": {
+      "claims": {
+        "predicted": 5,
+        "tpStrict": 2,
+        "tpLenient": 3,
+        "goldRequired": 3,
+        "goldMatchedStrict": 1,
+        "goldMatchedLenient": 1,
+        "fp": 2,
+        "fn": 2,
+        "precisionStrict": 0.4,
+        "precisionLenient": 0.6,
+        "recallStrict": 0.3333,
+        "recallLenient": 0.3333,
+        "yieldPer100": 3.6765
+      },
+      "relations": {
+        "predicted": 3,
+        "tpStrict": 1,
+        "tpLenient": 1,
+        "goldRequired": 2,
+        "goldMatchedStrict": 1,
+        "goldMatchedLenient": 1,
+        "fp": 2,
+        "fn": 1,
+        "precisionStrict": 0.3333,
+        "precisionLenient": 0.3333,
+        "recallStrict": 0.5,
+        "recallLenient": 0.5,
+        "yieldPer100": 2.2059
+      },
+      "handles": {
+        "predicted": 5,
+        "tpStrict": 5,
+        "tpLenient": 5,
+        "goldRequired": 4,
+        "goldMatchedStrict": 4,
+        "goldMatchedLenient": 4,
+        "fp": 0,
+        "fn": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 3.6765
+      },
+      "dates": {
+        "predicted": 1,
+        "tpStrict": 1,
+        "tpLenient": 1,
+        "goldRequired": 1,
+        "goldMatchedStrict": 1,
+        "goldMatchedLenient": 1,
+        "fp": 0,
+        "fn": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 0.7353
+      },
+      "events": {
+        "predicted": 0,
+        "tpStrict": 0,
+        "tpLenient": 0,
+        "goldRequired": 1,
+        "goldMatchedStrict": 0,
+        "goldMatchedLenient": 0,
+        "fp": 0,
+        "fn": 1,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "recallStrict": 0,
+        "recallLenient": 0,
+        "yieldPer100": 0
+      },
+      "messages": 136,
+      "yieldPer100Total": 10.2941,
+      "transactionalAsClaimRatio": 0.2,
+      "transactionalClaims": 1,
+      "sensitiveInStatement": 0,
+      "invalidEvidencePost": 0,
+      "invalidEvidencePreRate": 0,
+      "droppedInvalidEvidence": 0,
+      "rawItemCount": 19,
+      "evidenceOverlap": 1,
+      "unmatchedNewPersons": 1,
+      "kindMismatch": 1,
+      "categoryMismatch": 0,
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 1,
+          "should_ignore": 1,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 2,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "subLabels": {
+        "transactional": 1,
+        "coordination": 0,
+        "invisible_content": 0,
+        "not_about_person": 0
+      },
+      "zips": 3
+    }
+  },
+  "gates": [
+    {
+      "name": "claims.precisionLenient",
+      "source": "synthetic",
+      "value": 0.7385,
+      "threshold": 0.85,
+      "op": ">=",
+      "passed": false
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "synthetic",
+      "value": 0.8085,
+      "threshold": 0.7,
+      "op": ">=",
+      "passed": true
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "synthetic",
+      "value": 0.8571,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": false
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "synthetic",
+      "value": 0.6765,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": false
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "synthetic",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "synthetic",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "synthetic",
+      "value": 0.0923,
+      "threshold": 0.05,
+      "op": "<=",
+      "passed": false
+    },
+    {
+      "name": "zips.scored",
+      "source": "synthetic",
+      "value": 4,
+      "threshold": 1,
+      "op": ">=",
+      "passed": true,
+      "note": "4/4 zips with gold scored"
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "synthetic",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.frozen",
+      "source": "synthetic",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "synthetic",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "synthetic",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "synthetic",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "synthetic",
+      "value": 3715,
+      "threshold": 30000,
+      "op": "<=",
+      "passed": true
+    }
+  ],
+  "passed": false,
+  "passedBySource": {
+    "synthetic": false,
+    "real": false
+  },
+  "zips": [
+    {
+      "zip": "perf-5000.zip",
+      "source": "synthetic",
+      "status": "no_gold",
+      "messageCount": null,
+      "windows": null,
+      "metrics": null,
+      "errors": null
+    },
+    {
+      "zip": "聊天记录_20260405_223012.zip",
+      "source": "synthetic",
+      "status": "scored",
+      "messageCount": 207,
+      "windows": {
+        "total": 6,
+        "failed": 0,
+        "p95Ms": 2990,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 18,
+          "tpStrict": 12,
+          "tpLenient": 14,
+          "goldRequired": 12,
+          "goldMatchedStrict": 11,
+          "goldMatchedLenient": 12,
+          "fp": 4,
+          "fn": 0,
+          "precisionStrict": 0.6667,
+          "precisionLenient": 0.7778,
+          "recallStrict": 0.9167,
+          "recallLenient": 1,
+          "yieldPer100": 8.6957
+        },
+        "relations": {
+          "predicted": 3,
+          "tpStrict": 3,
+          "tpLenient": 3,
+          "goldRequired": 3,
+          "goldMatchedStrict": 3,
+          "goldMatchedLenient": 3,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 1.4493
+        },
+        "handles": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 1,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 1,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": 0,
+          "recallLenient": 0,
+          "yieldPer100": 0
+        },
+        "dates": {
+          "predicted": 2,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 2,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 0.9662
+        },
+        "events": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 3,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 2,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 0.3333,
+          "recallLenient": 0.3333,
+          "yieldPer100": 0.4831
+        },
+        "messages": 207,
+        "yieldPer100Total": 11.5942,
+        "transactionalAsClaimRatio": 0.1111,
+        "transactionalClaims": 2,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 32,
+        "evidenceOverlap": 1,
+        "unmatchedNewPersons": 0,
+        "kindMismatch": 0,
+        "categoryMismatch": 2,
+        "errors": {
+          "claims": {
+            "factual_error": 1,
+            "wrong_person": 0,
+            "over_inference": 1,
+            "should_ignore": 2,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 2,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 1,
+          "wrong_person": 0,
+          "over_inference": 1,
+          "should_ignore": 2,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "details": {
+        "tp": [
+          {
+            "type": "claims",
+            "predIndex": 0,
+            "goldId": "c1",
+            "verdict": "same",
+            "text": "在星禾互娱写前端",
+            "goldText": "在星禾互娱做前端开发",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 1,
+            "goldId": "c2",
+            "verdict": "same",
+            "text": "住在杭州滨江",
+            "goldText": "住在杭州滨江",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 3,
+            "goldId": "c3",
+            "verdict": "same",
+            "text": "吃不了香菜",
+            "goldText": "不吃香菜",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 4,
+            "goldId": "c5",
+            "verdict": "same",
+            "text": "毕业于武汉大学计算机系",
+            "goldText": "武汉大学计算机系毕业",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 5,
+            "goldId": "c4",
+            "verdict": "same",
+            "text": "1995年出生",
+            "goldText": "1995年出生",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 6,
+            "goldId": "c7",
+            "verdict": "less_specific",
+            "text": "和苏苏在一起了",
+            "goldText": "2025年11月和苏苏在一起了",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 7,
+            "goldId": "c9",
+            "verdict": "same",
+            "text": "做插画",
+            "goldText": "是自由插画师",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 8,
+            "goldId": "c10",
+            "verdict": "same",
+            "text": "提供过收货地址",
+            "goldText": "提供过收货地址",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 9,
+            "goldId": "c11",
+            "verdict": "less_specific",
+            "text": "提供过联系方式",
+            "goldText": "提供过手机号",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 10,
+            "goldId": "c14",
+            "verdict": "same",
+            "text": "老家在九江",
+            "goldText": "老家在九江",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 11,
+            "goldId": "c13",
+            "verdict": "same",
+            "text": "颈椎不好",
+            "goldText": "颈椎不好",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 13,
+            "goldId": "c16",
+            "verdict": "same",
+            "text": "最近每天早上跑五公里",
+            "goldText": "每天早上跑步五公里",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 16,
+            "goldId": "c17",
+            "verdict": "same",
+            "text": "拿到蓝鲸出行技术负责人的 offer，五月一号入职",
+            "goldText": "拿到蓝鲸出行技术负责人的offer，5月1日入职",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 17,
+            "goldId": "c18",
+            "verdict": "same",
+            "text": "计划四月底搬去深圳",
+            "goldText": "四月底搬去深圳",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 0,
+            "goldId": "r3",
+            "verdict": "same",
+            "text": "一舟 —classmate/大学同学→ 小满",
+            "goldText": "xiaoman —classmate/大学同学→ yizhou",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 1,
+            "goldId": "r1",
+            "verdict": "same",
+            "text": "一舟 —spouse/女朋友→ 苏苏",
+            "goldText": "susu —other/女朋友→ yizhou",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 2,
+            "goldId": "r2",
+            "verdict": "same",
+            "text": "一舟 —child/儿子→ 一舟妈妈",
+            "goldText": "yizhou_mom —parent/妈妈→ yizhou",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 0,
+            "goldId": "d1",
+            "verdict": "same",
+            "text": "birthday 11-3 solar",
+            "goldText": "birthday 11-3 solar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 1,
+            "goldId": "d2",
+            "verdict": "same",
+            "text": "birthday 1-18 lunar",
+            "goldText": "birthday 1-18 lunar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "events",
+            "predIndex": 0,
+            "goldId": "e2",
+            "verdict": "same",
+            "text": "武大计算机系毕业八年同学聚会",
+            "goldText": "12月武大计算机系同学聚会（毕业八年首次）",
+            "evidenceOverlap": true
+          }
+        ],
+        "fp": [
+          {
+            "type": "claims",
+            "fpId": "claims#2",
+            "predIndex": 2,
+            "person": "yizhou",
+            "text": "通勤半小时",
+            "evidence": [
+              12
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": null,
+            "reason": "通勤半小时属于居住事务细节，非人物核心信息"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#12",
+            "predIndex": 12,
+            "person": "yizhou",
+            "text": "报名了杭州马拉松，四月跑半马",
+            "evidence": [
+              152
+            ],
+            "label": "factual_error",
+            "subLabel": null,
+            "goldId": "c15",
+            "negativeId": null,
+            "reason": "标准答案只说报名半马，未提四月跑"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#14",
+            "predIndex": 14,
+            "person": "yizhou",
+            "text": "正在看新工作机会",
+            "evidence": [
+              169
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文只说在看机会，未明确是新工作机会"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#15",
+            "predIndex": 15,
+            "person": "yizhou",
+            "text": "在和深圳的蓝鲸出行聊技术负责人岗位",
+            "evidence": [
+              172
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n8",
+            "reason": "面试流程日程属于事务信息"
+          }
+        ],
+        "fn": [
+          {
+            "type": "claims",
+            "goldId": "c7",
+            "text": "2025年11月和苏苏在一起了",
+            "lessSpecificMatch": true
+          },
+          {
+            "type": "handles",
+            "goldId": "h1",
+            "text": "real_name:林小满",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e4",
+            "text": "春节一舟带苏苏回九江老家",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e6",
+            "text": "一舟拿到蓝鲸出行技术负责人offer",
+            "lessSpecificMatch": false
+          }
+        ],
+        "unmatchedNewPersons": []
+      }
+    },
+    {
+      "zip": "聊天记录_20260910_183020.zip",
+      "source": "synthetic",
+      "status": "scored",
+      "messageCount": 178,
+      "windows": {
+        "total": 5,
+        "failed": 0,
+        "p95Ms": 3839,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 19,
+          "tpStrict": 13,
+          "tpLenient": 14,
+          "goldRequired": 16,
+          "goldMatchedStrict": 12,
+          "goldMatchedLenient": 13,
+          "fp": 5,
+          "fn": 3,
+          "precisionStrict": 0.6842,
+          "precisionLenient": 0.7368,
+          "recallStrict": 0.75,
+          "recallLenient": 0.8125,
+          "yieldPer100": 10.6742
+        },
+        "relations": {
+          "predicted": 12,
+          "tpStrict": 5,
+          "tpLenient": 5,
+          "goldRequired": 4,
+          "goldMatchedStrict": 3,
+          "goldMatchedLenient": 3,
+          "fp": 7,
+          "fn": 1,
+          "precisionStrict": 0.4167,
+          "precisionLenient": 0.4167,
+          "recallStrict": 0.75,
+          "recallLenient": 0.75,
+          "yieldPer100": 6.7416
+        },
+        "handles": {
+          "predicted": 7,
+          "tpStrict": 7,
+          "tpLenient": 7,
+          "goldRequired": 6,
+          "goldMatchedStrict": 6,
+          "goldMatchedLenient": 6,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 3.9326
+        },
+        "dates": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "events": {
+          "predicted": 1,
+          "tpStrict": 0,
+          "tpLenient": 1,
+          "goldRequired": 1,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 0,
+          "precisionLenient": 1,
+          "recallStrict": 0,
+          "recallLenient": 1,
+          "yieldPer100": 0.5618
+        },
+        "messages": 178,
+        "yieldPer100Total": 21.9101,
+        "transactionalAsClaimRatio": 0,
+        "transactionalClaims": 0,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 49,
+        "evidenceOverlap": 0.963,
+        "unmatchedNewPersons": 3,
+        "kindMismatch": 0,
+        "categoryMismatch": 0,
+        "errors": {
+          "claims": {
+            "factual_error": 1,
+            "wrong_person": 2,
+            "over_inference": 2,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 4,
+            "over_inference": 1,
+            "should_ignore": 2,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 1,
+          "coordination": 1,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 1,
+          "wrong_person": 2,
+          "over_inference": 2,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 4,
+          "over_inference": 1,
+          "should_ignore": 2,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "details": {
+        "tp": [
+          {
+            "type": "claims",
+            "predIndex": 0,
+            "goldId": "c1",
+            "verdict": "same",
+            "text": "担任三年二班班主任",
+            "goldText": "担任三年二班班主任",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 1,
+            "goldId": "c2",
+            "verdict": "same",
+            "text": "教语文",
+            "goldText": "教语文",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 2,
+            "goldId": "c7",
+            "verdict": "same",
+            "text": "这学期转到三年二班",
+            "goldText": "这学期转学到三年二班",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 3,
+            "goldId": "c8",
+            "verdict": "same",
+            "text": "在上海学过一点Scratch",
+            "goldText": "在上海学过一点Scratch",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 4,
+            "goldId": "c18",
+            "verdict": "same",
+            "text": "开明杰少儿编程暑期班",
+            "goldText": "开办明杰少儿编程培训班",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 5,
+            "goldId": "c17",
+            "verdict": "less_specific",
+            "text": "是家委会成员",
+            "goldText": "是三年二班家委会成员",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 6,
+            "goldId": "c19",
+            "verdict": "same",
+            "text": "提供过银行账户",
+            "goldText": "提供过银行账户",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 7,
+            "goldId": "c16",
+            "verdict": "same",
+            "text": "喜欢恐龙",
+            "goldText": "喜欢恐龙",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 8,
+            "goldId": "c21",
+            "verdict": "same",
+            "text": "读三年级",
+            "goldText": "读三年级",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 10,
+            "goldId": "c14",
+            "verdict": "same",
+            "text": "在云杉口腔医院坐诊，周二周四出诊",
+            "goldText": "在云杉口腔医院当牙医",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 11,
+            "goldId": "c15",
+            "verdict": "same",
+            "text": "是儿童牙科医生",
+            "goldText": "儿童牙科医生",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 12,
+            "goldId": "c12",
+            "verdict": "same",
+            "text": "提供过联系方式",
+            "goldText": "提供过联系方式",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 13,
+            "goldId": "c6",
+            "verdict": "same",
+            "text": "提供过收货地址",
+            "goldText": "提供过收货地址",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 16,
+            "goldId": "c10",
+            "verdict": "same",
+            "text": "这学期读完就转回上海上学",
+            "goldText": "读完这学期转回上海上学",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 0,
+            "goldId": "r1",
+            "verdict": "same",
+            "text": "Amy —parent/妈妈→ 小宇",
+            "goldText": "amy —parent/妈妈→ xiaoyu",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 2,
+            "goldId": "r2",
+            "verdict": "same",
+            "text": "豆豆妈 —parent/妈妈→ 豆豆",
+            "goldText": "doudoumama —parent/妈妈→ doudou",
+            "evidenceOverlap": false
+          },
+          {
+            "type": "relations",
+            "predIndex": 3,
+            "goldId": "r3",
+            "verdict": "same",
+            "text": "乐乐爸爸 —parent/爸爸→ 乐乐",
+            "goldText": "lelebaba —parent/爸爸→ lele",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 4,
+            "goldId": "r7",
+            "verdict": "same",
+            "text": "刘春燕 —service_provider/班主任→ 小宇",
+            "goldText": "chunyan —other/班主任→ xiaoyu",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 6,
+            "goldId": "r5",
+            "verdict": "same",
+            "text": "小满 —parent/妈妈→ 朵朵",
+            "goldText": "xiaoman —parent→ duoduo",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 0,
+            "goldId": "h1",
+            "verdict": "same",
+            "text": "real_name:刘春燕",
+            "goldText": "real_name:刘春燕",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 1,
+            "goldId": "h3",
+            "verdict": "same",
+            "text": "address_term:小宇妈妈",
+            "goldText": "address_term:小宇妈妈",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 2,
+            "goldId": "h4",
+            "verdict": "same",
+            "text": "address_term:雯姐",
+            "goldText": "address_term:雯姐",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 3,
+            "goldId": "h5",
+            "verdict": "same",
+            "text": "real_name:王晓雯",
+            "goldText": "real_name:王晓雯",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 4,
+            "goldId": "h6",
+            "verdict": "same",
+            "text": "address_term:张医生",
+            "goldText": "address_term:张医生",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 5,
+            "goldId": "h7",
+            "verdict": "same",
+            "text": "address_term:周老师",
+            "goldText": "address_term:周老师",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 6,
+            "goldId": "h2",
+            "verdict": "same",
+            "text": "address_term:刘老师",
+            "goldText": "address_term:刘老师",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "events",
+            "predIndex": 0,
+            "goldId": "e1",
+            "verdict": "less_specific",
+            "text": "给小宇办欢送会",
+            "goldText": "在云杉万象城给小宇办欢送会",
+            "evidenceOverlap": true
+          }
+        ],
+        "fp": [
+          {
+            "type": "claims",
+            "fpId": "claims#9",
+            "predIndex": 9,
+            "person": "xiaoyu",
+            "text": "新学校就读",
+            "evidence": [
+              74
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文只说小宇紧张，未说新学校就读"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#14",
+            "predIndex": 14,
+            "person": "unknown",
+            "text": "只看漫画",
+            "evidence": [
+              49
+            ],
+            "label": "wrong_person",
+            "subLabel": null,
+            "goldId": "c9",
+            "negativeId": null,
+            "reason": "只看漫画的是小宇，不是unknown"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#15",
+            "predIndex": 15,
+            "person": "amy",
+            "text": "计划下个月搬去上海",
+            "evidence": [
+              90
+            ],
+            "label": "factual_error",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文说下个月搬，未说计划下个月搬去上海"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#17",
+            "predIndex": 17,
+            "person": "unknown",
+            "text": "调到上海分公司工作",
+            "evidence": [
+              90
+            ],
+            "label": "wrong_person",
+            "subLabel": null,
+            "goldId": "c3",
+            "negativeId": null,
+            "reason": "调到上海分公司的是Amy丈夫，不是unknown"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#18",
+            "predIndex": 18,
+            "person": "zhoumingjie",
+            "text": "是老师",
+            "evidence": [
+              120
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "称呼周老师不等于其职业是老师"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#1",
+            "predIndex": 1,
+            "person": "guoguonainai",
+            "text": "果果奶奶 —parent/奶奶→ 果果",
+            "evidence": [
+              27
+            ],
+            "label": "should_ignore",
+            "subLabel": "coordination",
+            "goldId": null,
+            "negativeId": "n28",
+            "reason": "果果奶奶到校门口问放学时间属即时协调"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#5",
+            "predIndex": 5,
+            "person": "zhoumingjie",
+            "text": "周明杰 —service_provider/编程班老师→ 小满",
+            "evidence": [
+              34,
+              35
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n4",
+            "reason": "编程班广告属事务信息，非人物关系"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#7",
+            "predIndex": 7,
+            "person": "doudoumama",
+            "text": "豆豆妈 —parent/妈妈→ 豆豆妈儿子",
+            "evidence": [
+              52
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#8",
+            "predIndex": 8,
+            "person": "amy",
+            "text": "Amy —parent/妈妈→ Amy儿子",
+            "evidence": [
+              48,
+              49
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#9",
+            "predIndex": 9,
+            "person": "lelebaba",
+            "text": "乐乐爸爸 —service_provider/张医生→ 豆豆妈",
+            "evidence": [
+              52,
+              53
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#10",
+            "predIndex": 10,
+            "person": "unknown",
+            "text": "Amy老公 —parent/爸爸→ 小宇",
+            "evidence": [
+              90
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#11",
+            "predIndex": 11,
+            "person": "amy",
+            "text": "Amy —spouse/老公→ Amy老公",
+            "evidence": [
+              90
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文未说明Amy与老公的配偶关系"
+          }
+        ],
+        "fn": [
+          {
+            "type": "claims",
+            "goldId": "c3",
+            "text": "丈夫调到上海分公司工作",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "claims",
+            "goldId": "c4",
+            "text": "2026年10月全家搬去上海",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "claims",
+            "goldId": "c9",
+            "text": "喜欢看漫画",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "claims",
+            "goldId": "c17",
+            "text": "是三年二班家委会成员",
+            "lessSpecificMatch": true
+          },
+          {
+            "type": "relations",
+            "goldId": "r4",
+            "text": "guoguonainai —relative/奶奶→ guoguo",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e1",
+            "text": "在云杉万象城给小宇办欢送会",
+            "lessSpecificMatch": true
+          }
+        ],
+        "unmatchedNewPersons": [
+          "new:豆豆妈儿子",
+          "new:Amy儿子",
+          "new:Amy老公"
+        ]
+      }
+    },
+    {
+      "zip": "聊天记录_20260912_095501.zip",
+      "source": "synthetic",
+      "status": "scored",
+      "messageCount": 215,
+      "windows": {
+        "total": 6,
+        "failed": 0,
+        "p95Ms": 3715,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 19,
+          "tpStrict": 11,
+          "tpLenient": 15,
+          "goldRequired": 13,
+          "goldMatchedStrict": 10,
+          "goldMatchedLenient": 13,
+          "fp": 4,
+          "fn": 0,
+          "precisionStrict": 0.5789,
+          "precisionLenient": 0.7895,
+          "recallStrict": 0.7692,
+          "recallLenient": 1,
+          "yieldPer100": 8.8372
+        },
+        "relations": {
+          "predicted": 17,
+          "tpStrict": 13,
+          "tpLenient": 13,
+          "goldRequired": 12,
+          "goldMatchedStrict": 11,
+          "goldMatchedLenient": 11,
+          "fp": 4,
+          "fn": 1,
+          "precisionStrict": 0.7647,
+          "precisionLenient": 0.7647,
+          "recallStrict": 0.9167,
+          "recallLenient": 0.9167,
+          "yieldPer100": 7.907
+        },
+        "handles": {
+          "predicted": 7,
+          "tpStrict": 5,
+          "tpLenient": 5,
+          "goldRequired": 5,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 2,
+          "fn": 3,
+          "precisionStrict": 0.7143,
+          "precisionLenient": 0.7143,
+          "recallStrict": 0.4,
+          "recallLenient": 0.4,
+          "yieldPer100": 3.2558
+        },
+        "dates": {
+          "predicted": 3,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 2,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 1,
+          "fn": 0,
+          "precisionStrict": 0.6667,
+          "precisionLenient": 0.6667,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 1.3953
+        },
+        "events": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 2,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 1,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 0.5,
+          "recallLenient": 0.5,
+          "yieldPer100": 0.4651
+        },
+        "messages": 215,
+        "yieldPer100Total": 21.8605,
+        "transactionalAsClaimRatio": 0.0526,
+        "transactionalClaims": 1,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 83,
+        "evidenceOverlap": 0.9444,
+        "unmatchedNewPersons": 3,
+        "kindMismatch": 0,
+        "categoryMismatch": 2,
+        "errors": {
+          "claims": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 2,
+            "should_ignore": 2,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 2,
+            "over_inference": 0,
+            "should_ignore": 2,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 2,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 1,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 2,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 3
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 2,
+          "should_ignore": 2,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 2,
+          "over_inference": 0,
+          "should_ignore": 2,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 2,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 1,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "details": {
+        "tp": [
+          {
+            "type": "claims",
+            "predIndex": 0,
+            "goldId": "c2",
+            "verdict": "less_specific",
+            "text": "在读大学",
+            "goldText": "在东南大学读书",
+            "evidenceOverlap": false
+          },
+          {
+            "type": "claims",
+            "predIndex": 1,
+            "goldId": "c3",
+            "verdict": "same",
+            "text": "学机械专业",
+            "goldText": "学机械专业",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 2,
+            "goldId": "c1",
+            "verdict": "same",
+            "text": "读大三",
+            "goldText": "读大三",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 3,
+            "goldId": "c5",
+            "verdict": "same",
+            "text": "在南京上学",
+            "goldText": "在南京上学",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 4,
+            "goldId": "c4",
+            "verdict": "less_specific",
+            "text": "暑假留在南京实习",
+            "goldText": "暑假在南京一家做机器人的公司实习",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 6,
+            "goldId": "c7",
+            "verdict": "same",
+            "text": "曾在顺达物流做调度，干了十年",
+            "goldText": "在顺达物流做调度，干了十年",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 7,
+            "goldId": "c8",
+            "verdict": "less_specific",
+            "text": "跟朋友合伙开了一家火锅店，下个月开业",
+            "goldText": "从顺达物流辞职，和朋友合伙开火锅店",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 8,
+            "goldId": "c9",
+            "verdict": "same",
+            "text": "火锅店店面在老城区",
+            "goldText": "火锅店开在老城区",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 9,
+            "goldId": "c12",
+            "verdict": "same",
+            "text": "读三年级",
+            "goldText": "上小学三年级",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 10,
+            "goldId": "c11",
+            "verdict": "same",
+            "text": "在云杉二小教数学，教了十二年",
+            "goldText": "在云杉二小教数学，已教十二年",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 12,
+            "goldId": "c10",
+            "verdict": "same",
+            "text": "在老城区开了一家大海老火锅",
+            "goldText": "火锅店叫大海老火锅",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 13,
+            "goldId": "c16",
+            "verdict": "same",
+            "text": "提供过身份证号",
+            "goldText": "提供过身份证号",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 14,
+            "goldId": "c6",
+            "verdict": "less_specific",
+            "text": "21岁",
+            "goldText": "2026年满21岁",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 15,
+            "goldId": "c13",
+            "verdict": "same",
+            "text": "计划下个月搬到林大海那边的小区住，老房子租出去",
+            "goldText": "计划下个月搬到大海家对面楼的小区住",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 16,
+            "goldId": "c14",
+            "verdict": "same",
+            "text": "计划下个月搬到林大海那边的小区住，老房子租出去",
+            "goldText": "计划下个月搬到大海家对面楼的小区住",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 0,
+            "goldId": "r1",
+            "verdict": "same",
+            "text": "林建国 —parent/爸爸→ 林大海",
+            "goldText": "jianguo —parent/儿子→ dahai",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 1,
+            "goldId": "r4",
+            "verdict": "same",
+            "text": "春天的花 —parent/妈妈→ 小满",
+            "goldText": "hua —parent/闺女→ xiaoman",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 2,
+            "goldId": "r5",
+            "verdict": "same",
+            "text": "林大海 —parent/爸爸→ 林子航",
+            "goldText": "dahai —parent/老爸→ zihang",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 3,
+            "goldId": "r6",
+            "verdict": "same",
+            "text": "静静 —parent/妈妈→ 林子航",
+            "goldText": "jingjing —parent/妈→ zihang",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 4,
+            "goldId": "r13",
+            "verdict": "same",
+            "text": "林大海 —spouse/老婆→ 静静",
+            "goldText": "dahai —spouse→ jingjing",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 5,
+            "goldId": "r14",
+            "verdict": "same",
+            "text": "小满 —parent/妈妈→ 朵朵",
+            "goldText": "xiaoman —parent→ duoduo",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 7,
+            "goldId": "r2",
+            "verdict": "same",
+            "text": "春天的花 —parent/妈妈→ 林大海",
+            "goldText": "hua —parent/妈→ dahai",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 9,
+            "goldId": "r3",
+            "verdict": "same",
+            "text": "林建国 —parent/爸爸→ 小满",
+            "goldText": "jianguo —parent/爸→ xiaoman",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 10,
+            "goldId": "r12",
+            "verdict": "same",
+            "text": "春天的花 —parent/妈妈→ 静静",
+            "goldText": "hua —relative/妈→ jingjing",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 12,
+            "goldId": "r10",
+            "verdict": "same",
+            "text": "林大海 —sibling/哥→ 小满",
+            "goldText": "dahai —sibling/哥→ xiaoman",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 13,
+            "goldId": "r8",
+            "verdict": "same",
+            "text": "春天的花 —relative/奶奶→ 林子航",
+            "goldText": "hua —relative/奶奶→ zihang",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 14,
+            "goldId": "r9",
+            "verdict": "same",
+            "text": "林建国 —spouse/老婆→ 春天的花",
+            "goldText": "jianguo —spouse→ hua",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 15,
+            "goldId": "r11",
+            "verdict": "same",
+            "text": "林建国 —parent/爸爸→ 静静",
+            "goldText": "jianguo —relative/爸→ jingjing",
+            "evidenceOverlap": false
+          },
+          {
+            "type": "handles",
+            "predIndex": 0,
+            "goldId": "h4",
+            "verdict": "same",
+            "text": "address_term:闺女",
+            "goldText": "address_term:闺女",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 3,
+            "goldId": "h6",
+            "verdict": "same",
+            "text": "address_term:奶奶",
+            "goldText": "address_term:奶奶",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 4,
+            "goldId": "h10",
+            "verdict": "same",
+            "text": "address_term:爸",
+            "goldText": "address_term:爸",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 5,
+            "goldId": "h7",
+            "verdict": "same",
+            "text": "address_term:爷爷",
+            "goldText": "address_term:爷爷",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "handles",
+            "predIndex": 6,
+            "goldId": "h3",
+            "verdict": "same",
+            "text": "address_term:哥",
+            "goldText": "address_term:哥",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 0,
+            "goldId": "d1",
+            "verdict": "same",
+            "text": "birthday 7-9 lunar",
+            "goldText": "birthday 7-9 lunar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 2,
+            "goldId": "d2",
+            "verdict": "same",
+            "text": "birthday 9-10 solar",
+            "goldText": "birthday 9-10 solar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "events",
+            "predIndex": 0,
+            "goldId": "e1",
+            "verdict": "same",
+            "text": "大海老火锅老城区店开业",
+            "goldText": "林大海的火锅店开业",
+            "evidenceOverlap": true
+          }
+        ],
+        "fp": [
+          {
+            "type": "claims",
+            "fpId": "claims#5",
+            "predIndex": 5,
+            "person": "zihang",
+            "text": "在一家做机器人的公司实习，与专业对口",
+            "evidence": [
+              41
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文只说做机器人公司，未说与专业对口"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#11",
+            "predIndex": 11,
+            "person": "unknown",
+            "text": "考上清华大学",
+            "evidence": [
+              80
+            ],
+            "label": "should_ignore",
+            "subLabel": "not_about_person",
+            "goldId": null,
+            "negativeId": "n14",
+            "reason": "老王儿子考上清华，不应为老王或其儿子建claim"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#17",
+            "predIndex": 17,
+            "person": "dahai",
+            "text": "帮父母看好了房子，就在自己家对面楼",
+            "evidence": [
+              199
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文只说房子看好了，未说帮父母看房"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#18",
+            "predIndex": 18,
+            "person": "unknown",
+            "text": "做房产中介",
+            "evidence": [
+              200,
+              201
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n4",
+            "reason": "中介名片属于事务信息，不应记成claim"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#6",
+            "predIndex": 6,
+            "person": "hua",
+            "text": "春天的花 —parent/奶奶→ 林子航",
+            "evidence": [
+              39
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#8",
+            "predIndex": 8,
+            "person": "jianguo",
+            "text": "林建国 —parent/爷爷→ 林子航",
+            "evidence": [
+              81
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#11",
+            "predIndex": 11,
+            "person": "unknown",
+            "text": "老王 —parent/爸爸→ 老王儿子",
+            "evidence": [
+              80
+            ],
+            "label": "should_ignore",
+            "subLabel": "not_about_person",
+            "goldId": null,
+            "negativeId": "n14",
+            "reason": "老王儿子属于不应建人物/claim的推断陷阱"
+          },
+          {
+            "type": "relations",
+            "fpId": "relations#16",
+            "predIndex": 16,
+            "person": "unknown",
+            "text": "中介小刘 —service_provider/中介→ 林建国",
+            "evidence": [
+              200,
+              201
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n4",
+            "reason": "中介名片属于事务信息，不应建关系"
+          },
+          {
+            "type": "handles",
+            "fpId": "handles#1",
+            "predIndex": 1,
+            "person": "jianguo",
+            "text": "address_term:老爸",
+            "evidence": [
+              16,
+              20
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "handles",
+            "fpId": "handles#2",
+            "predIndex": 2,
+            "person": "jingjing",
+            "text": "address_term:妈",
+            "evidence": [
+              22
+            ],
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "label": "wrong_person",
+            "reason": "same value exists in gold under another person"
+          },
+          {
+            "type": "dates",
+            "fpId": "dates#1",
+            "predIndex": 1,
+            "person": "hua",
+            "text": "birthday 8-21 solar",
+            "evidence": [
+              156,
+              157,
+              158,
+              159
+            ],
+            "label": "should_ignore",
+            "subLabel": "not_about_person",
+            "goldId": null,
+            "negativeId": "n15",
+            "reason": "农历生日对应公历8月21日，不应记成公历生日"
+          }
+        ],
+        "fn": [
+          {
+            "type": "claims",
+            "goldId": "c2",
+            "text": "在东南大学读书",
+            "lessSpecificMatch": true
+          },
+          {
+            "type": "claims",
+            "goldId": "c4",
+            "text": "暑假在南京一家做机器人的公司实习",
+            "lessSpecificMatch": true
+          },
+          {
+            "type": "claims",
+            "goldId": "c8",
+            "text": "从顺达物流辞职，和朋友合伙开火锅店",
+            "lessSpecificMatch": true
+          },
+          {
+            "type": "relations",
+            "goldId": "r7",
+            "text": "jianguo —relative/爷爷→ zihang",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "handles",
+            "goldId": "h1",
+            "text": "mentioned:大海",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "handles",
+            "goldId": "h2",
+            "text": "mentioned:子航",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "handles",
+            "goldId": "h5",
+            "text": "mentioned:朵朵",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e2",
+            "text": "春天的花过生日，家人在群里祝福",
+            "lessSpecificMatch": false
+          }
+        ],
+        "unmatchedNewPersons": [
+          "new:老王",
+          "new:老王儿子",
+          "new:中介小刘"
+        ]
+      }
+    },
+    {
+      "zip": "聊天记录_20260914_211545.zip",
+      "source": "synthetic",
+      "status": "scored",
+      "messageCount": 204,
+      "windows": {
+        "total": 6,
+        "failed": 0,
+        "p95Ms": 2970,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 9,
+          "tpStrict": 5,
+          "tpLenient": 5,
+          "goldRequired": 6,
+          "goldMatchedStrict": 5,
+          "goldMatchedLenient": 5,
+          "fp": 4,
+          "fn": 1,
+          "precisionStrict": 0.5556,
+          "precisionLenient": 0.5556,
+          "recallStrict": 0.8333,
+          "recallLenient": 0.8333,
+          "yieldPer100": 4.4118
+        },
+        "relations": {
+          "predicted": 2,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 2,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 0.9804
+        },
+        "handles": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "dates": {
+          "predicted": 2,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 0.9804
+        },
+        "events": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 6,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 5,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 0.1667,
+          "recallLenient": 0.1667,
+          "yieldPer100": 0.4902
+        },
+        "messages": 204,
+        "yieldPer100Total": 6.8627,
+        "transactionalAsClaimRatio": 0.3333,
+        "transactionalClaims": 3,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 17,
+        "evidenceOverlap": 1,
+        "unmatchedNewPersons": 0,
+        "kindMismatch": 0,
+        "categoryMismatch": 0,
+        "errors": {
+          "claims": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 1,
+            "should_ignore": 3,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 3,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 1,
+          "should_ignore": 3,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "details": {
+        "tp": [
+          {
+            "type": "claims",
+            "predIndex": 1,
+            "goldId": "c1",
+            "verdict": "same",
+            "text": "曾在星禾工作约五年",
+            "goldText": "曾在星禾工作近五年",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 4,
+            "goldId": "c3",
+            "verdict": "same",
+            "text": "住在深圳南山科技园附近",
+            "goldText": "住在深圳南山科技园附近",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 5,
+            "goldId": "c5",
+            "verdict": "same",
+            "text": "2026年5月20日与苏苏领证结婚",
+            "goldText": "2026年5月20日与苏苏领证结婚",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 6,
+            "goldId": "c6",
+            "verdict": "same",
+            "text": "计划2026年国庆回九江办婚礼",
+            "goldText": "婚礼定于2026年10月3日在九江举办",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "claims",
+            "predIndex": 8,
+            "goldId": "c9",
+            "verdict": "same",
+            "text": "在南山开了一家插画工作室",
+            "goldText": "在南山开了一家插画工作室",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 0,
+            "goldId": "r1",
+            "verdict": "same",
+            "text": "苏苏 —spouse/老婆→ 一舟",
+            "goldText": "susu —spouse/妻子→ yizhou",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "relations",
+            "predIndex": 1,
+            "goldId": "r2",
+            "verdict": "same",
+            "text": "小满 —parent/妈妈→ 朵朵",
+            "goldText": "duoduo —child/女儿→ xiaoman",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 0,
+            "goldId": "d1",
+            "verdict": "same",
+            "text": "anniversary 5-20 solar",
+            "goldText": "anniversary 5-20 solar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "dates",
+            "predIndex": 1,
+            "goldId": "d3",
+            "verdict": "same",
+            "text": "anniversary 10-3 solar",
+            "goldText": "anniversary 10-3 solar",
+            "evidenceOverlap": true
+          },
+          {
+            "type": "events",
+            "predIndex": 0,
+            "goldId": "e4",
+            "verdict": "same",
+            "text": "与苏苏领证",
+            "goldText": "一舟和苏苏领证",
+            "evidenceOverlap": true
+          }
+        ],
+        "fp": [
+          {
+            "type": "claims",
+            "fpId": "claims#0",
+            "predIndex": 0,
+            "person": "yizhou",
+            "text": "拿到蓝鲸出行技术负责人的 offer，五月一号入职",
+            "evidence": [
+              18,
+              19
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n1",
+            "reason": "入职日期属于事务性日程信息"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#2",
+            "predIndex": 2,
+            "person": "yizhou",
+            "text": "计划四月底搬去深圳",
+            "evidence": [
+              23,
+              25
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n7",
+            "reason": "搬家时间安排属于事务信息"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#3",
+            "predIndex": 3,
+            "person": "yizhou",
+            "text": "在深圳工作",
+            "evidence": [
+              36,
+              37
+            ],
+            "label": "should_ignore",
+            "subLabel": "transactional",
+            "goldId": null,
+            "negativeId": "n7",
+            "reason": "到深圳及住址属于事务性安排"
+          },
+          {
+            "type": "claims",
+            "fpId": "claims#7",
+            "predIndex": 7,
+            "person": "duoduo",
+            "text": "是女孩",
+            "evidence": [
+              111
+            ],
+            "label": "over_inference",
+            "subLabel": null,
+            "goldId": null,
+            "negativeId": null,
+            "reason": "原文只说闺女朵朵，未提及性别"
+          }
+        ],
+        "fn": [
+          {
+            "type": "claims",
+            "goldId": "c2",
+            "text": "在蓝鲸出行担任技术负责人",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e1",
+            "text": "一舟拿到蓝鲸出行技术负责人offer",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e2",
+            "text": "一舟从星禾离职",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e3",
+            "text": "一舟搬到深圳",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e5",
+            "text": "一舟和苏苏在九江办婚礼",
+            "lessSpecificMatch": false
+          },
+          {
+            "type": "events",
+            "goldId": "e6",
+            "text": "苏苏的插画工作室开业",
+            "lessSpecificMatch": false
+          }
+        ],
+        "unmatchedNewPersons": []
+      }
+    }
+  ],
+  "warnings": []
+}

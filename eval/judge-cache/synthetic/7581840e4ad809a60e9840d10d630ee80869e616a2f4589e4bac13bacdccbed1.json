@@ -1,0 +1,42 @@
+{
+  "inputHash": "7581840e4ad809a60e9840d10d630ee80869e616a2f4589e4bac13bacdccbed1",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T12:01:29.243Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "证据只提到生活费转账，未说明林子航是学生"
+      },
+      {
+        "fpId": "claims#10",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说房子在大海家对面楼，未说大海住哪个小区"
+      },
+      {
+        "fpId": "handles#0",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "“儿子”是称呼用语，不是人物本身的信息"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日推公历8月21日属推断陷阱，不应记录"
+      }
+    ]
+  }
+}

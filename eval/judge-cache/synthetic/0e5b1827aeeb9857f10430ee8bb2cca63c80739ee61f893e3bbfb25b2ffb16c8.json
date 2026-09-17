@@ -1,0 +1,20 @@
+{
+  "inputHash": "0e5b1827aeeb9857f10430ee8bb2cca63c80739ee61f893e3bbfb25b2ffb16c8",
+  "promptVersion": "judge-match.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:09:21.401Z",
+  "output": {
+    "matches": [
+      {
+        "pred": 0,
+        "gold": "e1",
+        "verdict": "same"
+      },
+      {
+        "pred": 1,
+        "gold": "e2",
+        "verdict": "less_specific"
+      }
+    ]
+  }
+}

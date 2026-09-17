@@ -1,0 +1,18 @@
+{
+  "inputHash": "81d3a57f99b04d1521425d33741cf3660969e9f03059833ff8e43f1febd41e50",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T12:30:59.104Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#11",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c4",
+        "negativeId": null,
+        "reason": "标准答案写2026年10月，条目说下个月，时间不符"
+      }
+    ]
+  }
+}

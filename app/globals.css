@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '../styles/tokens.css';
+
+/*
+ * Loam theme for Tailwind v4 + shadcn/ui (SPEC §9.1). Tokens live in styles/tokens.css.
+ * - Every shadow utility resolves to none, and a global rule removes box-shadow (rings included): "阴影 不用".
+ * - Radius utilities cap at 2px: "近方角，2px 以内".
+ * - Focus is shown with a 1px outline instead of a ring shadow.
+ */
+
+@theme inline {
+  /* shadcn semantic colours → Loam */
+  --color-background: var(--loam-ground);
+  --color-foreground: var(--loam-ink);
+  --color-card: var(--loam-paper);
+  --color-card-foreground: var(--loam-ink);
+  --color-popover: var(--loam-paper);
+  --color-popover-foreground: var(--loam-ink);
+  --color-primary: var(--loam-ink);
+  --color-primary-foreground: var(--loam-ink-inverse);
+  --color-secondary: var(--loam-paper);
+  --color-secondary-foreground: var(--loam-ink);
+  --color-muted: var(--loam-paper-hover);
+  --color-muted-foreground: var(--loam-ink-3);
+  --color-accent: var(--loam-paper-hover);
+  --color-accent-foreground: var(--loam-ink);
+  --color-destructive: var(--loam-danger);
+  --color-destructive-foreground: var(--loam-ink-inverse);
+  --color-border: var(--loam-line);
+  --color-input: var(--loam-line);
+  --color-ring: var(--loam-line-strong);
+
+  /* Loam names for module code */
+  --color-ground: var(--loam-ground);
+  --color-paper: var(--loam-paper);
+  --color-paper-hover: var(--loam-paper-hover);
+  --color-highlight: var(--loam-highlight);
+  --color-line: var(--loam-line);
+  --color-line-strong: var(--loam-line-strong);
+  --color-ink: var(--loam-ink);
+  --color-ink-2: var(--loam-ink-2);
+  --color-ink-3: var(--loam-ink-3);
+  --color-ink-inverse: var(--loam-ink-inverse);
+  --color-proposed: var(--loam-proposed);
+  --color-superseded: var(--loam-superseded);
+  --color-danger: var(--loam-danger);
+
+  --font-serif: var(--loam-font-serif);
+  --font-sans: var(--loam-font-sans);
+  --font-data: var(--loam-font-data);
+
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+}
+
+@theme {
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
+}
+
+/* shadcn's own radius variable, for any component that reads it directly */
+:root {
+  --radius: var(--loam-radius);
+  --background: var(--loam-ground);
+  --foreground: var(--loam-ink);
+  --border: var(--loam-line);
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--loam-line);
+  }
+
+  html {
+    background: var(--loam-ground);
+    color: var(--loam-ink);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--loam-ground);
+    color: var(--loam-ink);
+    font-family: var(--loam-font-sans);
+    font-size: 15px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'palt' 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--loam-font-serif);
+    font-weight: 600;
+    color: var(--loam-ink);
+    letter-spacing: 0.01em;
+  }
+
+  ::selection {
+    background: var(--loam-highlight);
+    color: var(--loam-ink);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--loam-ink-2);
+    outline-offset: 2px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--loam-ink-3);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* No shadows anywhere — including ring utilities, which Tailwind draws with box-shadow. */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+@layer components {
+  .loam-page-title {
+    font-family: var(--loam-font-serif);
+    font-size: 30px;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  @media (min-width: 640px) {
+    .loam-page-title {
+      font-size: 34px;
+    }
+  }
+
+  .loam-section-title {
+    font-family: var(--loam-font-serif);
+    font-size: 19px;
+    line-height: 1.5;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .loam-prose {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--loam-ink);
+  }
+
+  .loam-link {
+    color: var(--loam-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--loam-line-strong);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .loam-link:hover {
+    text-decoration-color: var(--loam-ink);
+  }
+
+  /* Quiet text button ("确认 / 不对", "重试", "补充") */
+  .loam-text-button {
+    color: var(--loam-ink-2);
+    text-decoration: underline;
+    text-decoration-color: var(--loam-line-strong);
+    text-underline-offset: 3px;
+  }
+  .loam-text-button:hover {
+    color: var(--loam-ink);
+    text-decoration-color: var(--loam-ink);
+  }
+
+  .loam-skeleton {
+    background: var(--loam-paper-hover);
+    border-radius: 1px;
+  }
+
+  /* Unconfirmed item: lighter ink, 1px rule on the left (SPEC §9.5) */
+  .loam-proposed {
+    color: var(--loam-ink-2);
+    border-left: 1px solid var(--loam-proposed);
+    padding-left: 10px;
+  }
+
+  .loam-superseded {
+    color: var(--loam-superseded);
+    text-decoration: line-through;
+    text-decoration-color: var(--loam-line-strong);
+  }
+
+  /* Anchor highlight (person module sets data-highlight="true" for 2 s) */
+  [data-highlight='true'] {
+    background: var(--loam-highlight);
+    transition: background-color 600ms ease;
+  }
+}

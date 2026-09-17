@@ -1,0 +1,33 @@
+{
+  "key": "8a9f21a75b7c9bbea951d81c52d1bb3e",
+  "recordedAt": "2026-09-15T09:21:02.071Z",
+  "model": "deepseek-flash",
+  "promptVersion": "llm-smoke.v1",
+  "purpose": "other",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你是信息抽取助手。只输出一个 json 对象，不要输出其他文字。json 格式示例：{\"city\": \"城市名，没有则为 null\", \"job\": \"职业，没有则为 null\"}"
+      },
+      {
+        "role": "user",
+        "content": "合成测试消息：「下个月我搬去成都，继续当小学老师。」请抽取说话人的城市和职业，输出 json。"
+      }
+    ],
+    "maxTokens": 200,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"city\": \"成都\", \"job\": \"小学老师\"}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 98,
+      "outputTokens": 13,
+      "cacheHitTokens": 0
+    },
+    "latencyMs": 763
+  },
+  "error": null
+}

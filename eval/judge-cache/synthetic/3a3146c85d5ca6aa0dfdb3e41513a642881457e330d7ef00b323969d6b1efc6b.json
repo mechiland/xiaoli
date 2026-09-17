@@ -1,0 +1,26 @@
+{
+  "inputHash": "3a3146c85d5ca6aa0dfdb3e41513a642881457e330d7ef00b323969d6b1efc6b",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T08:08:07.465Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "loops#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n2",
+        "reason": "班费金额与截止日期属于事务信息，不应记录"
+      },
+      {
+        "fpId": "loops#3",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n18",
+        "reason": "运动会报名通知链接属于事务信息"
+      }
+    ]
+  }
+}

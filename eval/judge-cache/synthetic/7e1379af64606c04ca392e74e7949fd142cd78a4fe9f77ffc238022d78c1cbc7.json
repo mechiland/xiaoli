@@ -1,0 +1,26 @@
+{
+  "inputHash": "7e1379af64606c04ca392e74e7949fd142cd78a4fe9f77ffc238022d78c1cbc7",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T12:01:40.867Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c2",
+        "negativeId": null,
+        "reason": "蓝鲸出行技术负责人正确，但入职日期原文未说5月1日"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "搬家时间与找房安排属于事务信息"
+      }
+    ]
+  }
+}

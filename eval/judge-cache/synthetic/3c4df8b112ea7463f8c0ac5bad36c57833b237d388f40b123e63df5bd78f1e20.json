@@ -1,0 +1,18 @@
+{
+  "inputHash": "3c4df8b112ea7463f8c0ac5bad36c57833b237d388f40b123e63df5bd78f1e20",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T12:00:50.183Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#11",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c13",
+        "negativeId": null,
+        "reason": "颈椎不好的是小满的妈妈，不是一舟妈妈"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1079 @@
+{
+  "reportVersion": 1,
+  "runId": "x31-v8-real-record-extract.v8",
+  "createdAt": "2026-09-15T19:13:47.373Z",
+  "promptVersion": "extract.v8",
+  "model": "deepseek-flash",
+  "mode": "record",
+  "deadlinePolicy": "app",
+  "parserVersion": "wechat-export@2",
+  "judgePromptVersions": {
+    "match": "judge-match.v1",
+    "fp": "judge-fp.v1"
+  },
+  "judgeFallback": false,
+  "aborted": null,
+  "usage": {
+    "inputTokens": 25441,
+    "outputTokens": 872,
+    "calls": 4,
+    "judgeInputTokens": 420,
+    "judgeOutputTokens": 20,
+    "judgeCalls": 1,
+    "judgeCacheHits": 3,
+    "judgeFallbacks": 0
+  },
+  "gold": [
+    {
+      "source": "real",
+      "zip": "real-1",
+      "lockKey": "real-9c94d9e7d17496e9",
+      "goldSha256": "9e309e4cd369558fc29f68e6c7d49f76065d207fa378f077ad2ad5aa9d11ea42",
+      "lockedSha256": "9e309e4cd369558fc29f68e6c7d49f76065d207fa378f077ad2ad5aa9d11ea42",
+      "lockVersions": 1,
+      "frozen": true,
+      "changeRecorded": null,
+      "lockAppendOnly": true
+    },
+    {
+      "source": "real",
+      "zip": "real-2",
+      "lockKey": "real-df2f003ef7b4c7d7",
+      "goldSha256": "c198a5c2e7224fcf447ee6521b27e20123e90e43fee2d08951d4a4651f77b717",
+      "lockedSha256": "c198a5c2e7224fcf447ee6521b27e20123e90e43fee2d08951d4a4651f77b717",
+      "lockVersions": 1,
+      "frozen": true,
+      "changeRecorded": null,
+      "lockAppendOnly": true
+    },
+    {
+      "source": "real",
+      "zip": "real-3",
+      "lockKey": "real-c83d048e7bbc3ad6",
+      "goldSha256": "4c088e559815fd8c26cdce3fe805c0257660c3673f083e38f650a02e26690067",
+      "lockedSha256": "4c088e559815fd8c26cdce3fe805c0257660c3673f083e38f650a02e26690067",
+      "lockVersions": 1,
+      "frozen": true,
+      "changeRecorded": null,
+      "lockAppendOnly": true
+    }
+  ],
+  "p95WindowMs": {
+    "synthetic": null,
+    "real": 1979
+  },
+  "p95Valid": true,
+  "sources": {
+    "synthetic": null,
+    "real": {
+      "claims": {
+        "predicted": 4,
+        "tpStrict": 4,
+        "tpLenient": 4,
+        "goldRequired": 3,
+        "goldMatchedStrict": 3,
+        "goldMatchedLenient": 3,
+        "fp": 0,
+        "fn": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 2.9412
+      },
+      "relations": {
+        "predicted": 3,
+        "tpStrict": 3,
+        "tpLenient": 3,
+        "goldRequired": 2,
+        "goldMatchedStrict": 2,
+        "goldMatchedLenient": 2,
+        "fp": 0,
+        "fn": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 2.2059
+      },
+      "handles": {
+        "predicted": 3,
+        "tpStrict": 3,
+        "tpLenient": 3,
+        "goldRequired": 4,
+        "goldMatchedStrict": 3,
+        "goldMatchedLenient": 3,
+        "fp": 0,
+        "fn": 1,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 0.75,
+        "recallLenient": 0.75,
+        "yieldPer100": 2.2059
+      },
+      "dates": {
+        "predicted": 1,
+        "tpStrict": 1,
+        "tpLenient": 1,
+        "goldRequired": 1,
+        "goldMatchedStrict": 1,
+        "goldMatchedLenient": 1,
+        "fp": 0,
+        "fn": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "recallStrict": 1,
+        "recallLenient": 1,
+        "yieldPer100": 0.7353
+      },
+      "events": {
+        "predicted": 1,
+        "tpStrict": 0,
+        "tpLenient": 0,
+        "goldRequired": 1,
+        "goldMatchedStrict": 0,
+        "goldMatchedLenient": 0,
+        "fp": 1,
+        "fn": 1,
+        "precisionStrict": 0,
+        "precisionLenient": 0,
+        "recallStrict": 0,
+        "recallLenient": 0,
+        "yieldPer100": 0.7353
+      },
+      "messages": 136,
+      "yieldPer100Total": 8.8235,
+      "transactionalAsClaimRatio": 0,
+      "transactionalClaims": 0,
+      "sensitiveInStatement": 0,
+      "invalidEvidencePost": 0,
+      "invalidEvidencePreRate": 0,
+      "droppedInvalidEvidence": 0,
+      "rawItemCount": 15,
+      "evidenceOverlap": 1,
+      "unmatchedNewPersons": 0,
+      "duplicateSenderPersons": 0,
+      "kindMismatch": 0,
+      "categoryMismatch": 0,
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 1,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      },
+      "subLabels": {
+        "transactional": 0,
+        "coordination": 0,
+        "invisible_content": 0,
+        "not_about_person": 0
+      },
+      "zips": 3
+    }
+  },
+  "gates": [
+    {
+      "name": "claims.precisionLenient",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0.85,
+      "op": ">=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0.7,
+      "op": ">=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0.05,
+      "op": "<=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "zips.scored",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 1,
+      "op": ">=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 0,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "gold.frozen",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 1,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 1,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 1,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 1,
+      "op": "==",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "synthetic",
+      "value": null,
+      "threshold": 30000,
+      "op": "<=",
+      "passed": false,
+      "note": "source not evaluated in this run"
+    },
+    {
+      "name": "claims.precisionLenient",
+      "source": "real",
+      "value": 1,
+      "threshold": 0.85,
+      "op": ">=",
+      "passed": true
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "real",
+      "value": 1,
+      "threshold": 0.7,
+      "op": ">=",
+      "passed": true
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "real",
+      "value": 1,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": true
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "real",
+      "value": 1,
+      "threshold": 0.9,
+      "op": ">=",
+      "passed": true
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "real",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "real",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "real",
+      "value": 0,
+      "threshold": 0.05,
+      "op": "<=",
+      "passed": true
+    },
+    {
+      "name": "zips.scored",
+      "source": "real",
+      "value": 3,
+      "threshold": 1,
+      "op": ">=",
+      "passed": true,
+      "note": "3/3 zips with gold scored"
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "real",
+      "value": 0,
+      "threshold": 0,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.frozen",
+      "source": "real",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "real",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "real",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "real",
+      "value": 1,
+      "threshold": 1,
+      "op": "==",
+      "passed": true
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "real",
+      "value": 1979,
+      "threshold": 30000,
+      "op": "<=",
+      "passed": true
+    }
+  ],
+  "passed": false,
+  "passedBySource": {
+    "synthetic": false,
+    "real": true
+  },
+  "zips": [
+    {
+      "zip": "real-1",
+      "source": "real",
+      "status": "scored",
+      "messageCount": 33,
+      "windows": {
+        "total": 1,
+        "failed": 0,
+        "p95Ms": 878,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "relations": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "handles": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "dates": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "events": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 1,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 1,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": 0,
+          "recallLenient": 0,
+          "yieldPer100": 0
+        },
+        "messages": 33,
+        "yieldPer100Total": 0,
+        "transactionalAsClaimRatio": null,
+        "transactionalClaims": 0,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": null,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 0,
+        "evidenceOverlap": null,
+        "unmatchedNewPersons": 0,
+        "duplicateSenderPersons": 0,
+        "kindMismatch": 0,
+        "categoryMismatch": 0,
+        "errors": {
+          "claims": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 0,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "zip": "real-2",
+      "source": "real",
+      "status": "scored",
+      "messageCount": 37,
+      "windows": {
+        "total": 1,
+        "failed": 0,
+        "p95Ms": 1130,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 2.7027
+        },
+        "relations": {
+          "predicted": 2,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 5.4054
+        },
+        "handles": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 2.7027
+        },
+        "dates": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "events": {
+          "predicted": 0,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": null,
+          "precisionLenient": null,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 0
+        },
+        "messages": 37,
+        "yieldPer100Total": 10.8108,
+        "transactionalAsClaimRatio": 0,
+        "transactionalClaims": 0,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 4,
+        "evidenceOverlap": 1,
+        "unmatchedNewPersons": 0,
+        "duplicateSenderPersons": 0,
+        "kindMismatch": 0,
+        "categoryMismatch": 0,
+        "errors": {
+          "claims": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 0,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "zip": "real-3",
+      "source": "real",
+      "status": "scored",
+      "messageCount": 66,
+      "windows": {
+        "total": 2,
+        "failed": 0,
+        "p95Ms": 1979,
+        "dedupSkipped": 0,
+        "failedCodes": {}
+      },
+      "metrics": {
+        "claims": {
+          "predicted": 3,
+          "tpStrict": 3,
+          "tpLenient": 3,
+          "goldRequired": 2,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 4.5455
+        },
+        "relations": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 1.5152
+        },
+        "handles": {
+          "predicted": 2,
+          "tpStrict": 2,
+          "tpLenient": 2,
+          "goldRequired": 3,
+          "goldMatchedStrict": 2,
+          "goldMatchedLenient": 2,
+          "fp": 0,
+          "fn": 1,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 0.6667,
+          "recallLenient": 0.6667,
+          "yieldPer100": 3.0303
+        },
+        "dates": {
+          "predicted": 1,
+          "tpStrict": 1,
+          "tpLenient": 1,
+          "goldRequired": 1,
+          "goldMatchedStrict": 1,
+          "goldMatchedLenient": 1,
+          "fp": 0,
+          "fn": 0,
+          "precisionStrict": 1,
+          "precisionLenient": 1,
+          "recallStrict": 1,
+          "recallLenient": 1,
+          "yieldPer100": 1.5152
+        },
+        "events": {
+          "predicted": 1,
+          "tpStrict": 0,
+          "tpLenient": 0,
+          "goldRequired": 0,
+          "goldMatchedStrict": 0,
+          "goldMatchedLenient": 0,
+          "fp": 1,
+          "fn": 0,
+          "precisionStrict": 0,
+          "precisionLenient": 0,
+          "recallStrict": null,
+          "recallLenient": null,
+          "yieldPer100": 1.5152
+        },
+        "messages": 66,
+        "yieldPer100Total": 12.1212,
+        "transactionalAsClaimRatio": 0,
+        "transactionalClaims": 0,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "droppedInvalidEvidence": 0,
+        "rawItemCount": 11,
+        "evidenceOverlap": 1,
+        "unmatchedNewPersons": 0,
+        "duplicateSenderPersons": 0,
+        "kindMismatch": 0,
+        "categoryMismatch": 0,
+        "errors": {
+          "claims": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "relations": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "handles": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "dates": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 0,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          },
+          "events": {
+            "factual_error": 0,
+            "wrong_person": 0,
+            "over_inference": 1,
+            "should_ignore": 0,
+            "sensitive_leak": 0,
+            "invalid_evidence": 0,
+            "other": 0
+          }
+        },
+        "subLabels": {
+          "transactional": 0,
+          "coordination": 0,
+          "invisible_content": 0,
+          "not_about_person": 0
+        }
+      },
+      "errors": {
+        "claims": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "relations": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "handles": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "dates": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 0,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        },
+        "events": {
+          "factual_error": 0,
+          "wrong_person": 0,
+          "over_inference": 1,
+          "should_ignore": 0,
+          "sensitive_leak": 0,
+          "invalid_evidence": 0,
+          "other": 0
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "gold for a real zip was annotated with parser wechat-export@1, now wechat-export@2 (digest unchanged)",
+    "gold for a real zip was annotated with parser wechat-export@1, now wechat-export@2 (digest unchanged)",
+    "gold for a real zip was annotated with parser wechat-export@1, now wechat-export@2 (digest unchanged)"
+  ]
+}

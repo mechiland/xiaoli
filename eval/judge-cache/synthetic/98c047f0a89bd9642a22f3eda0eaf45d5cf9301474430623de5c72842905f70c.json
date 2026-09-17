@@ -1,0 +1,42 @@
+{
+  "inputHash": "98c047f0a89bd9642a22f3eda0eaf45d5cf9301474430623de5c72842905f70c",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:50:00.367Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#1",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c2、c3重复，合并表述"
+      },
+      {
+        "fpId": "claims#9",
+        "label": "other",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c5在南京上学重复"
+      },
+      {
+        "fpId": "claims#14",
+        "label": "wrong_person",
+        "subLabel": null,
+        "goldId": "c13",
+        "negativeId": null,
+        "reason": "看房的是林建国夫妇，不是大海自己"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "农历生日推成公历8月21日，属推断陷阱"
+      }
+    ]
+  }
+}

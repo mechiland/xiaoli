@@ -1,0 +1,82 @@
+{
+  "inputHash": "9075de85bdb2a6aa3abdc58a61af29cc846d94af6989b97f032b14e7d37eca16",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:10:04.627Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#7",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说小宇紧张新学校，未说刚转学"
+      },
+      {
+        "fpId": "claims#12",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c4",
+        "negativeId": null,
+        "reason": "原文说下个月搬，标准答案记为2026年10月"
+      },
+      {
+        "fpId": "claims#14",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "证据只称呼刘老师，未说明其姓刘"
+      },
+      {
+        "fpId": "claims#15",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": "n27",
+        "reason": "一次轻微擦伤不应作为长期健康状况记录"
+      },
+      {
+        "fpId": "relations#5",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n5",
+        "reason": "原文只是建议，未说明小满报名或在上课"
+      },
+      {
+        "fpId": "events#0",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "开学第一天属于日程协调信息"
+      },
+      {
+        "fpId": "events#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说紧张新学校，未说转学后第一天"
+      },
+      {
+        "fpId": "events#2",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "开学第一天穿什么属于日程协调"
+      },
+      {
+        "fpId": "events#3",
+        "label": "should_ignore",
+        "subLabel": "invisible_content",
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "红包金额不可见，欢送会属协调信息"
+      }
+    ]
+  }
+}

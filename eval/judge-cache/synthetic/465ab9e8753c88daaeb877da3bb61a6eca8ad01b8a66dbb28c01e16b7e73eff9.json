@@ -1,0 +1,18 @@
+{
+  "inputHash": "465ab9e8753c88daaeb877da3bb61a6eca8ad01b8a66dbb28c01e16b7e73eff9",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-16T07:49:17.185Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#12",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": "c15",
+        "negativeId": null,
+        "reason": "标准答案只说报名杭州马拉松半马，未提四月跑"
+      }
+    ]
+  }
+}

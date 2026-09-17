@@ -1,0 +1,623 @@
+{
+  "intentVersion": 1,
+  "generator": "scripts/synthetic/generate.ts",
+  "generatorVersion": 1,
+  "note": "Planted by the generator. Annotators must not read this file before freezing gold (ARCHITECTURE §7.6). Not gold: ids, texts and idx are the generator's intent only.",
+  "zip": "聊天记录_20260405_223012.zip",
+  "chatScript": "private-yizhou",
+  "purpose": "私聊，第一次导出",
+  "chat": {
+    "title": "一舟",
+    "kind": "private"
+  },
+  "self": "小满",
+  "messageCount": 207,
+  "dateFrom": "2025-10-25 19:28",
+  "dateTo": "2026-04-05 21:45",
+  "senders": [
+    {
+      "name": "一舟",
+      "count": 113
+    },
+    {
+      "name": "小满",
+      "count": 94
+    }
+  ],
+  "members": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "displayName": "小满",
+      "note": "self (the user)"
+    },
+    {
+      "key": "yizhou",
+      "label": "陈一舟",
+      "displayName": "一舟",
+      "note": "university friend; remark name in private chat"
+    },
+    {
+      "key": "susu",
+      "label": "苏苏",
+      "note": "not a sender"
+    },
+    {
+      "key": "yizhou_mom",
+      "label": "一舟的妈妈",
+      "note": "not a sender"
+    },
+    {
+      "key": "duoduo",
+      "label": "朵朵",
+      "note": "self's daughter; not a sender"
+    }
+  ],
+  "planted": [
+    {
+      "id": "y-work-old",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "work",
+      "text": "在杭州星禾互娱做前端工程师",
+      "idx": [
+        10
+      ]
+    },
+    {
+      "id": "y-loc-old",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "location",
+      "text": "住在杭州滨江",
+      "idx": [
+        12
+      ]
+    },
+    {
+      "id": "y-birthday",
+      "type": "date",
+      "person": "yizhou",
+      "text": "生日 11月3日（1995年）",
+      "date": {
+        "kind": "birthday",
+        "month": 11,
+        "day": 3,
+        "year": 1995,
+        "calendar": "solar"
+      },
+      "idx": [
+        15,
+        16,
+        21
+      ]
+    },
+    {
+      "id": "y-pref-coriander",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "preference",
+      "text": "不吃香菜",
+      "idx": [
+        29,
+        30
+      ]
+    },
+    {
+      "id": "y-edu",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "education",
+      "text": "武汉大学计算机系毕业",
+      "idx": [
+        33,
+        35
+      ]
+    },
+    {
+      "id": "rel-y-susu-partner",
+      "type": "relation",
+      "from": "susu",
+      "to": "yizhou",
+      "relationType": "other",
+      "text": "苏苏是一舟的女朋友（2025年11月起）",
+      "idx": [
+        44,
+        46
+      ]
+    },
+    {
+      "id": "susu-work",
+      "type": "claim",
+      "person": "susu",
+      "category": "work",
+      "text": "是自由插画师",
+      "idx": [
+        46,
+        174
+      ]
+    },
+    {
+      "id": "m-realname",
+      "type": "handle",
+      "person": "xiaoman",
+      "handleKind": "real_name",
+      "value": "林小满",
+      "text": "真名林小满（出现在地址消息中）",
+      "optional": true,
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "ymom-bday",
+      "type": "date",
+      "person": "yizhou_mom",
+      "text": "生日农历正月十八",
+      "date": {
+        "kind": "birthday",
+        "month": 1,
+        "day": 18,
+        "calendar": "lunar"
+      },
+      "idx": [
+        122
+      ]
+    },
+    {
+      "id": "rel-ymom",
+      "type": "relation",
+      "from": "yizhou_mom",
+      "to": "yizhou",
+      "relationType": "parent",
+      "text": "一舟的妈妈",
+      "idx": [
+        122
+      ]
+    },
+    {
+      "id": "ymom-neck",
+      "type": "claim",
+      "person": "yizhou_mom",
+      "category": "other",
+      "text": "颈椎不好",
+      "optional": true,
+      "idx": [
+        124
+      ]
+    },
+    {
+      "id": "y-hometown",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "location",
+      "text": "老家在江西九江",
+      "idx": [
+        132
+      ]
+    },
+    {
+      "id": "y-running",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "preference",
+      "text": "每天早上跑五公里",
+      "idx": [
+        154
+      ]
+    },
+    {
+      "id": "y-halfmarathon",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "life_event",
+      "text": "报名了2026年4月杭州马拉松半马",
+      "optional": true,
+      "idx": [
+        152
+      ]
+    },
+    {
+      "id": "y-work-new",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "work",
+      "text": "在深圳蓝鲸出行担任技术负责人",
+      "validFrom": "2026-05",
+      "supersedes": "y-work-old",
+      "idx": [
+        194
+      ]
+    },
+    {
+      "id": "y-worked-5y",
+      "type": "claim",
+      "person": "yizhou",
+      "category": "work",
+      "text": "在星禾互娱工作了快五年",
+      "optional": true,
+      "idx": [
+        206
+      ]
+    },
+    {
+      "id": "m-edu",
+      "type": "claim",
+      "person": "xiaoman",
+      "category": "education",
+      "text": "武汉大学计算机系毕业（与一舟同系）",
+      "optional": true,
+      "idx": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "id": "loop-dinner-plan",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "mutual",
+      "text": "下周四晚上一起吃饭",
+      "dueAt": "2025-11-06",
+      "note": "2025-10-28 约定，2025-11-06 见面兑现；同一批消息也是 negative coord-dinner-plan —— 按 §8.8 分流，不进 claim，进 loop",
+      "idx": [
+        13,
+        14
+      ],
+      "closedBy": 22,
+      "closedReason": "done",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-pick-place",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "订吃饭的地方",
+      "dueAt": "2025-11-06",
+      "note": "承诺 2025-10-28 说出口，9 天后 2025-11-06 报出订好的桌号才算了结",
+      "idx": [
+        14
+      ],
+      "closedBy": 25,
+      "closedReason": "done",
+      "closedInExport": true
+    },
+    {
+      "id": "loop-tea-ship",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "theirs",
+      "text": "寄龙井茶过来",
+      "note": "两次导出里都没有寄到的确认，始终未结",
+      "idx": [
+        64
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-interview-later",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "promise",
+      "direction": "mine",
+      "text": "回头细说面试安排的看法",
+      "note": "在两次导出的重叠区间里",
+      "idx": [
+        181
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "loop-move-shenzhen",
+      "type": "loop",
+      "person": "yizhou",
+      "loopKind": "plan",
+      "direction": "theirs",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "note": "第一次导出结束时仍未结；第二次导出里 2026-04-28「到深圳了」了结",
+      "idx": [
+        198,
+        200
+      ],
+      "closedInExport": false
+    },
+    {
+      "id": "conv-susu",
+      "type": "conversation",
+      "text": "一舟说他和苏苏在一起了",
+      "topics": [
+        "苏苏",
+        "女朋友",
+        "插画"
+      ],
+      "note": "会话边界由标注者判定，这里记的是剧本场景的首尾",
+      "idx": [
+        43,
+        49
+      ],
+      "startIdx": 43,
+      "endIdx": 49
+    },
+    {
+      "id": "conv-job-change",
+      "type": "conversation",
+      "text": "一舟在看新机会",
+      "topics": [
+        "换工作",
+        "蓝鲸出行",
+        "深圳"
+      ],
+      "idx": [
+        169,
+        174
+      ],
+      "startIdx": 169,
+      "endIdx": 174
+    }
+  ],
+  "negatives": [
+    {
+      "id": "coord-dinner-plan",
+      "kind": "coordination",
+      "description": "约下周四晚上吃饭",
+      "idx": [
+        13,
+        14
+      ]
+    },
+    {
+      "id": "coord-at-door",
+      "kind": "coordination",
+      "description": "“我在门口”“先进去坐”",
+      "idx": [
+        22,
+        23,
+        24
+      ]
+    },
+    {
+      "id": "tx-table",
+      "kind": "transactional",
+      "description": "订的6号桌",
+      "idx": [
+        25
+      ]
+    },
+    {
+      "id": "inv-redpacket-bday",
+      "kind": "invisible_content",
+      "description": "生日红包，金额不可见",
+      "forbidden": "红包金额",
+      "idx": [
+        17
+      ]
+    },
+    {
+      "id": "sens-self-address",
+      "kind": "sensitive",
+      "description": "小满发了详细收货地址和手机号",
+      "forbidden": "详细地址或手机号进入正文",
+      "idx": [
+        63
+      ]
+    },
+    {
+      "id": "inv-transfer",
+      "kind": "invisible_content",
+      "description": "转账金额不可见",
+      "forbidden": "转账金额",
+      "idx": [
+        66,
+        69
+      ]
+    },
+    {
+      "id": "tx-price",
+      "kind": "transactional",
+      "description": "按摩仪价格 899、等年货节下单",
+      "idx": [
+        128
+      ]
+    },
+    {
+      "id": "trap-interviewing",
+      "kind": "inference_trap",
+      "description": "此时只是在和蓝鲸出行聊，不是已入职",
+      "forbidden": "一舟在蓝鲸出行工作（依据3月12日这条）",
+      "idx": [
+        172
+      ]
+    },
+    {
+      "id": "tx-interview-schedule",
+      "kind": "transactional",
+      "description": "面试流程时间表",
+      "idx": [
+        176
+      ]
+    },
+    {
+      "id": "inv-redpacket-offer",
+      "kind": "invisible_content",
+      "description": "恭喜红包，金额不可见",
+      "forbidden": "红包金额",
+      "idx": [
+        196
+      ]
+    },
+    {
+      "id": "inv-voice",
+      "kind": "invisible_content",
+      "description": "语音内容不可见",
+      "forbidden": "猜测语音内容",
+      "idx": [
+        201,
+        202
+      ]
+    }
+  ],
+  "sensitiveValues": [
+    "梧桐路88号7栋2单元1502室",
+    "17700001111"
+  ],
+  "kinds": {
+    "text": 173,
+    "image": 6,
+    "red_packet": 2,
+    "sticker_code": 9,
+    "video": 2,
+    "animated_sticker": 1,
+    "mini_program": 3,
+    "transfer": 2,
+    "forward": 1,
+    "link": 2,
+    "video_call": 1,
+    "recall": 1,
+    "quote": 2,
+    "voice": 2
+  },
+  "guessedFormats": [
+    {
+      "idx": 72,
+      "kind": "forward"
+    },
+    {
+      "idx": 75,
+      "kind": "link"
+    },
+    {
+      "idx": 163,
+      "kind": "link"
+    },
+    {
+      "idx": 190,
+      "kind": "recall"
+    },
+    {
+      "idx": 191,
+      "kind": "quote"
+    },
+    {
+      "idx": 192,
+      "kind": "quote"
+    }
+  ],
+  "use": "eval",
+  "mediaNames": "message-time",
+  "textFile": {
+    "bom": false,
+    "lineEnding": "lf",
+    "trailingNewline": true
+  },
+  "edgeCases": {
+    "multiline": [
+      176,
+      191,
+      192
+    ],
+    "bodyLineStartsWithDot": [
+      176
+    ],
+    "bodyLineLooksLikeTime": [
+      176
+    ],
+    "emptyImageName": [
+      136
+    ],
+    "missingMedia": [],
+    "unknownBracket": [],
+    "sameMinuteDuplicate": [
+      179
+    ],
+    "stickerOnly": [
+      18,
+      38,
+      42,
+      90,
+      105,
+      129,
+      147,
+      155,
+      182
+    ],
+    "stickerMixed": [
+      8,
+      10,
+      31,
+      51,
+      65,
+      101,
+      156,
+      195
+    ],
+    "unicodeEmoji": [
+      15,
+      81,
+      180
+    ],
+    "mention": [],
+    "quote": [
+      191,
+      192
+    ],
+    "recall": [
+      190
+    ],
+    "contactCard": [],
+    "location": [],
+    "link": [
+      75,
+      163
+    ],
+    "file": [],
+    "forward": [
+      72
+    ],
+    "system": [],
+    "bom": [],
+    "crlf": [],
+    "noTrailingNewline": []
+  },
+  "media": {
+    "included": [
+      "微信图片_202510251929_1.jpg",
+      "微信图片_202511061858_1.jpg",
+      "微信视频_202511200929_1.mp4",
+      "微信图片_202512021540_1.jpg",
+      "微信视频_202512242113_1.mp4",
+      "微信图片_202602081306_1.jpg",
+      "微信图片_202602191120_1.jpg"
+    ],
+    "missing": [],
+    "emptyName": 1,
+    "unreferenced": []
+  },
+  "overlaps": [
+    {
+      "with": "聊天记录_20260914_211545.zip",
+      "messages": 32,
+      "media": {
+        "messages": 0,
+        "renamed": 0
+      },
+      "sentAtRange": [
+        "2026-03-22 10:05",
+        "2026-04-05 21:45"
+      ],
+      "thisIdxRange": [
+        175,
+        206
+      ],
+      "otherIdxRange": [
+        0,
+        31
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "inputHash": "2e70b0125f0ce4bfedf17f232f42d8aae19381893794e9d62fb9e3ef04abb9a0",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:09:23.121Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "invisible_content",
+        "goldId": null,
+        "negativeId": "n10",
+        "reason": "生活费转账金额不可见，属不可见内容"
+      },
+      {
+        "fpId": "claims#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只是劝别天天点外卖，未说常点外卖"
+      },
+      {
+        "fpId": "claims#4",
+        "label": "should_ignore",
+        "subLabel": "not_about_person",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "与已有条目c8重复，非新信息"
+      },
+      {
+        "fpId": "claims#10",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说学校让带暑托班，未说暑假安排"
+      },
+      {
+        "fpId": "claims#15",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说房子看好了，未说帮父母看好"
+      },
+      {
+        "fpId": "claims#16",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n4",
+        "reason": "中介名片属事务信息，不应记为claim"
+      },
+      {
+        "fpId": "relations#14",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n4",
+        "reason": "中介名片属事务信息，不应建关系"
+      },
+      {
+        "fpId": "dates#1",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n15",
+        "reason": "生日为农历，公历8月21日是推断"
+      }
+    ]
+  }
+}

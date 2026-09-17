@@ -1,0 +1,42 @@
+{
+  "inputHash": "5f1a64198adbc19e279005da53776f4d59fa2137b78e2b0eeb08a6e36545bb57",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:51:27.303Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#0",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n1",
+        "reason": "offer入职时间属于事务信息"
+      },
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "搬家时间安排属于事务信息"
+      },
+      {
+        "fpId": "claims#3",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "到深圳及住址属事务安排"
+      },
+      {
+        "fpId": "claims#8",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n9",
+        "reason": "租房链接内容属于事务信息"
+      }
+    ]
+  }
+}

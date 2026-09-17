@@ -1,0 +1,1091 @@
+{
+  "goldVersion": 2,
+  "zip": "聊天记录_20260910_183020.zip",
+  "annotator": "annotator",
+  "annotatedAt": "2026-09-15T10:44:52.000Z",
+  "notes": "self=小满: 系统消息里春燕老师与 Amy 均以引号名出现（自己会显示为『你』），其余发送者中小满最像个人微信名而非群昵称。chat.title 取群内改名后的群名（用户可见）。儿童（小宇、豆豆、乐乐、朵朵、果果）建为非群成员人物。班主任与孩子的关系类型词表无 teacher，记为 other 且 optional。 goldVersion 2 (interaction pass): loops and conversations added; claims/handles/relations/dates/events/negatives unchanged. Loops follow SPEC §8.7 (a question someone later answers is not a loop) and are only recorded when they stay open past the conversation (window) in which they were opened, since a close can only be expressed against a loop carried in from an earlier window. Conversations cover the stretches with real content; pure small talk is left out so it does not skew topic coverage.",
+  "parserVersion": "wechat-export@1",
+  "messageCount": 178,
+  "messagesSha256": "a89b0ac9f05c4a638e98846a3df46b8f1bf574f514ae7ff71753475cf037509a",
+  "anchors": [
+    {
+      "idx": 0,
+      "fingerprint": "f52def825ca06259"
+    },
+    {
+      "idx": 50,
+      "fingerprint": "4c6ff58a3c1ce88a"
+    },
+    {
+      "idx": 100,
+      "fingerprint": "2f95cff43287600c"
+    },
+    {
+      "idx": 150,
+      "fingerprint": "0b8251261085f136"
+    },
+    {
+      "idx": 177,
+      "fingerprint": "551c39e419ef5556"
+    }
+  ],
+  "mapping": {
+    "chat": {
+      "title": "三年二班家长群",
+      "kind": "group"
+    },
+    "senders": [
+      {
+        "senderName": "春燕老师",
+        "person": "chunyan"
+      },
+      {
+        "senderName": "Amy",
+        "person": "amy"
+      },
+      {
+        "senderName": "豆豆妈",
+        "person": "doudoumama"
+      },
+      {
+        "senderName": "乐乐爸爸",
+        "person": "lelebaba"
+      },
+      {
+        "senderName": "小满",
+        "person": "xiaoman"
+      },
+      {
+        "senderName": "果果奶奶",
+        "person": "guoguonainai"
+      },
+      {
+        "senderName": "周明杰",
+        "person": "zhoumingjie"
+      }
+    ],
+    "self": "xiaoman"
+  },
+  "persons": [
+    {
+      "key": "chunyan",
+      "label": "刘春燕",
+      "aliases": [
+        "春燕老师",
+        "刘老师"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "amy",
+      "label": "Amy",
+      "aliases": [
+        "小宇妈妈"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "doudoumama",
+      "label": "豆豆妈",
+      "aliases": [
+        "雯姐",
+        "王晓雯"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "lelebaba",
+      "label": "乐乐爸爸",
+      "aliases": [
+        "张医生"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "inChat": true
+    },
+    {
+      "key": "guoguonainai",
+      "label": "果果奶奶",
+      "inChat": true
+    },
+    {
+      "key": "zhoumingjie",
+      "label": "周明杰",
+      "aliases": [
+        "周老师"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "xiaoyu",
+      "label": "小宇",
+      "inChat": false
+    },
+    {
+      "key": "doudou",
+      "label": "豆豆",
+      "inChat": false
+    },
+    {
+      "key": "lele",
+      "label": "乐乐",
+      "inChat": false
+    },
+    {
+      "key": "duoduo",
+      "label": "朵朵",
+      "inChat": false
+    },
+    {
+      "key": "guoguo",
+      "label": "果果",
+      "inChat": false
+    }
+  ],
+  "handles": [
+    {
+      "id": "h1",
+      "person": "chunyan",
+      "kind": "real_name",
+      "value": "刘春燕",
+      "evidence": [
+        1
+      ]
+    },
+    {
+      "id": "h2",
+      "person": "chunyan",
+      "kind": "address_term",
+      "value": "刘老师",
+      "evidence": [
+        2,
+        172
+      ]
+    },
+    {
+      "id": "h3",
+      "person": "amy",
+      "kind": "address_term",
+      "value": "小宇妈妈",
+      "evidence": [
+        2
+      ]
+    },
+    {
+      "id": "h4",
+      "person": "doudoumama",
+      "kind": "address_term",
+      "value": "雯姐",
+      "evidence": [
+        64
+      ]
+    },
+    {
+      "id": "h5",
+      "person": "doudoumama",
+      "kind": "real_name",
+      "value": "王晓雯",
+      "evidence": [
+        63,
+        64
+      ],
+      "optional": true
+    },
+    {
+      "id": "h6",
+      "person": "lelebaba",
+      "kind": "address_term",
+      "value": "张医生",
+      "evidence": [
+        52
+      ]
+    },
+    {
+      "id": "h7",
+      "person": "zhoumingjie",
+      "kind": "address_term",
+      "value": "周老师",
+      "evidence": [
+        120
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "from": "amy",
+      "to": "xiaoyu",
+      "type": "parent",
+      "label": "妈妈",
+      "evidence": [
+        2,
+        91
+      ]
+    },
+    {
+      "id": "r2",
+      "from": "doudoumama",
+      "to": "doudou",
+      "type": "parent",
+      "label": "妈妈",
+      "evidence": [
+        52,
+        63
+      ]
+    },
+    {
+      "id": "r3",
+      "from": "lelebaba",
+      "to": "lele",
+      "type": "parent",
+      "label": "爸爸",
+      "evidence": [
+        38,
+        172
+      ]
+    },
+    {
+      "id": "r4",
+      "from": "guoguonainai",
+      "to": "guoguo",
+      "type": "relative",
+      "label": "奶奶",
+      "evidence": [
+        27
+      ]
+    },
+    {
+      "id": "r5",
+      "from": "xiaoman",
+      "to": "duoduo",
+      "type": "parent",
+      "acceptTypes": [
+        "relative"
+      ],
+      "evidence": [
+        73,
+        93
+      ],
+      "optional": true
+    },
+    {
+      "id": "r6",
+      "from": "duoduo",
+      "to": "xiaoyu",
+      "type": "friend",
+      "acceptTypes": [
+        "classmate"
+      ],
+      "evidence": [
+        93
+      ],
+      "optional": true
+    },
+    {
+      "id": "r7",
+      "from": "chunyan",
+      "to": "xiaoyu",
+      "type": "other",
+      "label": "班主任",
+      "acceptTypes": [
+        "service_provider"
+      ],
+      "evidence": [
+        1,
+        2
+      ],
+      "optional": true
+    },
+    {
+      "id": "r8",
+      "from": "chunyan",
+      "to": "lele",
+      "type": "other",
+      "label": "老师",
+      "acceptTypes": [
+        "service_provider"
+      ],
+      "evidence": [
+        172,
+        173
+      ],
+      "optional": true
+    },
+    {
+      "id": "r9",
+      "from": "lelebaba",
+      "to": "doudou",
+      "type": "service_provider",
+      "label": "牙医",
+      "acceptTypes": [
+        "other"
+      ],
+      "evidence": [
+        52,
+        53
+      ],
+      "optional": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "c1",
+      "person": "chunyan",
+      "statement": "担任三年二班班主任",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        1
+      ]
+    },
+    {
+      "id": "c2",
+      "person": "chunyan",
+      "statement": "教语文",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        1
+      ]
+    },
+    {
+      "id": "c3",
+      "person": "amy",
+      "statement": "丈夫调到上海分公司工作",
+      "category": "family",
+      "acceptCategories": [
+        "work",
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        90
+      ]
+    },
+    {
+      "id": "c4",
+      "person": "amy",
+      "statement": "2026年10月全家搬去上海",
+      "category": "location",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        90
+      ]
+    },
+    {
+      "id": "c5",
+      "person": "amy",
+      "statement": "住在云杉市",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        51,
+        94
+      ],
+      "optional": true
+    },
+    {
+      "id": "c6",
+      "person": "amy",
+      "statement": "提供过收货地址",
+      "category": "other",
+      "acceptCategories": [
+        "location"
+      ],
+      "sensitive": true,
+      "evidence": [
+        51
+      ]
+    },
+    {
+      "id": "c7",
+      "person": "xiaoyu",
+      "statement": "这学期转学到三年二班",
+      "category": "education",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        2,
+        74
+      ]
+    },
+    {
+      "id": "c8",
+      "person": "xiaoyu",
+      "statement": "在上海学过一点Scratch",
+      "category": "education",
+      "acceptCategories": [
+        "other",
+        "preference"
+      ],
+      "sensitive": false,
+      "evidence": [
+        36
+      ]
+    },
+    {
+      "id": "c9",
+      "person": "xiaoyu",
+      "statement": "喜欢看漫画",
+      "category": "preference",
+      "sensitive": false,
+      "evidence": [
+        48,
+        49
+      ]
+    },
+    {
+      "id": "c10",
+      "person": "xiaoyu",
+      "statement": "读完这学期转回上海上学",
+      "category": "education",
+      "acceptCategories": [
+        "life_event",
+        "location"
+      ],
+      "sensitive": false,
+      "evidence": [
+        91
+      ]
+    },
+    {
+      "id": "c11",
+      "person": "xiaoyu",
+      "statement": "之前在上海上学",
+      "category": "education",
+      "acceptCategories": [
+        "location"
+      ],
+      "sensitive": false,
+      "evidence": [
+        74,
+        91,
+        160
+      ],
+      "optional": true
+    },
+    {
+      "id": "c12",
+      "person": "doudoumama",
+      "statement": "提供过联系方式",
+      "category": "other",
+      "sensitive": true,
+      "evidence": [
+        63
+      ]
+    },
+    {
+      "id": "c13",
+      "person": "doudoumama",
+      "statement": "是班级家委会成员",
+      "category": "other",
+      "sensitive": false,
+      "evidence": [
+        157
+      ],
+      "optional": true
+    },
+    {
+      "id": "c14",
+      "person": "lelebaba",
+      "statement": "在云杉口腔医院当牙医",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        52,
+        53
+      ]
+    },
+    {
+      "id": "c15",
+      "person": "lelebaba",
+      "statement": "儿童牙科医生",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        53
+      ],
+      "optional": true
+    },
+    {
+      "id": "c16",
+      "person": "lele",
+      "statement": "喜欢恐龙",
+      "category": "preference",
+      "sensitive": false,
+      "evidence": [
+        38,
+        77
+      ]
+    },
+    {
+      "id": "c17",
+      "person": "zhoumingjie",
+      "statement": "是三年二班家委会成员",
+      "category": "other",
+      "acceptCategories": [
+        "work"
+      ],
+      "sensitive": false,
+      "evidence": [
+        9,
+        130
+      ]
+    },
+    {
+      "id": "c18",
+      "person": "zhoumingjie",
+      "statement": "开办明杰少儿编程培训班",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        34
+      ]
+    },
+    {
+      "id": "c19",
+      "person": "zhoumingjie",
+      "statement": "提供过银行账户",
+      "category": "other",
+      "sensitive": true,
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "id": "c20",
+      "person": "zhoumingjie",
+      "statement": "孩子在三年二班上学",
+      "category": "family",
+      "sensitive": false,
+      "evidence": [
+        24,
+        43,
+        111
+      ],
+      "optional": true
+    },
+    {
+      "id": "c21",
+      "person": "duoduo",
+      "statement": "读三年级",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        73
+      ]
+    },
+    {
+      "id": "c22",
+      "person": "guoguonainai",
+      "statement": "负责接果果放学",
+      "category": "family",
+      "sensitive": false,
+      "evidence": [
+        27,
+        139
+      ],
+      "optional": true
+    }
+  ],
+  "dates": [],
+  "events": [
+    {
+      "id": "e1",
+      "summary": "在云杉万象城给小宇办欢送会",
+      "participants": [
+        "amy",
+        "xiaoyu",
+        "xiaoman"
+      ],
+      "evidence": [
+        95,
+        96,
+        117,
+        118,
+        119,
+        120
+      ]
+    },
+    {
+      "id": "e2",
+      "summary": "乐乐在学校摔倒擦破膝盖",
+      "participants": [
+        "lele"
+      ],
+      "evidence": [
+        172,
+        173
+      ],
+      "optional": true
+    }
+  ],
+  "loops": [
+    {
+      "id": "k1",
+      "person": "chunyan",
+      "direction": "mine",
+      "kind": "plan",
+      "text": "把紧急联系人信息私发给老师",
+      "evidence": [
+        62
+      ],
+      "optional": true
+    },
+    {
+      "id": "k2",
+      "person": "amy",
+      "direction": "mine",
+      "kind": "question",
+      "text": "谁家有多余的二年级旧课本",
+      "evidence": [
+        51
+      ],
+      "optional": true
+    },
+    {
+      "id": "k3",
+      "person": "amy",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "周六下午三点在万象城给小宇办欢送会",
+      "dueAt": "2026-09-05",
+      "evidence": [
+        96
+      ],
+      "closedBy": 117,
+      "closedReason": "done"
+    },
+    {
+      "id": "k4",
+      "person": "amy",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "以后回云杉再约着见面",
+      "evidence": [
+        94
+      ],
+      "optional": true
+    },
+    {
+      "id": "k5",
+      "person": "amy",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "私下问老师换座位的事",
+      "evidence": [
+        177
+      ],
+      "optional": true
+    }
+  ],
+  "conversations": [
+    {
+      "id": "v1",
+      "startIdx": 0,
+      "endIdx": 5,
+      "topics": [
+        "入群",
+        "班主任"
+      ]
+    },
+    {
+      "id": "v2",
+      "startIdx": 9,
+      "endIdx": 17,
+      "topics": [
+        "班费"
+      ]
+    },
+    {
+      "id": "v3",
+      "startIdx": 34,
+      "endIdx": 38,
+      "topics": [
+        "编程班"
+      ]
+    },
+    {
+      "id": "v4",
+      "startIdx": 46,
+      "endIdx": 51,
+      "topics": [
+        "书单",
+        "旧课本"
+      ]
+    },
+    {
+      "id": "v5",
+      "startIdx": 52,
+      "endIdx": 55,
+      "topics": [
+        "牙疼"
+      ]
+    },
+    {
+      "id": "v6",
+      "startIdx": 59,
+      "endIdx": 65,
+      "topics": [
+        "校服",
+        "紧急联系人"
+      ]
+    },
+    {
+      "id": "v7",
+      "startIdx": 72,
+      "endIdx": 77,
+      "topics": [
+        "开学"
+      ]
+    },
+    {
+      "id": "v8",
+      "startIdx": 87,
+      "endIdx": 96,
+      "topics": [
+        "上海",
+        "欢送会"
+      ]
+    },
+    {
+      "id": "v9",
+      "startIdx": 113,
+      "endIdx": 123,
+      "topics": [
+        "欢送会"
+      ]
+    },
+    {
+      "id": "v10",
+      "startIdx": 124,
+      "endIdx": 130,
+      "topics": [
+        "作息",
+        "运动会"
+      ]
+    },
+    {
+      "id": "v11",
+      "startIdx": 151,
+      "endIdx": 162,
+      "topics": [
+        "教师节"
+      ]
+    },
+    {
+      "id": "v12",
+      "startIdx": 166,
+      "endIdx": 177,
+      "topics": [
+        "摔倒",
+        "换座位"
+      ]
+    }
+  ],
+  "negatives": [
+    {
+      "id": "n1",
+      "kind": "sensitive",
+      "evidence": [
+        10
+      ],
+      "description": "家委会收款银行卡号与户名",
+      "forbidden": "卡号出现在任何输出文本"
+    },
+    {
+      "id": "n2",
+      "kind": "transactional",
+      "evidence": [
+        9,
+        10
+      ],
+      "description": "班费金额与缴费截止日期",
+      "forbidden": "金额或截止日期进入 claim"
+    },
+    {
+      "id": "n3",
+      "kind": "invisible_content",
+      "evidence": [
+        16,
+        17
+      ],
+      "description": "微信转账，金额不可见",
+      "forbidden": "猜测转账金额或写成已交班费金额"
+    },
+    {
+      "id": "n4",
+      "kind": "transactional",
+      "evidence": [
+        35
+      ],
+      "description": "编程班课程课时与价格",
+      "forbidden": "课程价格、课时进入 claim"
+    },
+    {
+      "id": "n5",
+      "kind": "inference_trap",
+      "evidence": [
+        36,
+        37
+      ],
+      "description": "建议小宇直接上进阶班",
+      "forbidden": "小宇报名或在上周明杰的编程班"
+    },
+    {
+      "id": "n6",
+      "kind": "inference_trap",
+      "evidence": [
+        48
+      ],
+      "description": "周明杰调侃 Amy 的儿子",
+      "forbidden": "周明杰与小宇之间的亲属关系"
+    },
+    {
+      "id": "n7",
+      "kind": "sensitive",
+      "evidence": [
+        51
+      ],
+      "description": "Amy 发在群里的详细收件地址",
+      "forbidden": "详细地址出现在任何输出文本"
+    },
+    {
+      "id": "n8",
+      "kind": "transactional",
+      "evidence": [
+        51
+      ],
+      "description": "求二年级旧课本",
+      "forbidden": "求课本作为 Amy 的 claim"
+    },
+    {
+      "id": "n9",
+      "kind": "coordination",
+      "evidence": [
+        52,
+        53,
+        54,
+        55
+      ],
+      "description": "豆豆牙疼约看牙",
+      "forbidden": "豆豆牙疼或就诊安排作为 claim"
+    },
+    {
+      "id": "n10",
+      "kind": "sensitive",
+      "evidence": [
+        63
+      ],
+      "description": "群里误发的紧急联系人手机号",
+      "forbidden": "手机号出现在任何输出文本"
+    },
+    {
+      "id": "n11",
+      "kind": "invisible_content",
+      "evidence": [
+        30,
+        113
+      ],
+      "description": "语音消息，内容不可见",
+      "forbidden": "猜测语音内容"
+    },
+    {
+      "id": "n12",
+      "kind": "coordination",
+      "evidence": [
+        28
+      ],
+      "description": "放学时间与等候地点",
+      "forbidden": "放学时间地点作为 claim"
+    },
+    {
+      "id": "n13",
+      "kind": "coordination",
+      "evidence": [
+        66,
+        67
+      ],
+      "description": "开学到校时间",
+      "forbidden": "到校时间作为 claim"
+    },
+    {
+      "id": "n14",
+      "kind": "coordination",
+      "evidence": [
+        117,
+        118
+      ],
+      "description": "到达与停车通知",
+      "forbidden": "到达通知作为 claim"
+    },
+    {
+      "id": "n15",
+      "kind": "invisible_content",
+      "evidence": [
+        119
+      ],
+      "description": "欢送红包，金额不可见",
+      "forbidden": "猜测红包金额"
+    },
+    {
+      "id": "n16",
+      "kind": "coordination",
+      "evidence": [
+        139,
+        140,
+        141
+      ],
+      "description": "顺路一起接孩子",
+      "forbidden": "接孩子安排作为 claim"
+    },
+    {
+      "id": "n17",
+      "kind": "transactional",
+      "evidence": [
+        124,
+        125
+      ],
+      "description": "作息时间表文件",
+      "forbidden": "作息时间进入 claim"
+    },
+    {
+      "id": "n18",
+      "kind": "transactional",
+      "evidence": [
+        129
+      ],
+      "description": "运动会报名通知链接",
+      "forbidden": "报名通知作为 claim"
+    },
+    {
+      "id": "n19",
+      "kind": "invisible_content",
+      "evidence": [
+        159
+      ],
+      "description": "合并转发的聊天记录，内容不可见",
+      "forbidden": "猜测转发内容"
+    },
+    {
+      "id": "n20",
+      "kind": "invisible_content",
+      "evidence": [
+        123
+      ],
+      "description": "视频通话",
+      "forbidden": "猜测通话内容"
+    },
+    {
+      "id": "n21",
+      "kind": "coordination",
+      "evidence": [
+        96
+      ],
+      "description": "欢送会时间地点通知",
+      "forbidden": "欢送会时间作为某人 claim"
+    },
+    {
+      "id": "n22",
+      "kind": "coordination",
+      "evidence": [
+        157,
+        161,
+        162
+      ],
+      "description": "教师节送花与不收礼通知",
+      "forbidden": "送花或不收礼作为 claim"
+    },
+    {
+      "id": "n23",
+      "kind": "inference_trap",
+      "evidence": [
+        81,
+        175
+      ],
+      "description": "孩子想跟同桌换座位",
+      "forbidden": "换座位或同学矛盾作为 claim"
+    },
+    {
+      "id": "n24",
+      "kind": "transactional",
+      "evidence": [
+        6,
+        7,
+        8,
+        18,
+        19,
+        39,
+        40,
+        41,
+        46,
+        47
+      ],
+      "description": "文具、书皮、书单购买渠道",
+      "forbidden": "购买渠道作为 claim"
+    },
+    {
+      "id": "n25",
+      "kind": "coordination",
+      "evidence": [
+        69,
+        70,
+        134,
+        135,
+        142,
+        143,
+        145,
+        146
+      ],
+      "description": "带跳绳、穿校服或运动服的日程",
+      "forbidden": "日程作为 claim"
+    },
+    {
+      "id": "n26",
+      "kind": "invisible_content",
+      "evidence": [
+        31,
+        32,
+        33,
+        131,
+        132,
+        133
+      ],
+      "description": "打不开的通知截图",
+      "forbidden": "猜测截图内容"
+    },
+    {
+      "id": "n27",
+      "kind": "inference_trap",
+      "evidence": [
+        172,
+        173
+      ],
+      "description": "乐乐一次轻微擦伤",
+      "forbidden": "擦伤写成长期健康状况 claim"
+    },
+    {
+      "id": "n28",
+      "kind": "coordination",
+      "evidence": [
+        27
+      ],
+      "description": "果果奶奶到校门口、问今天几点放学",
+      "forbidden": "到达校门口或询问放学时间作为 claim"
+    }
+  ],
+  "sensitiveValues": [
+    "6222 0000 1111 2222 333",
+    "云杉市青禾区银杏路12号3栋501",
+    "银杏路12号3栋501",
+    "13900002222"
+  ]
+}

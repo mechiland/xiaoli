@@ -1,0 +1,858 @@
+{
+  "kind": "compare",
+  "createdAt": "2026-09-16T06:01:54.993Z",
+  "a": {
+    "runId": "wave5-compare-extract.v5",
+    "promptVersion": "extract.v5",
+    "model": "deepseek-flash",
+    "mode": "replay",
+    "passed": false
+  },
+  "b": {
+    "runId": "wave5-compare-extract.v7",
+    "promptVersion": "extract.v7",
+    "model": "deepseek-flash",
+    "mode": "replay",
+    "passed": false
+  },
+  "goldSha256": {
+    "聊天记录_20260405_223012": "39f5ec7f20c0dd34d97e4032369ee52ca99753a1713aaa9da8646c1a8b22c31f",
+    "聊天记录_20260910_183020": "588eaea919f8900af618bcbea129f90a366ecb4e6f3e5b8901a6a08efcf4c3f0",
+    "聊天记录_20260912_095501": "3c09cfc34534a35bf059d7248cd097065f5ac48d8977816075cc5671472d9b23",
+    "聊天记录_20260914_211545": "5608a639be7e3b069b07ae2d39b14e3cdf996ebf93b7d96ecf65cd98e3625b16"
+  },
+  "sources": {
+    "synthetic": {
+      "a": {
+        "claims.precisionStrict": 0.8125,
+        "claims.precisionLenient": 0.8958,
+        "claims.recallStrict": 0.7447,
+        "claims.recallLenient": 0.8298,
+        "claims.yieldPer100": 5.9701,
+        "claims.predicted": 48,
+        "relations.precisionStrict": 0.9615,
+        "relations.precisionLenient": 0.9615,
+        "relations.recallStrict": 0.9524,
+        "relations.recallLenient": 0.9524,
+        "relations.yieldPer100": 3.2338,
+        "relations.predicted": 26,
+        "handles.precisionStrict": 1,
+        "handles.precisionLenient": 1,
+        "handles.recallStrict": 0.4167,
+        "handles.recallLenient": 0.4167,
+        "handles.yieldPer100": 0.995,
+        "handles.predicted": 8,
+        "dates.precisionStrict": 0.8571,
+        "dates.precisionLenient": 0.8571,
+        "dates.recallStrict": 1,
+        "dates.recallLenient": 1,
+        "dates.yieldPer100": 0.8706,
+        "dates.predicted": 7,
+        "events.precisionStrict": 0.3333,
+        "events.precisionLenient": 1,
+        "events.recallStrict": 0.0833,
+        "events.recallLenient": 0.25,
+        "events.yieldPer100": 0.3731,
+        "events.predicted": 3,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": 0,
+        "loops.predicted": 0,
+        "transactionalAsClaimRatio": 0.0208,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0.9765,
+        "yieldPer100Total": 11.4428,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": 0,
+        "interaction.loopKindMismatch": 0,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": 0,
+        "interaction.segments": 0,
+        "interaction.conversationsPredicted": 0,
+        "interaction.predictedCloses": 0
+      },
+      "b": {
+        "claims.precisionStrict": 0.7708,
+        "claims.precisionLenient": 0.8958,
+        "claims.recallStrict": 0.7021,
+        "claims.recallLenient": 0.8085,
+        "claims.yieldPer100": 5.9701,
+        "claims.predicted": 48,
+        "relations.precisionStrict": 0.8276,
+        "relations.precisionLenient": 0.8276,
+        "relations.recallStrict": 0.9524,
+        "relations.recallLenient": 0.9524,
+        "relations.yieldPer100": 3.607,
+        "relations.predicted": 29,
+        "handles.precisionStrict": 1,
+        "handles.precisionLenient": 1,
+        "handles.recallStrict": 0.4167,
+        "handles.recallLenient": 0.4167,
+        "handles.yieldPer100": 0.7463,
+        "handles.predicted": 6,
+        "dates.precisionStrict": 0.8,
+        "dates.precisionLenient": 0.8,
+        "dates.recallStrict": 0.8,
+        "dates.recallLenient": 0.8,
+        "dates.yieldPer100": 0.6219,
+        "dates.predicted": 5,
+        "events.precisionStrict": 0.5556,
+        "events.precisionLenient": 0.7778,
+        "events.recallStrict": 0.3333,
+        "events.recallLenient": 0.3333,
+        "events.yieldPer100": 1.1194,
+        "events.predicted": 9,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": 0,
+        "loops.predicted": 0,
+        "transactionalAsClaimRatio": 0.0417,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0.9643,
+        "yieldPer100Total": 12.0647,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": 0,
+        "interaction.loopKindMismatch": 0,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": 0,
+        "interaction.segments": 0,
+        "interaction.conversationsPredicted": 0,
+        "interaction.predictedCloses": 0
+      },
+      "delta": {
+        "claims.precisionStrict": -0.0417,
+        "claims.precisionLenient": 0,
+        "claims.recallStrict": -0.0426,
+        "claims.recallLenient": -0.0213,
+        "claims.yieldPer100": 0,
+        "claims.predicted": 0,
+        "relations.precisionStrict": -0.1339,
+        "relations.precisionLenient": -0.1339,
+        "relations.recallStrict": 0,
+        "relations.recallLenient": 0,
+        "relations.yieldPer100": 0.3732,
+        "relations.predicted": 3,
+        "handles.precisionStrict": 0,
+        "handles.precisionLenient": 0,
+        "handles.recallStrict": 0,
+        "handles.recallLenient": 0,
+        "handles.yieldPer100": -0.2487,
+        "handles.predicted": -2,
+        "dates.precisionStrict": -0.0571,
+        "dates.precisionLenient": -0.0571,
+        "dates.recallStrict": -0.2,
+        "dates.recallLenient": -0.2,
+        "dates.yieldPer100": -0.2487,
+        "dates.predicted": -2,
+        "events.precisionStrict": 0.2223,
+        "events.precisionLenient": -0.2222,
+        "events.recallStrict": 0.25,
+        "events.recallLenient": 0.0833,
+        "events.yieldPer100": 0.7463,
+        "events.predicted": 6,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": 0,
+        "loops.predicted": 0,
+        "transactionalAsClaimRatio": 0.0209,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": -0.0122,
+        "yieldPer100Total": 0.6219,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": 0,
+        "interaction.loopKindMismatch": 0,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": 0,
+        "interaction.segments": 0,
+        "interaction.conversationsPredicted": 0,
+        "interaction.predictedCloses": 0
+      }
+    },
+    "real": {
+      "a": {
+        "claims.precisionStrict": null,
+        "claims.precisionLenient": null,
+        "claims.recallStrict": null,
+        "claims.recallLenient": null,
+        "claims.yieldPer100": null,
+        "claims.predicted": null,
+        "relations.precisionStrict": null,
+        "relations.precisionLenient": null,
+        "relations.recallStrict": null,
+        "relations.recallLenient": null,
+        "relations.yieldPer100": null,
+        "relations.predicted": null,
+        "handles.precisionStrict": null,
+        "handles.precisionLenient": null,
+        "handles.recallStrict": null,
+        "handles.recallLenient": null,
+        "handles.yieldPer100": null,
+        "handles.predicted": null,
+        "dates.precisionStrict": null,
+        "dates.precisionLenient": null,
+        "dates.recallStrict": null,
+        "dates.recallLenient": null,
+        "dates.yieldPer100": null,
+        "dates.predicted": null,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": null,
+        "events.recallLenient": null,
+        "events.yieldPer100": null,
+        "events.predicted": null,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": null,
+        "loops.predicted": null,
+        "transactionalAsClaimRatio": null,
+        "sensitiveInStatement": null,
+        "invalidEvidencePost": null,
+        "invalidEvidencePreRate": null,
+        "evidenceOverlap": null,
+        "yieldPer100Total": null,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": null,
+        "interaction.loopKindMismatch": null,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": null,
+        "interaction.segments": null,
+        "interaction.conversationsPredicted": null,
+        "interaction.predictedCloses": null
+      },
+      "b": {
+        "claims.precisionStrict": null,
+        "claims.precisionLenient": null,
+        "claims.recallStrict": null,
+        "claims.recallLenient": null,
+        "claims.yieldPer100": null,
+        "claims.predicted": null,
+        "relations.precisionStrict": null,
+        "relations.precisionLenient": null,
+        "relations.recallStrict": null,
+        "relations.recallLenient": null,
+        "relations.yieldPer100": null,
+        "relations.predicted": null,
+        "handles.precisionStrict": null,
+        "handles.precisionLenient": null,
+        "handles.recallStrict": null,
+        "handles.recallLenient": null,
+        "handles.yieldPer100": null,
+        "handles.predicted": null,
+        "dates.precisionStrict": null,
+        "dates.precisionLenient": null,
+        "dates.recallStrict": null,
+        "dates.recallLenient": null,
+        "dates.yieldPer100": null,
+        "dates.predicted": null,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": null,
+        "events.recallLenient": null,
+        "events.yieldPer100": null,
+        "events.predicted": null,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": null,
+        "loops.predicted": null,
+        "transactionalAsClaimRatio": null,
+        "sensitiveInStatement": null,
+        "invalidEvidencePost": null,
+        "invalidEvidencePreRate": null,
+        "evidenceOverlap": null,
+        "yieldPer100Total": null,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": null,
+        "interaction.loopKindMismatch": null,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": null,
+        "interaction.segments": null,
+        "interaction.conversationsPredicted": null,
+        "interaction.predictedCloses": null
+      },
+      "delta": {
+        "claims.precisionStrict": null,
+        "claims.precisionLenient": null,
+        "claims.recallStrict": null,
+        "claims.recallLenient": null,
+        "claims.yieldPer100": null,
+        "claims.predicted": null,
+        "relations.precisionStrict": null,
+        "relations.precisionLenient": null,
+        "relations.recallStrict": null,
+        "relations.recallLenient": null,
+        "relations.yieldPer100": null,
+        "relations.predicted": null,
+        "handles.precisionStrict": null,
+        "handles.precisionLenient": null,
+        "handles.recallStrict": null,
+        "handles.recallLenient": null,
+        "handles.yieldPer100": null,
+        "handles.predicted": null,
+        "dates.precisionStrict": null,
+        "dates.precisionLenient": null,
+        "dates.recallStrict": null,
+        "dates.recallLenient": null,
+        "dates.yieldPer100": null,
+        "dates.predicted": null,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": null,
+        "events.recallLenient": null,
+        "events.yieldPer100": null,
+        "events.predicted": null,
+        "loops.precisionStrict": null,
+        "loops.precisionLenient": null,
+        "loops.recallStrict": null,
+        "loops.recallLenient": null,
+        "loops.yieldPer100": null,
+        "loops.predicted": null,
+        "transactionalAsClaimRatio": null,
+        "sensitiveInStatement": null,
+        "invalidEvidencePost": null,
+        "invalidEvidencePreRate": null,
+        "evidenceOverlap": null,
+        "yieldPer100Total": null,
+        "interaction.loopCloseRecall": null,
+        "interaction.loopFalseClose": null,
+        "interaction.loopKindMismatch": null,
+        "interaction.conversationCoverage": null,
+        "interaction.topicCoverage": null,
+        "interaction.segmentInvalidEvidence": null,
+        "interaction.segments": null,
+        "interaction.conversationsPredicted": null,
+        "interaction.predictedCloses": null
+      }
+    }
+  },
+  "triage": {
+    "synthetic": {
+      "claimsPredicted": [
+        48,
+        48,
+        0
+      ],
+      "claimsPrecisionLenient": [
+        0.8958,
+        0.8958,
+        0
+      ],
+      "claimsRecallStrict": [
+        0.7447,
+        0.7021,
+        -0.0426
+      ],
+      "claimsFn": [
+        8,
+        9,
+        1
+      ],
+      "loopsPredicted": [
+        0,
+        0,
+        0
+      ],
+      "segments": [
+        0,
+        0,
+        0
+      ],
+      "conversations": [
+        0,
+        0,
+        0
+      ],
+      "note": "分流 (SPEC §8.7/§8.8): from extract.v9 momentary coordination becomes a segment summary or a loop instead of a claim, so a drop in claims.predicted next to a rise in loops/segments is the rule working, not a regression. Read claims recall together with claims.fn, and a claims precision gain together with the loop numbers."
+    },
+    "real": {
+      "claimsPredicted": [
+        null,
+        null,
+        null
+      ],
+      "claimsPrecisionLenient": [
+        null,
+        null,
+        null
+      ],
+      "claimsRecallStrict": [
+        null,
+        null,
+        null
+      ],
+      "claimsFn": [
+        null,
+        null,
+        null
+      ],
+      "loopsPredicted": [
+        null,
+        null,
+        null
+      ],
+      "segments": [
+        null,
+        null,
+        null
+      ],
+      "conversations": [
+        null,
+        null,
+        null
+      ],
+      "note": "分流 (SPEC §8.7/§8.8): from extract.v9 momentary coordination becomes a segment summary or a loop instead of a claim, so a drop in claims.predicted next to a rise in loops/segments is the rule working, not a regression. Read claims recall together with claims.fn, and a claims precision gain together with the loop numbers."
+    }
+  },
+  "gates": [
+    {
+      "name": "claims.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 0.8958,
+        "passed": true
+      },
+      "b": {
+        "value": 0.8958,
+        "passed": true
+      }
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "synthetic",
+      "a": {
+        "value": 0.7447,
+        "passed": true
+      },
+      "b": {
+        "value": 0.7021,
+        "passed": true
+      }
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 0.9615,
+        "passed": true
+      },
+      "b": {
+        "value": 0.8276,
+        "passed": false
+      }
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "synthetic",
+      "a": {
+        "value": 0.0208,
+        "passed": true
+      },
+      "b": {
+        "value": 0.0417,
+        "passed": true
+      }
+    },
+    {
+      "name": "loops.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": null,
+        "passed": true
+      },
+      "b": {
+        "value": null,
+        "passed": true
+      }
+    },
+    {
+      "name": "loopFalseClose",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "segmentInvalidEvidence",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "zips.scored",
+      "source": "synthetic",
+      "a": {
+        "value": 4,
+        "passed": true
+      },
+      "b": {
+        "value": 4,
+        "passed": true
+      }
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.frozen",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "synthetic",
+      "a": {
+        "value": 3072,
+        "passed": true
+      },
+      "b": {
+        "value": 3218,
+        "passed": true
+      }
+    },
+    {
+      "name": "claims.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "loops.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "loopFalseClose",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "segmentInvalidEvidence",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "zips.scored",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "gold.frozen",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "real",
+      "a": {
+        "value": null,
+        "passed": false
+      },
+      "b": {
+        "value": null,
+        "passed": false
+      }
+    }
+  ],
+  "usage": {
+    "a": {
+      "inputTokens": 135808,
+      "outputTokens": 8787,
+      "calls": 33,
+      "judgeInputTokens": 0,
+      "judgeOutputTokens": 0,
+      "judgeCalls": 0,
+      "judgeCacheHits": 27,
+      "judgeFallbacks": 0
+    },
+    "b": {
+      "inputTokens": 129724,
+      "outputTokens": 8932,
+      "calls": 32,
+      "judgeInputTokens": 0,
+      "judgeOutputTokens": 0,
+      "judgeCalls": 0,
+      "judgeCacheHits": 28,
+      "judgeFallbacks": 0
+    }
+  }
+}

@@ -1,0 +1,992 @@
+{
+  "goldVersion": 2,
+  "zip": "聊天记录_20260405_223012.zip",
+  "annotator": "annotator",
+  "annotatedAt": "2026-09-15T10:43:34.064Z",
+  "notes": "self=小满 (the facts are mostly about the other party; 小满 gives their own shipping address). Title = the other sender name. Classmate relation from shared university/department reunion and \"大学四年\". Girlfriend relation typed other with label; spouse accepted. goldVersion 2 (interaction pass): loops and conversations added; claims/handles/relations/dates/events/negatives unchanged. Loops follow SPEC §8.7 (a question someone later answers is not a loop) and are only recorded when they stay open past the conversation (window) in which they were opened, since a close can only be expressed against a loop carried in from an earlier window. Conversations cover the stretches with real content; pure small talk is left out so it does not skew topic coverage.",
+  "parserVersion": "wechat-export@1",
+  "messageCount": 207,
+  "messagesSha256": "22ea55369b391b612b7fb89e61b10757766162cc365d3cd1e33435a6c67f6b5a",
+  "anchors": [
+    {
+      "idx": 0,
+      "fingerprint": "a1b0420fc457d448"
+    },
+    {
+      "idx": 50,
+      "fingerprint": "6af7bbeec869d44e"
+    },
+    {
+      "idx": 100,
+      "fingerprint": "ece2dfd20b2e73e2"
+    },
+    {
+      "idx": 150,
+      "fingerprint": "8fbcb1103794ecbf"
+    },
+    {
+      "idx": 200,
+      "fingerprint": "c32ba3d09e4bcab3"
+    },
+    {
+      "idx": 206,
+      "fingerprint": "c812211f98e596e1"
+    }
+  ],
+  "mapping": {
+    "chat": {
+      "title": "一舟",
+      "kind": "private"
+    },
+    "senders": [
+      {
+        "senderName": "一舟",
+        "person": "yizhou"
+      },
+      {
+        "senderName": "小满",
+        "person": "xiaoman"
+      }
+    ],
+    "self": "xiaoman"
+  },
+  "persons": [
+    {
+      "key": "xiaoman",
+      "label": "小满",
+      "aliases": [
+        "林小满"
+      ],
+      "inChat": true
+    },
+    {
+      "key": "yizhou",
+      "label": "一舟",
+      "inChat": true
+    },
+    {
+      "key": "susu",
+      "label": "苏苏",
+      "inChat": false
+    },
+    {
+      "key": "yizhou_mom",
+      "label": "一舟妈妈",
+      "aliases": [
+        "一舟的妈妈",
+        "一舟妈"
+      ],
+      "inChat": false
+    }
+  ],
+  "handles": [
+    {
+      "id": "h1",
+      "person": "xiaoman",
+      "kind": "real_name",
+      "value": "林小满",
+      "evidence": [
+        63
+      ]
+    },
+    {
+      "id": "h2",
+      "person": "susu",
+      "kind": "mentioned",
+      "value": "苏苏",
+      "evidence": [
+        44,
+        45
+      ],
+      "optional": true
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "from": "susu",
+      "to": "yizhou",
+      "type": "other",
+      "acceptTypes": [
+        "spouse",
+        "friend"
+      ],
+      "label": "女朋友",
+      "evidence": [
+        44
+      ]
+    },
+    {
+      "id": "r2",
+      "from": "yizhou_mom",
+      "to": "yizhou",
+      "type": "parent",
+      "label": "妈妈",
+      "evidence": [
+        122,
+        124,
+        134
+      ]
+    },
+    {
+      "id": "r3",
+      "from": "xiaoman",
+      "to": "yizhou",
+      "type": "classmate",
+      "acceptTypes": [
+        "friend"
+      ],
+      "label": "大学同学",
+      "evidence": [
+        30,
+        33,
+        34,
+        35
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "c1",
+      "person": "yizhou",
+      "statement": "在星禾互娱做前端开发",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        9,
+        10
+      ]
+    },
+    {
+      "id": "c2",
+      "person": "yizhou",
+      "statement": "住在杭州滨江",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        11,
+        12
+      ]
+    },
+    {
+      "id": "c3",
+      "person": "yizhou",
+      "statement": "不吃香菜",
+      "category": "preference",
+      "sensitive": false,
+      "evidence": [
+        29,
+        30
+      ]
+    },
+    {
+      "id": "c4",
+      "person": "yizhou",
+      "statement": "1995年出生",
+      "category": "other",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        20,
+        21
+      ],
+      "optional": true
+    },
+    {
+      "id": "c5",
+      "person": "yizhou",
+      "statement": "武汉大学计算机系毕业",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "id": "c6",
+      "person": "xiaoman",
+      "statement": "武汉大学计算机系毕业",
+      "category": "education",
+      "sensitive": false,
+      "evidence": [
+        33,
+        34,
+        35
+      ],
+      "optional": true
+    },
+    {
+      "id": "c7",
+      "person": "yizhou",
+      "statement": "2025年11月和苏苏在一起了",
+      "category": "family",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        43,
+        44
+      ]
+    },
+    {
+      "id": "c8",
+      "person": "yizhou",
+      "statement": "和苏苏在公司楼下咖啡店认识",
+      "category": "life_event",
+      "acceptCategories": [
+        "family",
+        "other"
+      ],
+      "sensitive": false,
+      "evidence": [
+        46
+      ],
+      "optional": true
+    },
+    {
+      "id": "c9",
+      "person": "susu",
+      "statement": "是自由插画师",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        46,
+        174
+      ]
+    },
+    {
+      "id": "c10",
+      "person": "xiaoman",
+      "statement": "提供过收货地址",
+      "category": "location",
+      "acceptCategories": [
+        "other"
+      ],
+      "sensitive": true,
+      "evidence": [
+        62,
+        63
+      ]
+    },
+    {
+      "id": "c11",
+      "person": "xiaoman",
+      "statement": "提供过手机号",
+      "category": "other",
+      "sensitive": true,
+      "evidence": [
+        63
+      ],
+      "optional": true
+    },
+    {
+      "id": "c12",
+      "person": "xiaoman",
+      "statement": "住在云杉",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        6,
+        7,
+        49
+      ],
+      "optional": true
+    },
+    {
+      "id": "c13",
+      "person": "yizhou_mom",
+      "statement": "颈椎不好",
+      "category": "other",
+      "sensitive": false,
+      "evidence": [
+        124
+      ]
+    },
+    {
+      "id": "c14",
+      "person": "yizhou",
+      "statement": "老家在九江",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        132
+      ]
+    },
+    {
+      "id": "c15",
+      "person": "yizhou",
+      "statement": "报名了杭州马拉松半马",
+      "category": "life_event",
+      "acceptCategories": [
+        "preference",
+        "other"
+      ],
+      "sensitive": false,
+      "evidence": [
+        152
+      ],
+      "optional": true
+    },
+    {
+      "id": "c16",
+      "person": "yizhou",
+      "statement": "每天早上跑步五公里",
+      "category": "preference",
+      "acceptCategories": [
+        "other"
+      ],
+      "sensitive": false,
+      "evidence": [
+        152,
+        154
+      ]
+    },
+    {
+      "id": "c17",
+      "person": "yizhou",
+      "statement": "拿到蓝鲸出行技术负责人的offer，5月1日入职",
+      "category": "work",
+      "sensitive": false,
+      "evidence": [
+        172,
+        193,
+        194
+      ],
+      "supersedes": "c1"
+    },
+    {
+      "id": "c18",
+      "person": "yizhou",
+      "statement": "四月底搬去深圳",
+      "category": "location",
+      "sensitive": false,
+      "evidence": [
+        198,
+        200
+      ],
+      "supersedes": "c2"
+    },
+    {
+      "id": "c19",
+      "person": "yizhou",
+      "statement": "在星禾互娱工作了快五年",
+      "category": "work",
+      "acceptCategories": [
+        "other"
+      ],
+      "sensitive": false,
+      "evidence": [
+        205,
+        206
+      ],
+      "optional": true
+    },
+    {
+      "id": "c21",
+      "person": "yizhou",
+      "statement": "已从星禾互娱离职",
+      "category": "work",
+      "acceptCategories": [
+        "life_event"
+      ],
+      "sensitive": false,
+      "evidence": [
+        204,
+        205,
+        206
+      ],
+      "optional": true
+    },
+    {
+      "id": "c20",
+      "person": "yizhou_mom",
+      "statement": "很喜欢苏苏",
+      "category": "family",
+      "acceptCategories": [
+        "other"
+      ],
+      "sensitive": false,
+      "evidence": [
+        133,
+        134
+      ],
+      "optional": true
+    }
+  ],
+  "dates": [
+    {
+      "id": "d1",
+      "person": "yizhou",
+      "kind": "birthday",
+      "month": 11,
+      "day": 3,
+      "year": 1995,
+      "calendar": "solar",
+      "evidence": [
+        15,
+        16,
+        21
+      ]
+    },
+    {
+      "id": "d2",
+      "person": "yizhou_mom",
+      "kind": "birthday",
+      "month": 1,
+      "day": 18,
+      "calendar": "lunar",
+      "evidence": [
+        122
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "summary": "一舟来云杉出差，和小满一起吃饭",
+      "participants": [
+        "yizhou",
+        "xiaoman"
+      ],
+      "evidence": [
+        6,
+        7,
+        13,
+        22,
+        28
+      ],
+      "optional": true
+    },
+    {
+      "id": "e2",
+      "summary": "12月武大计算机系同学聚会（毕业八年首次）",
+      "participants": [
+        "yizhou",
+        "xiaoman"
+      ],
+      "evidence": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "id": "e3",
+      "summary": "一舟和苏苏在一起",
+      "participants": [
+        "yizhou",
+        "susu"
+      ],
+      "evidence": [
+        44
+      ],
+      "optional": true
+    },
+    {
+      "id": "e4",
+      "summary": "春节一舟带苏苏回九江老家",
+      "participants": [
+        "yizhou",
+        "susu",
+        "yizhou_mom"
+      ],
+      "evidence": [
+        132,
+        133,
+        134
+      ]
+    },
+    {
+      "id": "e5",
+      "summary": "一舟参加蓝鲸出行面试",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        175,
+        176,
+        189
+      ],
+      "optional": true
+    },
+    {
+      "id": "e6",
+      "summary": "一舟拿到蓝鲸出行技术负责人offer",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        193,
+        194
+      ]
+    },
+    {
+      "id": "e7",
+      "summary": "一舟从星禾互娱离职",
+      "participants": [
+        "yizhou"
+      ],
+      "evidence": [
+        204
+      ],
+      "optional": true
+    }
+  ],
+  "loops": [
+    {
+      "id": "k1",
+      "person": "yizhou",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "下周四在云杉一起吃饭",
+      "dueAt": "2025-11-06",
+      "evidence": [
+        7,
+        13,
+        14
+      ],
+      "closedBy": 22,
+      "closedReason": "done"
+    },
+    {
+      "id": "k2",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "定吃饭的地方",
+      "evidence": [
+        14
+      ],
+      "closedBy": 25,
+      "closedReason": "done",
+      "optional": true
+    },
+    {
+      "id": "k3",
+      "person": "yizhou",
+      "direction": "mutual",
+      "kind": "plan",
+      "text": "12月回武汉参加武大计算机系同学聚会",
+      "dueAt": "2025-12",
+      "evidence": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "id": "k4",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "过年带苏苏来云杉见面",
+      "evidence": [
+        49
+      ]
+    },
+    {
+      "id": "k5",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "promise",
+      "text": "寄龙井茶过来",
+      "dueAt": "2025-12",
+      "evidence": [
+        62,
+        64
+      ]
+    },
+    {
+      "id": "k6",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "question",
+      "text": "副歌是啦啦啦的那首歌叫什么名字",
+      "evidence": [
+        99,
+        100
+      ],
+      "optional": true
+    },
+    {
+      "id": "k7",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "把最近在追的剧名发过去",
+      "evidence": [
+        114
+      ]
+    },
+    {
+      "id": "k8",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "下次见面请喝奶茶",
+      "evidence": [
+        151
+      ]
+    },
+    {
+      "id": "k9",
+      "person": "yizhou",
+      "direction": "mine",
+      "kind": "promise",
+      "text": "回头细说",
+      "evidence": [
+        181
+      ],
+      "optional": true
+    },
+    {
+      "id": "k10",
+      "person": "yizhou",
+      "direction": "theirs",
+      "kind": "plan",
+      "text": "四月底搬去深圳",
+      "dueAt": "2026-04",
+      "evidence": [
+        198,
+        200
+      ]
+    }
+  ],
+  "conversations": [
+    {
+      "id": "v1",
+      "startIdx": 4,
+      "endIdx": 14,
+      "topics": [
+        "出差",
+        "吃饭"
+      ]
+    },
+    {
+      "id": "v2",
+      "startIdx": 15,
+      "endIdx": 21,
+      "topics": [
+        "生日"
+      ]
+    },
+    {
+      "id": "v3",
+      "startIdx": 22,
+      "endIdx": 30,
+      "topics": [
+        "吃饭",
+        "香菜"
+      ]
+    },
+    {
+      "id": "v4",
+      "startIdx": 31,
+      "endIdx": 35,
+      "topics": [
+        "聚会"
+      ]
+    },
+    {
+      "id": "v5",
+      "startIdx": 43,
+      "endIdx": 49,
+      "topics": [
+        "苏苏",
+        "在一起"
+      ]
+    },
+    {
+      "id": "v6",
+      "startIdx": 62,
+      "endIdx": 70,
+      "topics": [
+        "龙井",
+        "地址"
+      ]
+    },
+    {
+      "id": "v7",
+      "startIdx": 81,
+      "endIdx": 86,
+      "topics": [
+        "平安夜",
+        "圣诞树"
+      ]
+    },
+    {
+      "id": "v8",
+      "startIdx": 112,
+      "endIdx": 115,
+      "topics": [
+        "追剧"
+      ],
+      "optional": true
+    },
+    {
+      "id": "v9",
+      "startIdx": 122,
+      "endIdx": 128,
+      "topics": [
+        "生日",
+        "按摩仪"
+      ]
+    },
+    {
+      "id": "v10",
+      "startIdx": 132,
+      "endIdx": 138,
+      "topics": [
+        "过年",
+        "苏苏"
+      ]
+    },
+    {
+      "id": "v11",
+      "startIdx": 148,
+      "endIdx": 151,
+      "topics": [
+        "奶茶"
+      ]
+    },
+    {
+      "id": "v12",
+      "startIdx": 152,
+      "endIdx": 156,
+      "topics": [
+        "马拉松"
+      ]
+    },
+    {
+      "id": "v13",
+      "startIdx": 169,
+      "endIdx": 174,
+      "topics": [
+        "工作",
+        "蓝鲸出行"
+      ]
+    },
+    {
+      "id": "v14",
+      "startIdx": 175,
+      "endIdx": 181,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v15",
+      "startIdx": 189,
+      "endIdx": 192,
+      "topics": [
+        "面试"
+      ]
+    },
+    {
+      "id": "v16",
+      "startIdx": 193,
+      "endIdx": 200,
+      "topics": [
+        "offer",
+        "深圳"
+      ]
+    },
+    {
+      "id": "v17",
+      "startIdx": 201,
+      "endIdx": 206,
+      "topics": [
+        "离职"
+      ]
+    }
+  ],
+  "negatives": [
+    {
+      "id": "n1",
+      "kind": "sensitive",
+      "evidence": [
+        63
+      ],
+      "description": "小满发的收货地址、姓名和手机号",
+      "forbidden": "详细地址或手机号出现在任何输出文本中"
+    },
+    {
+      "id": "n2",
+      "kind": "invisible_content",
+      "evidence": [
+        17,
+        196
+      ],
+      "description": "微信红包，金额不可见",
+      "forbidden": "猜测红包金额"
+    },
+    {
+      "id": "n3",
+      "kind": "invisible_content",
+      "evidence": [
+        66,
+        68,
+        69
+      ],
+      "description": "AA 饭钱转账，金额不可见",
+      "forbidden": "猜测转账金额"
+    },
+    {
+      "id": "n4",
+      "kind": "invisible_content",
+      "evidence": [
+        201,
+        202
+      ],
+      "description": "语音消息内容不可见",
+      "forbidden": "猜测语音内容"
+    },
+    {
+      "id": "n5",
+      "kind": "invisible_content",
+      "evidence": [
+        190
+      ],
+      "description": "撤回的消息内容不可见",
+      "forbidden": "猜测撤回内容"
+    },
+    {
+      "id": "n6",
+      "kind": "coordination",
+      "evidence": [
+        13,
+        14,
+        22,
+        23,
+        24,
+        25,
+        26
+      ],
+      "description": "约饭时间、到店、桌号",
+      "forbidden": "桌号或到达通知进入 claim"
+    },
+    {
+      "id": "n7",
+      "kind": "transactional",
+      "evidence": [
+        126,
+        127,
+        128
+      ],
+      "description": "按摩仪价格和下单时机",
+      "forbidden": "价格进入 claim"
+    },
+    {
+      "id": "n8",
+      "kind": "transactional",
+      "evidence": [
+        176
+      ],
+      "description": "面试流程日程",
+      "forbidden": "面试日程作为 claim 或重要日期"
+    },
+    {
+      "id": "n9",
+      "kind": "transactional",
+      "evidence": [
+        62,
+        64
+      ],
+      "description": "寄龙井",
+      "forbidden": "寄茶叶作为 claim"
+    },
+    {
+      "id": "n10",
+      "kind": "transactional",
+      "evidence": [
+        75,
+        163
+      ],
+      "description": "砍价链接互点",
+      "forbidden": "点链接作为 claim"
+    },
+    {
+      "id": "n11",
+      "kind": "inference_trap",
+      "evidence": [
+        197
+      ],
+      "description": "\"谢谢老板\"是玩笑",
+      "forbidden": "小满是一舟的老板/上司"
+    },
+    {
+      "id": "n12",
+      "kind": "inference_trap",
+      "evidence": [
+        123
+      ],
+      "description": "买过按摩仪的是小满给自己的妈妈",
+      "forbidden": "一舟妈妈用过按摩仪；小满与一舟妈妈的关系"
+    },
+    {
+      "id": "n13",
+      "kind": "inference_trap",
+      "evidence": [
+        173,
+        174
+      ],
+      "description": "只是问苏苏怎么办",
+      "forbidden": "苏苏要搬去深圳或两人已婚"
+    },
+    {
+      "id": "n14",
+      "kind": "inference_trap",
+      "evidence": [
+        49
+      ],
+      "description": "\"见见你们\"没有说明你们是谁",
+      "forbidden": "小满的家人或配偶关系"
+    },
+    {
+      "id": "n15",
+      "kind": "inference_trap",
+      "evidence": [
+        170
+      ],
+      "description": "公司项目砍半、同事离职",
+      "forbidden": "一舟被裁员"
+    },
+    {
+      "id": "n16",
+      "kind": "coordination",
+      "evidence": [
+        132
+      ],
+      "description": "初六回杭州的行程",
+      "forbidden": "返程日期作为 claim"
+    },
+    {
+      "id": "n17",
+      "kind": "coordination",
+      "evidence": [
+        6
+      ],
+      "description": "出差日程周三到周五",
+      "forbidden": "出差日程作为 claim"
+    },
+    {
+      "id": "n18",
+      "kind": "inference_trap",
+      "evidence": [
+        172
+      ],
+      "description": "3月12日只是在和蓝鲸出行谈岗位，并未入职",
+      "forbidden": "一舟已在蓝鲸出行工作或已担任技术负责人（依据这条消息）"
+    }
+  ],
+  "sensitiveValues": [
+    "云杉市青禾区梧桐路88号7栋2单元1502室",
+    "梧桐路88号",
+    "17700001111"
+  ]
+}

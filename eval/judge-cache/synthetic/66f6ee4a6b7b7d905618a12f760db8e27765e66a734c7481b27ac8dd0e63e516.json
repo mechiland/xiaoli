@@ -1,0 +1,26 @@
+{
+  "inputHash": "66f6ee4a6b7b7d905618a12f760db8e27765e66a734c7481b27ac8dd0e63e516",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T18:15:13.108Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "relations#3",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": "n5",
+        "reason": "原文只是建议小宇直接上进阶，未说明小满与周明杰的师生关系"
+      },
+      {
+        "fpId": "events#0",
+        "label": "should_ignore",
+        "subLabel": "coordination",
+        "goldId": null,
+        "negativeId": null,
+        "reason": "开学第一天到校属于即时日程协调，不应记录"
+      }
+    ]
+  }
+}

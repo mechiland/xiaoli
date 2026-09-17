@@ -1,0 +1,18 @@
+{
+  "inputHash": "02e89841d8c040da22bb903e10dce11e1545e9f1645ab68dd8811b52d0b0fe35",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:50:34.888Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#11",
+        "label": "over_inference",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只说带苏苏回老家，未说养了苏苏"
+      }
+    ]
+  }
+}

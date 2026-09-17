@@ -1,0 +1,621 @@
+{
+  "kind": "compare",
+  "createdAt": "2026-09-15T12:03:53.722Z",
+  "a": {
+    "runId": "20260915-114324-extract.v4",
+    "promptVersion": "extract.v4",
+    "model": "deepseek-flash",
+    "mode": "record",
+    "passed": false
+  },
+  "b": {
+    "runId": "20260915-115019-extract.v5",
+    "promptVersion": "extract.v5",
+    "model": "deepseek-flash",
+    "mode": "record",
+    "passed": false
+  },
+  "goldSha256": {
+    "real-9c94d9e7d17496e9": "9e309e4cd369558fc29f68e6c7d49f76065d207fa378f077ad2ad5aa9d11ea42",
+    "real-c83d048e7bbc3ad6": "4c088e559815fd8c26cdce3fe805c0257660c3673f083e38f650a02e26690067",
+    "real-df2f003ef7b4c7d7": "c198a5c2e7224fcf447ee6521b27e20123e90e43fee2d08951d4a4651f77b717",
+    "聊天记录_20260405_223012": "39f5ec7f20c0dd34d97e4032369ee52ca99753a1713aaa9da8646c1a8b22c31f",
+    "聊天记录_20260910_183020": "588eaea919f8900af618bcbea129f90a366ecb4e6f3e5b8901a6a08efcf4c3f0",
+    "聊天记录_20260912_095501": "3c09cfc34534a35bf059d7248cd097065f5ac48d8977816075cc5671472d9b23",
+    "聊天记录_20260914_211545": "5608a639be7e3b069b07ae2d39b14e3cdf996ebf93b7d96ecf65cd98e3625b16"
+  },
+  "sources": {
+    "synthetic": {
+      "a": {
+        "claims.precisionStrict": 0.6308,
+        "claims.precisionLenient": 0.7385,
+        "claims.recallStrict": 0.8085,
+        "claims.recallLenient": 0.9149,
+        "claims.yieldPer100": 8.0846,
+        "claims.predicted": 65,
+        "relations.precisionStrict": 0.6765,
+        "relations.precisionLenient": 0.6765,
+        "relations.recallStrict": 0.9048,
+        "relations.recallLenient": 0.9048,
+        "relations.yieldPer100": 4.2289,
+        "relations.predicted": 34,
+        "handles.precisionStrict": 0.8571,
+        "handles.precisionLenient": 0.8571,
+        "handles.recallStrict": 0.6667,
+        "handles.recallLenient": 0.6667,
+        "handles.yieldPer100": 1.7413,
+        "handles.predicted": 14,
+        "dates.precisionStrict": 0.8571,
+        "dates.precisionLenient": 0.8571,
+        "dates.recallStrict": 1,
+        "dates.recallLenient": 1,
+        "dates.yieldPer100": 0.8706,
+        "dates.predicted": 7,
+        "events.precisionStrict": 0.75,
+        "events.precisionLenient": 1,
+        "events.recallStrict": 0.25,
+        "events.recallLenient": 0.3333,
+        "events.yieldPer100": 0.4975,
+        "events.predicted": 4,
+        "transactionalAsClaimRatio": 0.0923,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0.9677,
+        "yieldPer100Total": 15.4229
+      },
+      "b": {
+        "claims.precisionStrict": 0.6721,
+        "claims.precisionLenient": 0.7377,
+        "claims.recallStrict": 0.766,
+        "claims.recallLenient": 0.8511,
+        "claims.yieldPer100": 7.5871,
+        "claims.predicted": 61,
+        "relations.precisionStrict": 0.9259,
+        "relations.precisionLenient": 0.9259,
+        "relations.recallStrict": 0.9524,
+        "relations.recallLenient": 0.9524,
+        "relations.yieldPer100": 3.3582,
+        "relations.predicted": 27,
+        "handles.precisionStrict": 0.8462,
+        "handles.precisionLenient": 0.8462,
+        "handles.recallStrict": 0.5,
+        "handles.recallLenient": 0.5,
+        "handles.yieldPer100": 1.6169,
+        "handles.predicted": 13,
+        "dates.precisionStrict": 0.8571,
+        "dates.precisionLenient": 0.8571,
+        "dates.recallStrict": 1,
+        "dates.recallLenient": 1,
+        "dates.yieldPer100": 0.8706,
+        "dates.predicted": 7,
+        "events.precisionStrict": 0.3333,
+        "events.precisionLenient": 1,
+        "events.recallStrict": 0.0833,
+        "events.recallLenient": 0.25,
+        "events.yieldPer100": 0.3731,
+        "events.predicted": 3,
+        "transactionalAsClaimRatio": 0.082,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0.9778,
+        "yieldPer100Total": 13.806
+      },
+      "delta": {
+        "claims.precisionStrict": 0.0413,
+        "claims.precisionLenient": -0.0008,
+        "claims.recallStrict": -0.0425,
+        "claims.recallLenient": -0.0638,
+        "claims.yieldPer100": -0.4975,
+        "claims.predicted": -4,
+        "relations.precisionStrict": 0.2494,
+        "relations.precisionLenient": 0.2494,
+        "relations.recallStrict": 0.0476,
+        "relations.recallLenient": 0.0476,
+        "relations.yieldPer100": -0.8707,
+        "relations.predicted": -7,
+        "handles.precisionStrict": -0.0109,
+        "handles.precisionLenient": -0.0109,
+        "handles.recallStrict": -0.1667,
+        "handles.recallLenient": -0.1667,
+        "handles.yieldPer100": -0.1244,
+        "handles.predicted": -1,
+        "dates.precisionStrict": 0,
+        "dates.precisionLenient": 0,
+        "dates.recallStrict": 0,
+        "dates.recallLenient": 0,
+        "dates.yieldPer100": 0,
+        "dates.predicted": 0,
+        "events.precisionStrict": -0.4167,
+        "events.precisionLenient": 0,
+        "events.recallStrict": -0.1667,
+        "events.recallLenient": -0.0833,
+        "events.yieldPer100": -0.1244,
+        "events.predicted": -1,
+        "transactionalAsClaimRatio": -0.0103,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0.0101,
+        "yieldPer100Total": -1.6169
+      }
+    },
+    "real": {
+      "a": {
+        "claims.precisionStrict": 0.4,
+        "claims.precisionLenient": 0.6,
+        "claims.recallStrict": 0.3333,
+        "claims.recallLenient": 0.3333,
+        "claims.yieldPer100": 3.6765,
+        "claims.predicted": 5,
+        "relations.precisionStrict": 0.3333,
+        "relations.precisionLenient": 0.3333,
+        "relations.recallStrict": 0.5,
+        "relations.recallLenient": 0.5,
+        "relations.yieldPer100": 2.2059,
+        "relations.predicted": 3,
+        "handles.precisionStrict": 1,
+        "handles.precisionLenient": 1,
+        "handles.recallStrict": 1,
+        "handles.recallLenient": 1,
+        "handles.yieldPer100": 3.6765,
+        "handles.predicted": 5,
+        "dates.precisionStrict": 1,
+        "dates.precisionLenient": 1,
+        "dates.recallStrict": 1,
+        "dates.recallLenient": 1,
+        "dates.yieldPer100": 0.7353,
+        "dates.predicted": 1,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": 0,
+        "events.recallLenient": 0,
+        "events.yieldPer100": 0,
+        "events.predicted": 0,
+        "transactionalAsClaimRatio": 0.2,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 1,
+        "yieldPer100Total": 10.2941
+      },
+      "b": {
+        "claims.precisionStrict": 1,
+        "claims.precisionLenient": 1,
+        "claims.recallStrict": 1,
+        "claims.recallLenient": 1,
+        "claims.yieldPer100": 3.6765,
+        "claims.predicted": 5,
+        "relations.precisionStrict": 1,
+        "relations.precisionLenient": 1,
+        "relations.recallStrict": 1,
+        "relations.recallLenient": 1,
+        "relations.yieldPer100": 2.2059,
+        "relations.predicted": 3,
+        "handles.precisionStrict": 1,
+        "handles.precisionLenient": 1,
+        "handles.recallStrict": 0.75,
+        "handles.recallLenient": 0.75,
+        "handles.yieldPer100": 2.2059,
+        "handles.predicted": 3,
+        "dates.precisionStrict": 1,
+        "dates.precisionLenient": 1,
+        "dates.recallStrict": 1,
+        "dates.recallLenient": 1,
+        "dates.yieldPer100": 0.7353,
+        "dates.predicted": 1,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": 0,
+        "events.recallLenient": 0,
+        "events.yieldPer100": 0,
+        "events.predicted": 0,
+        "transactionalAsClaimRatio": 0,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 1,
+        "yieldPer100Total": 8.8235
+      },
+      "delta": {
+        "claims.precisionStrict": 0.6,
+        "claims.precisionLenient": 0.4,
+        "claims.recallStrict": 0.6667,
+        "claims.recallLenient": 0.6667,
+        "claims.yieldPer100": 0,
+        "claims.predicted": 0,
+        "relations.precisionStrict": 0.6667,
+        "relations.precisionLenient": 0.6667,
+        "relations.recallStrict": 0.5,
+        "relations.recallLenient": 0.5,
+        "relations.yieldPer100": 0,
+        "relations.predicted": 0,
+        "handles.precisionStrict": 0,
+        "handles.precisionLenient": 0,
+        "handles.recallStrict": -0.25,
+        "handles.recallLenient": -0.25,
+        "handles.yieldPer100": -1.4706,
+        "handles.predicted": -2,
+        "dates.precisionStrict": 0,
+        "dates.precisionLenient": 0,
+        "dates.recallStrict": 0,
+        "dates.recallLenient": 0,
+        "dates.yieldPer100": 0,
+        "dates.predicted": 0,
+        "events.precisionStrict": null,
+        "events.precisionLenient": null,
+        "events.recallStrict": 0,
+        "events.recallLenient": 0,
+        "events.yieldPer100": 0,
+        "events.predicted": 0,
+        "transactionalAsClaimRatio": -0.2,
+        "sensitiveInStatement": 0,
+        "invalidEvidencePost": 0,
+        "invalidEvidencePreRate": 0,
+        "evidenceOverlap": 0,
+        "yieldPer100Total": -1.4706
+      }
+    }
+  },
+  "gates": [
+    {
+      "name": "claims.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 0.7385,
+        "passed": false
+      },
+      "b": {
+        "value": 0.7377,
+        "passed": false
+      }
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "synthetic",
+      "a": {
+        "value": 0.8085,
+        "passed": true
+      },
+      "b": {
+        "value": 0.766,
+        "passed": true
+      }
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 0.8571,
+        "passed": false
+      },
+      "b": {
+        "value": 0.8462,
+        "passed": false
+      }
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "synthetic",
+      "a": {
+        "value": 0.6765,
+        "passed": false
+      },
+      "b": {
+        "value": 0.9259,
+        "passed": true
+      }
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "synthetic",
+      "a": {
+        "value": 0.0923,
+        "passed": false
+      },
+      "b": {
+        "value": 0.082,
+        "passed": false
+      }
+    },
+    {
+      "name": "zips.scored",
+      "source": "synthetic",
+      "a": {
+        "value": 4,
+        "passed": true
+      },
+      "b": {
+        "value": 4,
+        "passed": true
+      }
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "synthetic",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.frozen",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "synthetic",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "synthetic",
+      "a": {
+        "value": 3715,
+        "passed": true
+      },
+      "b": {
+        "value": 3180,
+        "passed": true
+      }
+    },
+    {
+      "name": "claims.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": 0.6,
+        "passed": false
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "claims.recallStrict",
+      "source": "real",
+      "a": {
+        "value": 0.3333,
+        "passed": false
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "handles.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "relations.precisionLenient",
+      "source": "real",
+      "a": {
+        "value": 0.3333,
+        "passed": false
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "sensitiveInStatement",
+      "source": "real",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "invalidEvidencePost",
+      "source": "real",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "transactionalAsClaimRatio",
+      "source": "real",
+      "a": {
+        "value": 0.2,
+        "passed": false
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "zips.scored",
+      "source": "real",
+      "a": {
+        "value": 3,
+        "passed": true
+      },
+      "b": {
+        "value": 3,
+        "passed": true
+      }
+    },
+    {
+      "name": "zips.unscoredWithGold",
+      "source": "real",
+      "a": {
+        "value": 0,
+        "passed": true
+      },
+      "b": {
+        "value": 0,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.frozen",
+      "source": "real",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.changeRecorded",
+      "source": "real",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "gold.lockAppendOnly",
+      "source": "real",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "judge.noFallback",
+      "source": "real",
+      "a": {
+        "value": 1,
+        "passed": true
+      },
+      "b": {
+        "value": 1,
+        "passed": true
+      }
+    },
+    {
+      "name": "p95WindowMs",
+      "source": "real",
+      "a": {
+        "value": 1886,
+        "passed": true
+      },
+      "b": {
+        "value": 2172,
+        "passed": true
+      }
+    }
+  ],
+  "usage": {
+    "a": {
+      "inputTokens": 144201,
+      "outputTokens": 10560,
+      "calls": 41,
+      "judgeInputTokens": 27911,
+      "judgeOutputTokens": 2309,
+      "judgeCalls": 29,
+      "judgeCacheHits": 3,
+      "judgeFallbacks": 0
+    },
+    "b": {
+      "inputTokens": 159527,
+      "outputTokens": 9786,
+      "calls": 40,
+      "judgeInputTokens": 22568,
+      "judgeOutputTokens": 1874,
+      "judgeCalls": 26,
+      "judgeCacheHits": 4,
+      "judgeFallbacks": 0
+    }
+  }
+}

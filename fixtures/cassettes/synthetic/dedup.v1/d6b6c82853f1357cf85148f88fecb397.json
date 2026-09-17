@@ -1,0 +1,33 @@
+{
+  "key": "d6b6c82853f1357cf85148f88fecb397",
+  "recordedAt": "2026-09-15T11:08:59.332Z",
+  "model": "deepseek-flash",
+  "promptVersion": "dedup.v1",
+  "purpose": "dedup",
+  "request": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "你在帮用户整理人物档案。对每个人，给你一组\"已有信息\"（candidates，带 id）和一组\"新信息\"（new，带 index）。找出与某条已有信息**说的是同一件事**的新信息，只输出一个 json 对象。\n\n判断规则：\n- 同一件事 = 同一个人、同一个事实，措辞可以不同（\"在成都当护士\"与\"成都某医院护士\"是同一件事）。\n- 新信息比已有信息多了实质的新内容（新的时间、地点、变化），或者说的是另一件事，就**不是**重复。\n- 相互冲突的信息（\"住在杭州\"与\"搬到了苏州\"）不是重复。\n- 每条新信息最多对应一条已有信息；不确定时不要标为重复。\n- 只能使用输入里出现过的 index 和 id。\n\n输出格式（json 示例）：\n\n{ \"duplicates\": [ { \"newIndex\": 0, \"existingClaimId\": 42 } ] }"
+      },
+      {
+        "role": "user",
+        "content": "{\"persons\":[{\"personId\":3,\"label\":\"林大海\",\"candidates\":[{\"id\":5,\"statement\":\"从顺达物流辞职\"},{\"id\":6,\"statement\":\"跟朋友合伙开火锅店，下个月开业\"},{\"id\":7,\"statement\":\"在顺达物流做了十年调度\"},{\"id\":8,\"statement\":\"火锅店店面在老城区\"}],\"new\":[{\"index\":0,\"statement\":\"开了一家大海老火锅（老城区店）\"}]},{\"personId\":2,\"label\":\"林子航\",\"candidates\":[{\"id\":1,\"statement\":\"在外上学，由家里给生活费\"},{\"id\":2,\"statement\":\"常点外卖\"},{\"id\":3,\"statement\":\"在南京读大学，大三，机械专业\"},{\"id\":4,\"statement\":\"暑假留在南京，在一家做机器人的公司实习\"}],\"new\":[{\"index\":1,\"statement\":\"人在南京\"}]}]}\n\n请输出 json。"
+      }
+    ],
+    "maxTokens": 1024,
+    "temperature": 0,
+    "thinking": "disabled"
+  },
+  "response": {
+    "content": "{\"duplicates\":[{\"newIndex\":0,\"existingClaimId\":6},{\"newIndex\":1,\"existingClaimId\":3}]}",
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 426,
+      "outputTokens": 28,
+      "cacheHitTokens": 0
+    },
+    "latencyMs": 714
+  },
+  "error": null
+}

@@ -1,0 +1,26 @@
+{
+  "inputHash": "bf8625e1173aec67ec762a4c95380b51068b92e278b82466f2634e77ad19dec6",
+  "promptVersion": "judge-fp.v1",
+  "model": "deepseek-flash",
+  "createdAt": "2026-09-15T11:21:57.625Z",
+  "output": {
+    "labels": [
+      {
+        "fpId": "claims#2",
+        "label": "should_ignore",
+        "subLabel": "transactional",
+        "goldId": null,
+        "negativeId": "n7",
+        "reason": "离职手续和最后一天属于事务性时间安排"
+      },
+      {
+        "fpId": "claims#3",
+        "label": "factual_error",
+        "subLabel": null,
+        "goldId": null,
+        "negativeId": null,
+        "reason": "原文只发位置在深圳湾科技生态园，未说在此上班"
+      }
+    ]
+  }
+}
