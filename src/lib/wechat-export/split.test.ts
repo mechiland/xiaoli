@@ -30,6 +30,17 @@ describe('message splitting (SPEC §6 rule)', () => {
     expect(p.messages[0].kind).toBe('text')
   })
 
+  it('normalizes Mac dates for sorting, preserving mixed formats and multi-line bodies', () => {
+    const body = 'Hello\n\n·清单\n2026-9-5 is not a time line\n  缩进行😀'
+    const p = parseExportText(`·测试甲\n2026-9-5 08:03\t \n${body}\n\n·测试乙\n2026-10-1 09:00\n收到\n\n·测试甲\n${T}\n更早`)
+    expect(p.messages.map((m) => m.sentAt)).toEqual(['2026-09-05 08:03', '2026-10-01 09:00', '2026-09-01 10:00'])
+    expect(p.messages[0].body).toBe(body)
+    expect(p.dateFrom).toBe('2026-09-01 10:00')
+    expect(p.dateTo).toBe('2026-10-01 09:00')
+    expect(p.warnings.map((w) => w.code)).toEqual(['time_out_of_order'])
+    expect(p.messages[0].fingerprint).toBe(parseExportText(`·测试甲\n2026年09月05日 08:03\n${body}`).messages[0].fingerprint)
+  })
+
   it('body line starting with "·" (not followed by a timestamp) stays in the body', () => {
     const txt = `·测试甲\n${T}\n清单：\n·鸡蛋\n·牛奶\n\n·测试乙\n${T}\n收到\n`
     const p = parseExportText(txt)
@@ -135,6 +146,7 @@ describe('message splitting (SPEC §6 rule)', () => {
 
   it('exportedAt from file name is Asia/Shanghai local → UTC', () => {
     expect(exportedAtFromFileName('聊天记录_20260101_120000.zip')).toBe('2026-01-01T04:00:00.000Z')
+    expect(exportedAtFromFileName('Chat History_20260101_120000.zip')).toBe('2026-01-01T04:00:00.000Z')
     expect(exportedAtFromFileName('dir/聊天记录_20260101_070000.zip')).toBe('2025-12-31T23:00:00.000Z')
     expect(exportedAtFromFileName('chat.zip')).toBeNull()
     expect(exportedAtFromFileName('聊天记录_20260231_120000.zip')).toBeNull()

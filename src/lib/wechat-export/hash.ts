@@ -33,15 +33,17 @@ function hex4(n: number): string {
 }
 
 /**
- * WeChat names exported media `微信图片_<YYYYMMDDHHMM>_<n>.<ext>` / `微信视频_…` from the EXPORT time, with `n` counting
- * through the export, so a later export of the same chat renames every image/video (DECISIONS parser P14).
+ * WeChat names exported media `微信图片_<YYYYMMDDHHMM>_<n>.<ext>` / `微信视频_…`, or `Weixin Image_…` / `Weixin Video_…`
+ * in English exports. Names may change across exports (DECISIONS parser P14).
  */
-const GENERATED_MEDIA_NAME_RE = /微信(图片|视频)_\d{8,14}(?:_\d+)?\.[A-Za-z0-9]{1,5}/g
+const GENERATED_MEDIA_NAME_RE = /(微信图片|微信视频|Weixin Image|Weixin Video)_\d{8,14}(?:_\d+)?\.[A-Za-z0-9]{1,5}/g
 
 /** Body as fingerprinted: image/video bodies with generated media file names replaced by a constant; others unchanged. */
 export function fingerprintBody(kind: MessageKind, body: string): string {
   if (kind !== 'image' && kind !== 'video') return body
-  return body.replace(GENERATED_MEDIA_NAME_RE, '微信$1_*')
+  return body.replace(GENERATED_MEDIA_NAME_RE, (_, prefix: string) =>
+    prefix === '微信图片' || prefix === 'Weixin Image' ? '微信图片_*' : '微信视频_*',
+  )
 }
 
 /**

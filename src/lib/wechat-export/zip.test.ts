@@ -72,6 +72,20 @@ describe('parseExportZip', () => {
     expect(b.media).toEqual(a.media)
   })
 
+  it.each(['Chat History.txt', '聊天记录.txt'])('prefers %s over a larger text attachment', async (chatName) => {
+    const zip = zipSync({
+      [`export/${chatName}`]: strToU8(text),
+      'export/files/notes.txt': strToU8('This is a text attachment.\n'.repeat(100)),
+      '__MACOSX/export/._Chat History.txt': bytes(10),
+      'export/.DS_Store': bytes(10),
+    })
+    const p = await parseExportZip(zip, { fileName: 'Chat History_20260101_120000.zip' })
+    expect(p.messages).toEqual(parseExportText(text).messages)
+    expect(p.exportedAt).toBe('2026-01-01T04:00:00.000Z')
+    expect(p.media.map((m) => m.name)).toEqual(['notes.txt'])
+    expect(p.warnings).toContainEqual({ line: 0, code: 'multiple_txt' })
+  })
+
   it('summarize: counts, date range, senders by count, kinds, image/video bytes', async () => {
     const p = await parseExportZip(sampleZip())
     const s = summarize(p)

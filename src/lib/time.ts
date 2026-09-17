@@ -12,12 +12,14 @@ export function nowIso(): string {
 }
 
 const WECHAT_TIME = /^(\d{4})年(\d{2})月(\d{2})日 (\d{2}):(\d{2})$/
+const WECHAT_MAC_TIME = /^(\d{4})-(\d{1,2})-(\d{1,2}) (\d{2}):(\d{2})$/
 
-/** 'YYYY年MM月DD日 HH:MM' → 'YYYY-MM-DD HH:MM'. Throws on malformed input. */
+/** WeChat iOS / Mac wall time → 'YYYY-MM-DD HH:MM'. Throws on malformed input. */
 export function parseWechatTime(s: string): MsgTimeString {
-  const m = WECHAT_TIME.exec(s.trim())
+  const t = s.trim()
+  const m = WECHAT_TIME.exec(t) ?? WECHAT_MAC_TIME.exec(t)
   if (!m) throw new Error(`invalid wechat time: ${s}`)
-  return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`
+  return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')} ${m[4]}:${m[5]}`
 }
 
 const MSG_TIME = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/

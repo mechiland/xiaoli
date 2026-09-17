@@ -101,6 +101,8 @@ YYYY年MM月DD日 HH:MM
 
 切分规则：某行以 `·` 开头，且下一行完全匹配 `^\d{4}年\d{2}月\d{2}日 \d{2}:\d{2}$`，即一条消息的起点。正文为到下一个起点前的内容，去掉首尾空行。
 
+Mac 英文导出同样支持（2026-09-17 用户提供的目录截图及文本样本）：ZIP 名为 `Chat History_YYYYMMDD_HHMMSS.zip`，正文为 `Chat History.txt`，附件目录为 `Images, videos, and files in chat history`，图片/视频名为 `Weixin Image_YYYYMMDDHHMM_N.jpg` / `Weixin Video_YYYYMMDDHHMM_N.mp4`。正文沿用 `·发送者` 起始行，下一行为 `YYYY-M-D HH:MM`（月、日可为一位或两位），解析后补零为 `YYYY-MM-DD HH:MM`，仍为本地墙上时间。已见英文类型标记 `[Photo]`、`[Video]`、`[Mini Program]`、`[Link]` 分别对应 image、video、mini_program、link；正文保留原文。中英文正文文件名均优先于普通 TXT 附件，ZIP 外层目录和 Mac 元数据不影响导入。
+
 | 正文形式 | kind | 说明 |
 | --- | --- | --- |
 | 普通文本，可多行，可含 Unicode 表情 | text | |

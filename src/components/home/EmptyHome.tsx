@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { useImportOverlay } from '@/components/import-overlay'
+import { EXAMPLE_ENGLISH_EXPORT_FILE_NAME, EXAMPLE_EXPORT_FILE_NAME } from '@/components/import-overlay/format'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { welcomeHref } from '@/lib/links'
 
 const STEPS: { title: string; body: string }[] = [
-  { title: '多选消息', body: '在微信聊天里长按一条消息，点「多选」，勾选想导入的消息。' },
-  { title: '转发', body: '点底部的「转发」。' },
+  { title: '多选消息', body: '在微信聊天里选中想导入的消息；手机上可长按消息，点「多选」。' },
+  { title: '转发', body: '点「转发」。' },
   { title: '其他应用', body: '在转发方式里选「其他应用」。' },
   { title: '选择本应用或保存到文件', body: '手机上直接选小丽；也可以保存到文件，再拖到这里。' },
 ]
@@ -123,7 +124,7 @@ export function EmptyHome({ needsOnboarding }: { needsOnboarding: boolean }) {
               选择文件
             </Button>
             <span className="text-[13px] leading-6 text-ink-3">
-              ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">聊天记录_20260101_120000.zip</span>
+              ZIP 文件，文件名形如 <span className="inline-block max-w-full break-words font-data">{EXAMPLE_EXPORT_FILE_NAME}</span> 或 <span className="inline-block max-w-full break-words font-data">{EXAMPLE_ENGLISH_EXPORT_FILE_NAME}</span>
             </span>
           </div>
           <input
