@@ -1,6 +1,6 @@
 // Pure "即将到来" computation (SPEC §9.4): the next occurrence of each confirmed important date within 30 days,
-// merged with the 约定 (`plan` loops with a `dueAt`) that fall due inside the same window.
-import type { DayString, HomeResponse, PersonRefDTO } from '@/contracts'
+// merged with all dated open matters that fall due inside the same window.
+import type { DayString, HomeResponse, LoopDirection, LoopKind, PersonRefDTO } from '@/contracts'
 import { nextOccurrence } from '@/lib/lunar'
 
 export const UPCOMING_WINDOW_DAYS = 30
@@ -24,6 +24,10 @@ export interface UpcomingPlanRow {
   label: string
   solar: DayString
   days: number
+  loopKind?: LoopKind
+  direction?: LoopDirection
+  status?: 'proposed' | 'confirmed'
+  dueAt?: string
 }
 
 export type UpcomingRow = HomeResponse['upcoming'][number]
@@ -84,13 +88,13 @@ export function compareUpcoming(a: UpcomingRow, b: UpcomingRow): number {
 
 /**
  * Merges the 约定 rows into the important-date rows. Plans outside the window are dropped defensively: the block is
- * "the next 30 days", and an overdue 约定 is 人物页's business (SPEC §9.3 — the home page gets no reminder list).
+ * "the next 30 days"; overdue and undated matters remain accessible on their person pages.
  */
 export function mergeUpcoming(dates: UpcomingRow[], plans: UpcomingPlanRow[], windowDays = UPCOMING_WINDOW_DAYS): UpcomingRow[] {
   const rows: UpcomingRow[] = [...dates]
   for (const p of plans) {
     if (p.days < 0 || p.days > windowDays) continue
-    rows.push({ person: p.person, kind: 'plan', dateId: null, loopId: p.loopId, label: p.label, solar: p.solar, lunarLabel: null, days: p.days })
+    rows.push({ ...p, kind: !p.loopKind || p.loopKind === 'plan' ? 'plan' : 'loop', dateId: null, lunarLabel: null })
   }
   return rows.sort(compareUpcoming)
 }

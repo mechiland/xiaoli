@@ -82,7 +82,7 @@ export const loops = sqliteTable(
     kind: text('kind').$type<LoopKind>().notNull(),
     text: text('text').notNull(),
     textNorm: text('text_norm').notNull(),
-    /** PartialDate; only `plan` normally has one */
+    /** PartialDate; any actionable matter may have a deadline */
     dueAt: text('due_at'),
     /** set null (not cascade): deleting the opening message must not silently drop the item — deleteImport
      *  removes it explicitly through its evidence rows, like every other derived item (ARCHITECTURE §11). */

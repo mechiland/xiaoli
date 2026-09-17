@@ -8,7 +8,7 @@ export function PersonSkeleton() {
         <Skeleton className="h-9 w-40 sm:h-10" />
         <Skeleton className="mt-3 h-3.5 w-56" />
       </div>
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_308px] lg:items-start lg:gap-14">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12">
         <div className="mb-8 border border-line bg-paper px-4 py-3 lg:order-2 lg:mb-0 lg:px-5 lg:py-4">
           <SkeletonLines lines={2} className="lg:hidden" />
           <div className="hidden space-y-4 lg:block">

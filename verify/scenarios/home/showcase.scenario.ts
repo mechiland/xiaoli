@@ -7,22 +7,21 @@ const HOME_API = /\/api\/home(\?|$)/
 
 export default defineScenario({
   id: 'home/showcase',
-  description: '首页：种子数据、首屏、字母跳转、加载中、单块错误、>200 折叠、农历、约定、无即将到来、长内容、窄屏',
+  description: '首页：种子数据、首屏、字母跳转、加载中、单块错误、>200 折叠、农历、约定、无事项、长内容、窄屏',
   account: 'seed',
   requiredTags: ['person:long-profile', 'person:long-label', 'person:lunar-birthday-soon'],
   expectedFailures: [{ urlPattern: '/api/home', status: 500, step: 'error-state', consoleText: 'Failed to load resource' }],
   async run({ page, step, shot, check, helpers, seed, width, measure }) {
     const longLabel = await seed.person('long-label')
-    const lunarSoon = await seed.person('lunar-birthday-soon')
     const main = page.locator('main')
     const heading = (name: string) => main.getByRole('heading', { name, exact: true })
     // `has:` locators are resolved relative to the outer element, so they must not be rooted at main
-    const section = (name: string) => main.locator('section', { has: page.getByRole('heading', { name, exact: true }) })
+    const section = (name: string) => name === '事项' ? main.getByRole('complementary', { name, exact: true }) : main.locator('section', { has: page.getByRole('heading', { name, exact: true }) })
 
     await step('seeded home', async () => {
       const status = await helpers.goto('/')
       check('home answers 200', status === 200, { status })
-      for (const name of ['即将到来', '最近有新信息的人', '关注的人', '全部人物', '最近导入']) {
+      for (const name of ['事项', '最近有新信息的人', '关注的人', '全部人物', '最近导入']) {
         check(`section "${name}" present`, await heading(name).isVisible())
       }
       const hero = main.getByRole('button', { name: /搜索人物、别名或信息/ })
@@ -32,8 +31,8 @@ export default defineScenario({
       check('index lists exactly 200 people', (await main.locator('[id^="people-"] a').count()) === 200)
       check('index is not collapsed at 200', (await main.locator('[data-index-collapsed]').count()) === 0)
       check('long label is a link in the index', (await main.locator('[id^="people-"] a', { hasText: longLabel.label! }).count()) === 1)
-      const upcomingText = await section('即将到来').innerText()
-      check('lunar upcoming row shows the lunar date and its solar day', /农历.+·\s*\d+月\d+日/.test(upcomingText) && upcomingText.includes(lunarSoon.label!))
+      check('seven-day range is selected by default', await section('事项').getByRole('button', { name: /未来 7 天/ }).getAttribute('aria-pressed') === 'true')
+      check('full matters view is linked', await section('事项').getByRole('link', { name: /查看全部/ }).getAttribute('href') === '/tasks?range=7')
       const updated = await section('最近有新信息的人').locator('a[href*="claim-"]').allInnerTexts()
       check('recently updated never shows a sensitive placeholder as latest', updated.length > 0 && !updated.some((x) => x.startsWith('提供过')), { rows: updated.length })
       const importRows = await section('最近导入').locator('a[href^="/imports/"]').count()
@@ -76,7 +75,7 @@ export default defineScenario({
     await step('error-state', async () => {
       const un = await helpers.simulateError(HOME_API, { status: 500 })
       await page.goto('/?devFail=upcoming', { waitUntil: 'load' })
-      const alert = section('即将到来').getByRole('alert')
+      const alert = section('事项').getByRole('alert')
       await alert.waitFor({ timeout: 15_000 })
       check('failing block shows BlockError', (await alert.innerText()).includes('这一块没有加载出来'))
       check('other blocks still render', (await main.locator('[id^="people-"] a').count()) === 200 && (await heading('关注的人').isVisible()))
@@ -84,7 +83,7 @@ export default defineScenario({
       await shot('block-error', { fullPage: false })
       await un()
       await alert.getByRole('button', { name: '重试' }).click()
-      await section('即将到来').locator('li').first().waitFor({ timeout: 15_000 })
+      await section('事项').locator('li').first().waitFor({ timeout: 15_000 })
       check('retry recovers the block', (await main.getByRole('alert').count()) === 0)
     })
 
@@ -103,31 +102,31 @@ export default defineScenario({
 
     await step('variant: lunar + solar upcoming', async () => {
       await helpers.goto('/dev/home/showcase?variant=lunar')
-      const t = await section('即将到来').innerText()
+      const t = await section('事项').innerText()
       check('today / tomorrow wording and a lunar row', t.includes('今天') && t.includes('明天') && t.includes('农历'), { t })
     })
     await shot('lunar', { fullPage: false })
 
-    // SPEC §9.4: dated 约定 join 即将到来. The rows come from @/components/interaction's PlanRow (ARCHITECTURE §1.17).
-    await step('variant: 约定 merged into 即将到来', async () => {
+    // SPEC §9.4: dated 约定 join the matters panel alongside important dates.
+    await step('variant: 约定 merged into 事项', async () => {
       await helpers.goto('/dev/home/showcase?variant=plans')
-      const texts = await section('即将到来').locator('li').allInnerTexts()
-      check('即将到来 still renders its date rows', texts.length > 2, { rows: texts.length })
-      const planRows = await section('即将到来').locator('[data-plan-row]').count()
-      const loopLinks = await section('即将到来').locator('a[href*="#loop-"]').count()
-      check('two 约定 rows, linking to the person page at the loop', planRows === 2 && loopLinks >= 2, { planRows, loopLinks })
-      check('约定 rows carry the small 约定 note', texts.filter((t) => t.includes('约定')).length === 2, { marked: texts.filter((t) => t.includes('约定')) })
+      const texts = await section('事项').locator('li').allInnerTexts()
+      check('事项 still renders its date rows', texts.length > 2, { rows: texts.length })
+      const planRows = texts.filter((text) => text.includes('约定')).length
+      const loopLinks = await section('事项').locator('a[href*="#loop-"]').count()
+      check('near-term 约定 links to the person page at the loop', planRows >= 1 && loopLinks >= 1, { planRows, loopLinks })
+      check('约定 rows carry the small 约定 note', texts.filter((t) => t.includes('约定')).length >= 1, { marked: texts.filter((t) => t.includes('约定')) })
       // mixed into the date order, not appended: the first 约定 is 2 days out, among dates spanning today … +30
       const i = texts.findIndex((t) => t.includes('说好周末一起去看新家的装修'))
       check('约定 sits inside the date-sorted list', i > 0 && i < texts.length - 1, { i, rows: texts.length })
-      const all = await section('即将到来').innerText()
-      check('no counts or reminder wording (SPEC §9.3)', !/\d+\s*条|未结|好久没联系|提醒/.test(all), { all })
+      const all = await section('事项').innerText()
+      check('no relationship nagging (SPEC §9.3)', !/好久没联系|提醒/.test(all), { all })
     })
     await shot('plans', { fullPage: false })
 
-    await step('variant: no upcoming dates hides the block', async () => {
+    await step('variant: no upcoming dates shows an empty state', async () => {
       await helpers.goto('/dev/home/showcase?variant=no-upcoming')
-      check('即将到来 hidden', (await heading('即将到来').count()) === 0)
+      check('事项 empty state', await heading('事项').isVisible() && await section('事项').getByText('未来 7 天暂无事项。', { exact: true }).isVisible())
     })
     await shot('no-upcoming', { fullPage: false })
 

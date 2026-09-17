@@ -16,7 +16,8 @@ export const DEDUP_PROMPT_VERSION = 'dedup.v2'
  * positives `should_ignore` coordination ("晚上过去拿西瓜", "回头细说"). `interaction.v1` stays registered so
  * `--prompt interaction.v1` still renders for comparison. SPEC §8.8, DECISIONS ## extract X41.
  */
-export const INTERACTION_PROMPT_VERSION = 'interaction.v2'
+// v3: actionable requests, explicit recipients, and acknowledgement is not completion.
+export const INTERACTION_PROMPT_VERSION = 'interaction.v3'
 
 /**
  * `llm_calls.purpose` of the interaction call, so its cost and latency read separately from the extraction call's.

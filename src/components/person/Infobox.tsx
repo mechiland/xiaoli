@@ -24,7 +24,7 @@ const breakout = '[&_.evidence-block]:ml-[calc(-1*(84px_+_0.75rem))] [&_.evidenc
 function Field({ label, children, stacked = false }: { label: string; children: ReactNode; stacked?: boolean }) {
   return (
     <div data-field={label} className={cn('py-2 first:pt-0 last:pb-0', !stacked && 'grid grid-cols-[84px_minmax(0,1fr)] gap-x-3')}>
-      <dt className="pt-[1px] text-[13px] leading-6 text-ink-3">{label}</dt>
+      <dt className="pt-[1px] text-[13px] font-medium leading-6 text-ink-2">{label}</dt>
       <dd className={cn('min-w-0 text-[14px] leading-6 text-ink [overflow-wrap:anywhere]', !stacked && breakout)}>{children}</dd>
     </div>
   )
@@ -263,8 +263,11 @@ export function InfoboxFields({ profile, markOf }: { profile: ProfileResponse; m
 export function Infobox({ profile, markOf, open, onOpenChange }: { profile: ProfileResponse; markOf: MarkOf; open: boolean; onOpenChange: (v: boolean) => void }) {
   if (!hasInfobox(profile)) return null
   return (
-    <aside data-block="infobox" aria-label="信息框" className="border border-line bg-paper lg:px-5 lg:py-4">
-      <p className="mb-3 hidden border-b border-line pb-2.5 font-serif text-[16px] font-semibold leading-6 text-ink [overflow-wrap:anywhere] lg:block">{profile.person.label}</p>
+    <aside data-block="infobox" aria-label="信息框" className="border border-line bg-paper lg:px-6 lg:py-5">
+      <div className="mb-4 hidden border-b border-line pb-4 text-center lg:block">
+        <p className="font-serif text-[21px] font-semibold leading-8 text-ink [overflow-wrap:anywhere]">{profile.person.label}</p>
+        <p className="mt-1 text-[12px] tracking-[0.08em] text-ink-3">人物资料</p>
+      </div>
       <button
         type="button"
         aria-expanded={open}

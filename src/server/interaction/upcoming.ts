@@ -1,6 +1,6 @@
-// Plan loops with a dueAt, for the home page 即将到来 block (SPEC §9.4).
-import { and, eq, gte, isNotNull, isNull, ne } from 'drizzle-orm'
-import type { DayString, PersonRefDTO } from '@/contracts'
+// Dated open matters shared by the home sidebar and the independent matters view.
+import { and, eq, gte, inArray, isNotNull, isNull } from 'drizzle-orm'
+import type { DayString, LoopDirection, LoopKind, PersonRefDTO } from '@/contracts'
 import { daysBetween, todayInTz } from '@/lib/time'
 import { loops, owned, persons, type Db } from '@/server/db'
 import { partialDateEnd } from './loop-state'
@@ -11,29 +11,30 @@ export interface UpcomingPlan {
   label: string
   solar: DayString
   days: number
+  loopKind?: LoopKind
+  direction?: LoopDirection
+  status?: 'proposed' | 'confirmed'
+  dueAt?: string
 }
 
-/**
- * Open 约定 falling due in the next `days` days, confirmed or not (SPEC §9.4). This is the one place the interaction
- * layer reaches the home page, and only because 即将到来 is already a list sorted by date — there is no global list of
- * unfinished items anywhere (SPEC §9.3).
- *
- * A month-level `dueAt` ('2026-10') is placed on the last day it could still happen; a year-level one is too vague to
- * put on a dated list and is left out.
- */
+/** Legacy plans-only entry point. Month precision is retained; year-only dates are omitted. */
 export async function getUpcomingPlans(db: Db, ownerId: string, days: number): Promise<UpcomingPlan[]> {
-  const today = todayInTz()
+  return getUpcomingLoops(db, ownerId, days, todayInTz(), true)
+}
+
+/** All dated open matters, including requests and promises. The caller supplies its timezone's today. */
+export async function getUpcomingLoops(db: Db, ownerId: string, days: number, today = todayInTz(), plansOnly = false): Promise<UpcomingPlan[]> {
   const rows = await db
-    .select({ id: loops.id, text: loops.text, dueAt: loops.dueAt, personId: persons.id, label: persons.label })
+    .select({ id: loops.id, text: loops.text, dueAt: loops.dueAt, kind: loops.kind, direction: loops.direction, status: loops.status, personId: persons.id, label: persons.label })
     .from(loops)
     .innerJoin(persons, eq(persons.id, loops.personId))
     .where(
       owned(
         loops,
         ownerId,
-        eq(loops.kind, 'plan'),
+        plansOnly ? eq(loops.kind, 'plan') : undefined,
         isNotNull(loops.dueAt),
-        ne(loops.status, 'rejected'),
+        inArray(loops.status, ['proposed', 'confirmed']),
         isNull(loops.closedReason),
         isNull(loops.closedMessageId),
         and(eq(persons.ownerId, ownerId), isNull(persons.mergedIntoId)),
@@ -41,7 +42,6 @@ export async function getUpcomingPlans(db: Db, ownerId: string, days: number): P
         gte(loops.dueAt, today.slice(0, 7)),
       ),
     )
-    .limit(500)
     .all()
 
   const out: UpcomingPlan[] = []
@@ -50,7 +50,8 @@ export async function getUpcomingPlans(db: Db, ownerId: string, days: number): P
     const solar = partialDateEnd(r.dueAt)
     const d = daysBetween(today, solar)
     if (d < 0 || d > days) continue
-    out.push({ person: { id: r.personId, label: r.label }, loopId: r.id, label: r.text, solar, days: d })
+    out.push({ person: { id: r.personId, label: r.label }, loopId: r.id, label: r.text, solar, days: d,
+      loopKind: r.kind, direction: r.direction, status: r.status as 'proposed' | 'confirmed', dueAt: r.dueAt })
   }
   out.sort((a, b) => a.solar.localeCompare(b.solar) || a.loopId - b.loopId)
   return out

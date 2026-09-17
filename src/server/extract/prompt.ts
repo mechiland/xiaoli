@@ -16,7 +16,7 @@ const HANDLE_KIND_LABEL: Record<HandleKind, string> = {
 }
 
 /** Interaction input side (SPEC §8.8): the open loops a window's known persons carry. `interaction.*` only. */
-const LOOP_KIND_LABEL: Record<LoopKind, string> = { promise: '承诺', question: '提问', plan: '约定' }
+const LOOP_KIND_LABEL: Record<LoopKind, string> = { promise: '承诺', question: '提问', plan: '约定', request: '请求' }
 const LOOP_DIRECTION_LABEL: Record<LoopDirection, string> = { mine: '该我', theirs: '该对方', mutual: '双方' }
 
 const CATEGORY_LABEL: Record<Category, string> = {
