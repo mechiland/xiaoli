@@ -3,7 +3,7 @@ import path from 'node:path'
 import type { Page, Route } from 'playwright'
 import type { MessageDTO } from '@/contracts'
 import { groupTranscript } from '@/components/chat/grouping'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Chat page (SPEC §9.10) on seed data + fixtures:
 // contract & isolation → at= highlight mid-history → older page keeps the position → header participants → image

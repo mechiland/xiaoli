@@ -1,7 +1,7 @@
 import { and, eq, isNotNull } from 'drizzle-orm'
-import { withPlatform } from '@/scripts/with-platform'
+import { withPlatform } from '~/scripts/with-platform'
 import { persons } from '@/server/db'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Person page representative states on seed data (synthetic): long rich profile, sparse, only-proposed, lunar birthday,
 // history expanded, alias list expanded, evidence open, hover actions, edit-in-place, 补充 input, ⋯ menu + merge picker +

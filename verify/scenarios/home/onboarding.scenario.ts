@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // First run (SPEC §9.12) on a fresh account (shared across widths): 1440 fills the display names and saves;
 // 390 then sees them prefilled and skips (names kept). Both land on the empty home.

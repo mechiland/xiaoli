@@ -1,7 +1,7 @@
 import type { Route } from 'playwright'
 import type { ClaimDTO, ProfileResponse, ReviewItem } from '@/contracts'
 import { formatIsoDate } from '@/lib/time'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { clone, compactReview, elementShot, fulfillJson, guardJobs, itemsOf, reviewUrl, type Review } from './_support'
 
 // Review actions on the import result page against a stateful route mock (seed account, read-only on the server):

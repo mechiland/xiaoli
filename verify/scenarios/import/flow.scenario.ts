@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { deleteImportOf, PRIVATE_1, SELF_NAME, stubJobsNext, waitFor } from './_support'
 
 // Wave-2 import flow (ARCHITECTURE §12): top bar 导入 → choose file → preview → step 2 → 开始 → /imports/:id.

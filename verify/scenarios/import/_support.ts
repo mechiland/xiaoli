@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { ParsedExport } from '@/contracts'
 import { parseExportZip } from '@/lib/wechat-export'
-import type { ScenarioContext } from '@/verify/lib'
+import type { ScenarioContext } from '~/verify/lib'
 
 export const FIXTURES = path.resolve(process.cwd(), 'fixtures', 'synthetic')
 export const PRIVATE_1 = path.join(FIXTURES, '聊天记录_20260405_223012.zip')

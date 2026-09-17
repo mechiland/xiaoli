@@ -1,7 +1,7 @@
-import { SEED_ACCOUNTS } from '@/scripts/seed/accounts'
+import { SEED_ACCOUNTS } from '~/scripts/seed/accounts'
 import { countOwnerRows } from '@/server/settings'
-import { withPlatform } from '@/scripts/with-platform'
-import { defineScenario } from '@/verify/lib'
+import { withPlatform } from '~/scripts/with-platform'
+import { defineScenario } from '~/verify/lib'
 import { PRIVATE_1, PRIVATE_2 } from '../import/_support'
 import { apiAs, fillAccount, posterFromContext, posterFromScenario, tableCounts, THROWAWAY_PASSWORD, type Dump } from './_support'
 

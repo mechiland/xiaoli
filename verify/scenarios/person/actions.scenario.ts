@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { withPlatform } from '@/scripts/with-platform'
+import { withPlatform } from '~/scripts/with-platform'
 import { claims, owned, withOwner } from '@/server/db'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 
 // Person page write path on a throwaway account (never seed data): confirm / reject a proposed claim, rewrite,
 // mark outdated with "现在的情况", delete, add a manual claim with 补充, pin; then reload and check everything persisted

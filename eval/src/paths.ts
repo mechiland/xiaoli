@@ -15,6 +15,8 @@ export interface EvalPaths {
   lock: string
   decisions: string
   reports: string
+  reportSummary: string
+  reportCompare: string
   reportDetail: Record<Source, string>
   judgeCache: Record<Source, string>
   runs: string
@@ -32,12 +34,14 @@ export function evalPaths(root: string = REPO_ROOT): EvalPaths {
     lock: j('eval/gold/LOCK.json'),
     decisions: j('docs/DECISIONS.md'),
     reports: j('eval/reports'),
+    reportSummary: j('eval/reports/summary'),
+    reportCompare: j('eval/reports/compare'),
     reportDetail: { synthetic: j('eval/reports/synthetic'), real: j('eval/reports/real') },
     judgeCache: { synthetic: j('eval/judge-cache/synthetic'), real: j('eval/judge-cache/real') },
     runs: j('eval/runs'),
     cassettes: { synthetic: j('fixtures/cassettes/synthetic'), real: j('fixtures/cassettes/real') },
     annotate: { synthetic: j('.dev/annotate/synthetic'), real: j('.dev/annotate/real') },
-    judgePrompts: j('eval/prompts'),
+    judgePrompts: j('prompts/judge'),
   }
 }
 

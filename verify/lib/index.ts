@@ -3,7 +3,7 @@ import type { ScenarioDefinition } from './types'
 
 export type * from './types'
 export { SCENARIO_ALIASES, median, parseServerTiming, sanitizeUrl } from './log-utils'
-export { SEED_ACCOUNTS, SEED_PASSWORD } from '@/scripts/seed/accounts'
+export { SEED_ACCOUNTS, SEED_PASSWORD } from '~/scripts/seed/accounts'
 
 const ID = /^[a-z0-9_][a-z0-9_-]*(\/[a-z0-9_][a-z0-9_-]*)+$/
 

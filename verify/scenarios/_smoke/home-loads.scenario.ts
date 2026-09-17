@@ -1,4 +1,4 @@
-import { defineScenario, SEED_ACCOUNTS } from '@/verify/lib'
+import { defineScenario, SEED_ACCOUNTS } from '~/verify/lib'
 
 // Alias: `pnpm verify smoke`. Sign-in page (signed out), sign-in through the form, app shell on home and a person page.
 export default defineScenario({

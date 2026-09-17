@@ -1,4 +1,4 @@
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import { deleteImportOf, parseFixture, PRIVATE_2, SELF_NAME, waitFor } from './_support'
 
 // F4 (ARCHITECTURE §10): closing the overlay at step 2 deletes the import; the same file can be imported again;

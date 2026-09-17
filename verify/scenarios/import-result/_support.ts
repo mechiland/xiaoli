@@ -1,7 +1,7 @@
 // Shared helpers for import-result scenarios (synthetic seed data only).
 import type { Page, Route } from 'playwright'
 import type { ImportDetailResponse, ImportReviewResponse, ReviewItem } from '@/contracts'
-import type { ScenarioContext } from '@/verify/lib'
+import type { ScenarioContext } from '~/verify/lib'
 
 export type Review = ImportReviewResponse
 export type Detail = ImportDetailResponse

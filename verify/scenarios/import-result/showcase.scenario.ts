@@ -1,5 +1,5 @@
 import type { Route } from 'playwright'
-import { defineScenario } from '@/verify/lib'
+import { defineScenario } from '~/verify/lib'
 import type { EvidenceResponse } from '@/contracts'
 import {
   allHandledReview,
