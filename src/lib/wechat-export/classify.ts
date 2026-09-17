@@ -29,6 +29,11 @@ export const STICKER_CODES: ReadonlySet<string> = new Set([
 
 /** `[tag] rest` type prefixes; value = kind. Order does not matter (exact tag match). */
 const TYPE_TAGS: Record<string, MessageKind> = {
+  // Observed in the Mac English export; keep the original body and file names intact.
+  Photo: 'image',
+  Video: 'video',
+  'Mini Program': 'mini_program',
+  Link: 'link',
   图片: 'image',
   视频: 'video',
   语音: 'voice',

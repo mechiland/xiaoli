@@ -1,6 +1,7 @@
 // Import e2e (ARCHITECTURE §12 wave-2 behaviour). Synthetic ZIPs, a fresh account per test, no jobs/next (no live LLM).
 import path from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
+import { macExportSample } from '../../../src/lib/wechat-export/test-synthetic'
 
 const BASE = process.env.VERIFY_BASE_URL ?? 'http://localhost:3000'
 const FIXTURES = path.resolve(process.cwd(), 'fixtures', 'synthetic')
@@ -31,6 +32,46 @@ async function toStep2(page: Page, file: string): Promise<number> {
   await expect(page.locator('[data-import-overlay][data-step="mapping"]')).toBeVisible()
   return ((await res.json()) as { import: { id: number } }).import.id
 }
+
+test('Mac English ZIP → preview → mapping with linked photos and normalized dates', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+  await freshAccount(page, 'mac')
+  await page.goto('/')
+  await expect(page.getByText('Chat History_20260101_120000.zip', { exact: true })).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('mac-empty-home.png'), fullPage: true, caret: 'initial', animations: 'disabled' })
+  const sample = macExportSample()
+  await page.setInputFiles('input[data-home-file-input]', { name: sample.fileName, mimeType: 'application/zip', buffer: Buffer.from(sample.zip) })
+  const overlay = page.locator('[data-import-overlay]')
+  await expect(overlay).toHaveAttribute('data-step', 'preview', { timeout: 15_000 })
+  await expect(overlay.getByText(sample.fileName, { exact: true })).toBeVisible()
+  await expect(page.locator('#att-image')).toHaveAttribute('data-state', 'checked')
+  await expect(page.locator('#att-video')).toHaveAttribute('data-state', 'unchecked')
+  await expect(overlay.getByText('示例乙', { exact: true })).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('mac-preview.png'), fullPage: true, caret: 'initial', animations: 'disabled' })
+  const [created] = await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith('/api/imports') && r.request().method() === 'POST'),
+    overlay.getByRole('button', { name: '下一步' }).click(),
+  ])
+  expect(created.status()).toBe(201)
+  const payload = created.request().postDataJSON()
+  expect(payload.fileName).toBe(sample.fileName)
+  expect(payload.exportedAt).toBe('2026-01-05T04:00:00.000Z')
+  expect(payload.messages).toHaveLength(7)
+  expect(payload.messages[0].sentAt).toBe('2026-01-05 08:03')
+  expect(payload.messages[3].attachmentName).toBe(sample.imageName)
+  expect(payload.selectedAttachments).toEqual([sample.imageName, sample.secondImageName])
+  await expect(overlay).toHaveAttribute('data-step', 'mapping')
+  const importId = (await created.json()).import.id
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await page.request.get(`${BASE}/api/imports/${importId}`)).status()).toBe(404)
+  await page.setInputFiles('input[data-home-file-input]', { name: sample.fileName, mimeType: 'application/zip', buffer: Buffer.from('not a zip') })
+  await expect(overlay.getByText('无法识别这个文件')).toBeVisible()
+  await expect(overlay.getByText('Chat History_20260101_120000.zip', { exact: true })).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('mac-parse-error.png'), fullPage: true, caret: 'initial', animations: 'disabled' })
+  expect(errors).toEqual([])
+})
 
 test('file → preview → 这是谁的聊天 → 开始 → /imports/:id with jobs and rising uploads', async ({ page }) => {
   const errors: string[] = []

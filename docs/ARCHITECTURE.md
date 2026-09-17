@@ -53,7 +53,7 @@ Notation: paths are globs relative to repo root. "Public entry" = the only file 
 ```ts
 // src/lib/time.ts
 nowIso(): string                                   // new Date().toISOString()
-parseWechatTime(s: 'YYYY年MM月DD日 HH:MM'): string    // -> 'YYYY-MM-DD HH:MM'
+parseWechatTime(s: string): string    // iOS 'YYYY年MM月DD日 HH:MM' / Mac 'YYYY-M-D HH:MM' -> 'YYYY-MM-DD HH:MM'
 minutesBetween(a: MsgTime, b: MsgTime): number      // MsgTime = 'YYYY-MM-DD HH:MM'
 formatMsgTime(t: MsgTime, style: 'full'|'short'|'date'): string
 todayInTz(tz?: string): 'YYYY-MM-DD'
@@ -80,12 +80,12 @@ parseExportText(txt: string, opts?: { fileName?: string; mediaFiles?: MediaFileI
 readMediaFiles(zip: Uint8Array | ArrayBuffer, names: string[]): Promise<Map<string, Uint8Array>>          // bytes of selected media (import upload queue)
 sha256Hex(bytes: Uint8Array): Promise<string>
 fingerprint(m: { senderName: string; sentAt: string; body: string; kind: MessageKind }): string // FNV-1a 64 hex of `${senderName}${sentAt}${kind}${fingerprintBody(kind, body)}`, sync
-fingerprintBody(kind: MessageKind, body: string): string // image/video: each generated media file name `微信(图片|视频)_\d{8,14}(_\d+)?.<ext>` → `微信图片_*` / `微信视频_*` (re-exports rename media by export time; SPEC §8.4); every other kind: `body` (parser P14)
+fingerprintBody(kind: MessageKind, body: string): string // image/video: generated `微信图片_…` / `Weixin Image_…` → `微信图片_*`, `微信视频_…` / `Weixin Video_…` → `微信视频_*`; numeric suffix matches `\d{8,14}(_\d+)?.<ext>`; every other kind: `body` (parser P14)
 messagesDigest(msgs: { senderName: string; sentAt: string; body: string }[]): Promise<string> // sha256 hex of idx-ordered lines `${senderName}\t${sentAt}\t${body}` joined by '\n' (kind deliberately excluded) — gold freeze, §7.2
 classifyBody(body: string): { kind: MessageKind; meta: MessageMeta }
 extractMentions(body: string): { name: string; addressTerm?: string }[]    // "@显示名 称呼"
 summarize(p: ParsedExport): ExportPreview                                   // for the import overlay step 1
-PARSER_VERSION: string                                                      // bump on any change affecting idx/body/sender/time/kind/fingerprint; currently `wechat-export@2`
+PARSER_VERSION: string                                                      // bump on any change affecting idx/body/sender/time/kind/fingerprint; currently `wechat-export@3` (Mac dates, English tags/names)
 class ParseError extends Error { code: 'not_zip'|'no_txt'|'no_messages'|'bad_encoding' }
 ```
 Fingerprint changes (`wechat-export@2`, core request parser#1): stored `messages.fingerprint` rows are rewritten once per D1 with `npx tsx scripts/parser/backfill-fingerprints.ts [--remote [--env <name>]]` (idempotent, prints counts only; deploy runbook); any other code computing a fingerprint imports `fingerprint` from this entry rather than copying the formula. Output shape = `ParsedExportSchema` (§2.3). Dependencies: core `contracts` (types only), core `src/lib/time.parseWechatTime` (`src/lib/time.ts` is pure; parser must not import anything that imports server code).

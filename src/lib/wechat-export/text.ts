@@ -6,7 +6,7 @@ import { fingerprint } from './hash'
 import { PARSER_VERSION } from './version'
 
 /** SPEC §6: a line starting with `·` whose NEXT line fully matches this is a message start. */
-export const TIME_LINE_RE = /^\d{4}年\d{2}月\d{2}日 \d{2}:\d{2}$/
+export const TIME_LINE_RE = /^(?:\d{4}年\d{2}月\d{2}日|\d{4}-\d{1,2}-\d{1,2}) \d{2}:\d{2}$/
 const SENDER_MARK = 0x00b7 // '·'
 
 export type Warning = { line: number; code: string }
@@ -74,7 +74,7 @@ export function splitMessages(txt: string, warnings: Warning[] = []): RawMessage
   return out
 }
 
-/** `聊天记录_YYYYMMDD_HHMMSS(.zip)` → ISO Z, interpreted as Asia/Shanghai (UTC+8, no DST). */
+/** Timestamp in `聊天记录_…` / `Chat History_…` → ISO Z, interpreted as Asia/Shanghai (UTC+8, no DST). */
 export function exportedAtFromFileName(fileName: string | undefined): string | null {
   if (!fileName) return null
   const base = fileName.split(/[\\/]/).pop() ?? fileName

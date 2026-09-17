@@ -8,7 +8,9 @@ import { parseServerEnv } from '@/server/env'
 describe('lib/time', () => {
   it('parses and formats message time', () => {
     expect(parseWechatTime('2026年09月05日 08:03')).toBe('2026-09-05 08:03')
-    expect(() => parseWechatTime('2026-09-05 08:03')).toThrow()
+    expect(parseWechatTime('2026-09-05 08:03')).toBe('2026-09-05 08:03')
+    expect(parseWechatTime('2026-9-5 08:03')).toBe('2026-09-05 08:03')
+    expect(() => parseWechatTime('2026/09/05 08:03')).toThrow()
     expect(minutesBetween('2026-09-05 23:30', '2026-09-06 02:31')).toBe(181)
     expect(formatMsgTime('2026-09-05 08:03', 'full')).toBe('2026年9月5日 08:03')
     expect(formatMsgTime('2026-09-05 08:03', 'short')).toBe('08:03')

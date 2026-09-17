@@ -183,7 +183,7 @@ function safeUnzip(bytes: Uint8Array, filter: (f: UnzipFileInfo) => boolean): Re
   }
 }
 
-const CHAT_TXT = '聊天记录.txt'
+const CHAT_TXT_NAMES = new Set(['聊天记录.txt', 'chat history.txt'])
 
 export async function parseExportZip(
   zip: Uint8Array | ArrayBuffer,
@@ -207,7 +207,7 @@ export async function parseExportZip(
   const txts = entries.filter((e) => files[e.rawName] !== undefined)
   if (txts.length === 0) throw new ParseError('no_txt')
   const chosen =
-    txts.filter((e) => e.name === CHAT_TXT).sort((a, b) => a.path.split('/').length - b.path.split('/').length)[0] ??
+    txts.filter((e) => CHAT_TXT_NAMES.has(e.name.toLowerCase())).sort((a, b) => a.path.split('/').length - b.path.split('/').length)[0] ??
     [...txts].sort((a, b) => b.originalSize - a.originalSize)[0]
 
   const warnings: Warning[] = []

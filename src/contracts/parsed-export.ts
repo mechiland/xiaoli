@@ -34,7 +34,7 @@ export const ParsedExportSchema = z.object({
   formatVersion: z.literal(1),
   parserVersion: z.string(),
   fileName: z.string(),
-  /** from 聊天记录_YYYYMMDD_HHMMSS, Asia/Shanghai local → ISO Z */
+  /** from 聊天记录_YYYYMMDD_HHMMSS / Chat History_YYYYMMDD_HHMMSS, Asia/Shanghai local → ISO Z */
   exportedAt: IsoString.nullable(),
   sha256: z.string(),
   messages: z.array(ParsedMessageSchema),

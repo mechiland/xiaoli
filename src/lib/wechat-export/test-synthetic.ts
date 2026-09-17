@@ -27,6 +27,37 @@ export function buildExportText(msgs: SynthMessage[], opts: { crlf?: boolean; bo
 
 export const MEDIA_DIR = '聊天记录内的图片、视频和文件'
 
+/** Mac's English export layout, using only invented conversation content. */
+export function macExportSample(mediaStamp = '202601051030', firstIndex = 1) {
+  const imageName = `Weixin Image_${mediaStamp}_${firstIndex}.jpg`
+  const secondImageName = `Weixin Image_${mediaStamp}_${firstIndex + 1}.jpg`
+  const videoName = `Weixin Video_${mediaStamp}_${firstIndex}.mp4`
+  const text = [
+    '·测试甲\n2026-1-5 08:03\nHello，测试消息😀\n\n·清单项目\n  保留缩进',
+    '·示例乙\n2026-1-5 08:04\n[Mini Program] 示例报名',
+    '·示例乙\n2026-1-5 08:04\n[Link] 示例文章 https://example.com/read?a=1&b=2#section',
+    `·示例乙\n2026-1-5 08:05\n[Photo] ${imageName}`,
+    `·示例乙\n2026-1-5 08:05\n[Photo] ${secondImageName}`,
+    `·示例乙\n2026-1-5 08:06\n[Video] ${videoName}`,
+    '·测试甲\n2026-1-5 08:07\n收到[玫瑰]',
+  ].join('\n\n') + '\n'
+  const fileName = 'Chat History_20260105_120000.zip'
+  const root = fileName.slice(0, -4)
+  const mediaDir = `${root}/Images, videos, and files in chat history`
+  const imageBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0])
+  const videoBytes = new Uint8Array([0, 0, 0, 20, 102, 116, 121, 112, 109, 112, 52, 50])
+  const zip = zipSync({
+    [`${root}/Chat History.txt`]: strToU8(text),
+    [`${mediaDir}/${imageName}`]: imageBytes,
+    [`${mediaDir}/${secondImageName}`]: imageBytes,
+    [`${mediaDir}/${videoName}`]: videoBytes,
+    [`${mediaDir}/notes.txt`]: strToU8('An unrelated text attachment.\n'.repeat(100)),
+    [`__MACOSX/${root}/._Chat History.txt`]: new Uint8Array([1, 2, 3]),
+    [`${root}/.DS_Store`]: new Uint8Array([1, 2, 3]),
+  })
+  return { fileName, text, zip, imageName, secondImageName, videoName, mediaDir, imageBytes, videoBytes }
+}
+
 export function buildExportZip(opts: {
   text: string | Uint8Array
   media?: { name: string; bytes: Uint8Array }[]

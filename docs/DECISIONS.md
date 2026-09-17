@@ -203,6 +203,8 @@ Round 1 (2026-09-15). Module `lib/wechat-export`; public entry `@/lib/wechat-exp
   - Attachments imported before this keep `image/jpeg`; chat's server-side sniff still covers them.
 - **P16 No real export basename in parser tests (overall critic r3 #2).** `split.test.ts` and `zip.test.ts` use the synthetic stamp `聊天记录_20260101_120000.zip`, whose exportedAt is `2026-01-01T04:00:00.000Z`. `eval/src/GOLD_FORMAT.md` still names a real basename; that file is eval-synthetic's.
 
+- **P17 Mac English exports (2026-09-17, `wechat-export@3`).** The user supplied a directory screenshot and pasted export text. Recognize `Chat History.txt` alongside `聊天记录.txt`, including when a larger TXT attachment exists. Accept `YYYY-M-D HH:MM` with one/two-digit month/day and normalize to the existing padded wall-time contract. The observed `[Photo]`, `[Video]`, `[Mini Program]`, `[Link]` tags map to existing kinds; bodies and attachment names stay verbatim. Normalize generated `Weixin Image_…` / `Weixin Video_…` names for repeat-export fingerprints; existing Chinese fingerprints stay unchanged. Unknown English tags retain the existing unknown fallback. Export filename timestamps retain the existing Asia/Shanghai assumption because the format carries no timezone. Tests use invented names/content with the observed layout, including same-minute photos, multiline text, metadata files and nested attachments. No original ZIP was available; browser preview/submission is checked with a synthetic ZIP at 1440 and 390 pixels, and the three existing real iOS samples still parse.
+
 ## llm
 
 Round 1 (2026-09-15). Builds on architecture A2. Contract shapes in ARCHITECTURE §5 are unchanged; the additions are listed in L13.

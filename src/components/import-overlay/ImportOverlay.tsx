@@ -12,7 +12,7 @@ import { ApiClientError } from '@/lib/api-client'
 import { cn } from '@/lib/cn'
 import { importHref } from '@/lib/links'
 import { isParseError, parseExportZip, summarize } from '@/lib/wechat-export'
-import { EXAMPLE_EXPORT_FILE_NAME, formatRange } from './format'
+import { EXAMPLE_ENGLISH_EXPORT_FILE_NAME, EXAMPLE_EXPORT_FILE_NAME, formatRange } from './format'
 import { importUrl, requestJson } from './http'
 import { AttachmentPicker, defaultSelection, PreviewStats } from './StepPreview'
 import { buildMappingRequest, initialDraft, StepMapping, type MappingDraft } from './StepMapping'
@@ -408,7 +408,7 @@ function PickBody({ notice, onPick }: { notice?: string; onPick: () => void }) {
         </Button>
       </div>
       <p className="text-[13px] leading-6 text-ink-3">
-        在微信聊天中多选消息 → 转发 → 其他应用，保存得到 <span className="font-data">聊天记录_日期_时间.zip</span>。文件在浏览器里解析，只上传解析出的消息和你勾选的图片。
+        在微信聊天中多选消息 → 转发 → 其他应用，保存得到 <span className="font-data">聊天记录_日期_时间.zip</span> 或 <span className="font-data">Chat History_日期_时间.zip</span>。文件在浏览器里解析，只上传解析出的消息和你勾选的图片。
       </p>
     </div>
   )
@@ -434,7 +434,7 @@ function ParseErrorBody({ fileName }: { fileName: string }) {
       <p>
         <FileName name={fileName} />
       </p>
-      <p className="mt-2">支持微信「转发到其他应用」导出的 ZIP 文件，文件名形如 <span className="whitespace-nowrap font-data">{EXAMPLE_EXPORT_FILE_NAME}</span>。</p>
+      <p className="mt-2">支持微信「转发到其他应用」导出的 ZIP 文件，文件名形如 <span className="inline-block max-w-full break-words font-data">{EXAMPLE_EXPORT_FILE_NAME}</span> 或 <span className="inline-block max-w-full break-words font-data">{EXAMPLE_ENGLISH_EXPORT_FILE_NAME}</span>。</p>
     </Notice>
   )
 }

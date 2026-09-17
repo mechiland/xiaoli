@@ -6,6 +6,7 @@ import { formatMsgTime } from '@/lib/time'
  * basename (overall critic r2 #1); same stamp as the empty-home drop zone.
  */
 export const EXAMPLE_EXPORT_FILE_NAME = '聊天记录_20260101_120000.zip'
+export const EXAMPLE_ENGLISH_EXPORT_FILE_NAME = 'Chat History_20260101_120000.zip'
 
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
