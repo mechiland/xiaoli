@@ -39,11 +39,11 @@ describe('prompt files', () => {
     // the one that cost the extraction 0.90 → 0.76 claims precision. Keep the file so `--prompt extract.v9` still
     // renders for comparison, but never make it the production prompt again without new numbers.
     expect(PROMPT_VERSION).toBe('extract.v8')
-    expect(INTERACTION_PROMPT_VERSION).toBe('interaction.v2')
+    expect(INTERACTION_PROMPT_VERSION).toBe('interaction.v3')
     expect(getPrompt('extract.v9').version).toBe('extract.v9')
     expect(listPromptVersions('extract.')).toContain('extract.v9')
     // interaction.v1 stays registered so `--prompt interaction.v1` still renders for comparison (X41)
-    expect(listPromptVersions('interaction.')).toEqual(['interaction.v1', 'interaction.v2'])
+    expect(listPromptVersions('interaction.')).toEqual(['interaction.v1', 'interaction.v2', 'interaction.v3'])
   })
 
   it('extract prompt covers every SPEC §8.7 point and the relation reading', () => {

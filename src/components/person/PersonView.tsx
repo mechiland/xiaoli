@@ -103,7 +103,7 @@ export function PersonView({ id, selfId }: { id: number; selfId: number | null }
           <PageTitle className="text-ink-3">人物</PageTitle>
           <BlockError className="mt-3" onRetry={retry} message="标题和别名没有加载出来" />
         </div>
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_308px] lg:items-start lg:gap-14">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12">
           <div className="mb-8 border border-line bg-paper px-4 py-3 lg:order-2 lg:mb-0">
             <BlockError onRetry={retry} message="信息框没有加载出来" className="border-l-0 pl-0" />
           </div>
@@ -122,7 +122,7 @@ export function PersonView({ id, selfId }: { id: number; selfId: number | null }
         <BlockBoundary fallback={BlockFallback({ title: '标题' })}>
           <PersonHeader profile={p} markOf={markOf} aliasesOpen={aliasesOpen} onAliasesOpenChange={setAliasesOpen} />
         </BlockBoundary>
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_308px] lg:items-start lg:gap-14">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12">
           <div className="mb-9 lg:order-2 lg:mb-0">
             <BlockBoundary fallback={BlockFallback({ title: '信息框' })}>
               <Infobox profile={p} markOf={markOf} open={infoboxOpen} onOpenChange={setInfoboxOpen} />

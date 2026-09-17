@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import type { HomeResponse } from '@/contracts'
 import { DEFAULT_TZ, todayInTz } from '@/lib/time'
 import { chats, claims, getUserSettings, importantDates, imports, owned, persons, type Db } from '@/server/db'
-import { getUpcomingPlans } from '@/server/interaction'
+import { getUpcomingLoops } from '@/server/interaction'
 import { listPeopleIndex } from '@/server/search'
 import { computeUpcoming, mergeUpcoming, UPCOMING_WINDOW_DAYS, type UpcomingPlanRow } from './upcoming'
 
@@ -32,8 +32,8 @@ export interface HomeBlocksResult {
   today: string
 }
 
-/** `getUpcomingPlans` from `@/server/interaction`; injectable so unit tests never touch the interaction module. */
-export type UpcomingPlansFn = (db: Db, ownerId: string, days: number) => Promise<UpcomingPlanRow[]>
+/** `getUpcomingLoops` from `@/server/interaction`; injectable so unit tests never touch the interaction module. */
+export type UpcomingPlansFn = (db: Db, ownerId: string, days: number, today?: string) => Promise<UpcomingPlanRow[]>
 
 export interface HomeOptions {
   tz?: string
@@ -41,7 +41,7 @@ export interface HomeOptions {
   today?: string
   /** development-only failure injection for the showcase (page passes it only when NEXTJS_ENV=development) */
   fail?: readonly HomeBlockKey[]
-  /** test seam for the 约定 rows; defaults to `@/server/interaction`'s `getUpcomingPlans` */
+  /** test seam for the 约定 rows; defaults to `@/server/interaction`'s `getUpcomingLoops` */
   plans?: UpcomingPlansFn
 }
 
@@ -51,16 +51,16 @@ const visiblePerson = (ownerId: string) => and(eq(persons.ownerId, ownerId), isN
  * The 约定 half of 即将到来. The interaction module is a separate deployment unit from home's point of view: if it
  * cannot answer, the block still renders its dates rather than failing whole (ARCHITECTURE §3, DECISIONS home H14).
  */
-async function loadUpcomingPlans(db: Db, ownerId: string, fetchPlans: UpcomingPlansFn): Promise<UpcomingPlanRow[]> {
+async function loadUpcomingPlans(db: Db, ownerId: string, today: string, fetchPlans: UpcomingPlansFn): Promise<UpcomingPlanRow[]> {
   try {
-    return await fetchPlans(db, ownerId, UPCOMING_WINDOW_DAYS)
+    return await fetchPlans(db, ownerId, UPCOMING_WINDOW_DAYS, today)
   } catch (e) {
     console.log(JSON.stringify({ level: 'warn', msg: 'upcoming plans unavailable', error: e instanceof Error ? e.message.slice(0, 200) : 'unknown' }))
     return []
   }
 }
 
-export async function loadUpcoming(db: Db, ownerId: string, today: string, fetchPlans: UpcomingPlansFn = getUpcomingPlans): Promise<HomeResponse['upcoming']> {
+export async function loadUpcoming(db: Db, ownerId: string, today: string, fetchPlans: UpcomingPlansFn = getUpcomingLoops): Promise<HomeResponse['upcoming']> {
   const rows = await db
     .select({
       dateId: importantDates.id,
@@ -78,7 +78,7 @@ export async function loadUpcoming(db: Db, ownerId: string, today: string, fetch
     .where(owned(importantDates, ownerId, eq(importantDates.status, 'confirmed'), visiblePerson(ownerId)))
     .all()
   const dates = computeUpcoming(rows, today)
-  return mergeUpcoming(dates, await loadUpcomingPlans(db, ownerId, fetchPlans))
+  return mergeUpcoming(dates, await loadUpcomingPlans(db, ownerId, today, fetchPlans))
 }
 
 async function recentImportIds(db: Db, ownerId: string): Promise<number[]> {

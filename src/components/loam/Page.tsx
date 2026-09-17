@@ -25,7 +25,7 @@ export function PageShell({
     <div
       className={cn(
         'mx-auto w-full px-5 pb-24 pt-10 sm:px-8 sm:pt-14',
-        width === 'reading' ? 'max-w-[720px]' : 'max-w-[1080px]',
+        width === 'reading' ? 'max-w-[720px]' : 'max-w-[1180px]',
         className,
       )}
     >

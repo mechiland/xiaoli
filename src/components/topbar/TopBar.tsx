@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { signOut } from '@/lib/auth-client'
 import { homeHref, settingsHref, signInHref } from '@/lib/links'
+import { NavigationMenu } from './NavigationMenu'
 
 /**
  * Top bar, identical on every page (SPEC §9.2): product name → home (left), search entry (center),
- * "导入" + account menu (设置, 退出) (right). No sidebar, no badges, no counts (SPEC §9.3).
+ * Navigation menu + product name (left), search (center), import and account (right).
  */
 export function TopBar({ email }: { email: string }) {
   const importOverlay = useImportOverlay()
@@ -39,13 +40,16 @@ export function TopBar({ email }: { email: string }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ground/95 backdrop-blur-[2px]">
-      <div className="mx-auto grid h-[var(--loam-topbar-height)] max-w-[1080px] grid-cols-[auto_1fr_auto] items-center gap-4 px-5 sm:gap-8 sm:px-8">
-        <Link href={homeHref} className="font-serif text-[20px] font-semibold leading-none tracking-[0.08em] text-ink">
-          小丽
-        </Link>
+      <div className="grid h-[var(--loam-topbar-height)] grid-cols-[auto_1fr_auto] items-center gap-2 px-4 sm:gap-8 sm:px-8">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <NavigationMenu />
+          <Link href={homeHref} className="font-serif text-[22px] font-semibold leading-none tracking-[0.08em] text-ink">
+            小丽
+          </Link>
+        </div>
 
         <div className="flex justify-end sm:justify-center">
-          <SearchTrigger variant="topbar" />
+          <SearchTrigger variant="topbar" className="sm:max-w-[680px]" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">

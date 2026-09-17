@@ -77,7 +77,7 @@ export const LoopDirection = z.enum(['mine', 'theirs', 'mutual'])
 export type LoopDirection = z.infer<typeof LoopDirection>
 export const LoopDirectionSchema = LoopDirection
 
-export const LoopKind = z.enum(['promise', 'question', 'plan'])
+export const LoopKind = z.enum(['promise', 'question', 'plan', 'request'])
 export type LoopKind = z.infer<typeof LoopKind>
 export const LoopKindSchema = LoopKind
 

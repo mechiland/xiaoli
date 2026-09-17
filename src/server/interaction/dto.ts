@@ -156,7 +156,7 @@ export type LoopRow = {
   id: number
   personId: number
   direction: 'mine' | 'theirs' | 'mutual'
-  kind: 'promise' | 'question' | 'plan'
+  kind: LoopDTO['kind']
   text: string
   dueAt: string | null
   openedAt: string

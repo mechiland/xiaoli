@@ -20,7 +20,7 @@ const base = (): WindowInput => ({
   ],
 })
 const chat = (over: Partial<WindowInput> = {}): WindowInput => ({ ...base(), ...over })
-type Shown = { id: number; kind: 'promise' | 'question' | 'plan'; direction: 'mine' | 'theirs' | 'mutual'; text: string; openedAt: string }
+type Shown = { id: number; kind: 'promise' | 'question' | 'plan' | 'request'; direction: 'mine' | 'theirs' | 'mutual'; text: string; openedAt: string }
 const withLoops = (openLoops: Shown[], over: Partial<WindowInput> = {}) =>
   chat({ known: base().known.map((p) => (p.personId === 2 ? { ...p, openLoops } : p)), ...over })
 const segment = (over: Record<string, unknown> = {}) => ({ summary: '对了柜子报价的进度', topics: ['柜子', '报价'], speakers: [{ personId: 1 }, { personId: 2 }], evidence: [1, 2], ...over })
@@ -82,6 +82,19 @@ describe('validateInteraction: segment', () => {
 })
 
 describe('validateInteraction: loops', () => {
+  it('keeps a dated request without treating the acknowledgement as completion', () => {
+    const input = base()
+    input.chat = { title: '一年级家长群', kind: 'group' }
+    input.messages[1].body = '请各位家长明天交孩子的观察报告'
+    const request = loop({ kind: 'request', direction: 'mine', text: '提交孩子的观察报告', dueAt: '2026-05-02' })
+    const result = ok(validateInteraction({ loops: [request] }, input))
+    expect(result.output.loops).toEqual([request])
+    input.known[1].openLoops = [{ id: 90, kind: 'request', direction: 'mine', text: '提交孩子的观察报告', openedAt: '2026-05-01 09:02' }]
+    expect(ok(validateInteraction({ closes: [{ loopId: 90, reason: 'done', evidence: [4] }] }, input)).output.closes).toEqual([])
+    input.messages[3].body = '孩子的观察报告已经交了'
+    expect(ok(validateInteraction({ closes: [{ loopId: 90, reason: 'done', evidence: [4] }] }, input)).output.closes).toHaveLength(1)
+  })
+
   it('drops loops on an unknown person or on self, merges repeats, and removes a malformed dueAt', () => {
     const r = ok(
       validateInteraction(

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DayString, Id } from '../common'
+import { DayString, Id, LoopDirection, LoopKind } from '../common'
 import { ClaimDTOSchema, PersonRefDTOSchema } from '../entities'
 import { RecentImportSchema } from './imports'
 import { PeopleIndexResponseSchema } from './people'
@@ -7,15 +7,20 @@ import { PeopleIndexResponseSchema } from './people'
 export const HomeResponseSchema = z.object({
   isEmpty: z.boolean(),
   needsOnboarding: z.boolean(),
-  /** important dates and, from SPEC §9.4, plan loops with a dueAt — sorted together by `solar` asc */
+  /** Important dates and dated open matters, sorted together by solar day. */
   upcoming: z.array(
     z.object({
       person: PersonRefDTOSchema,
-      kind: z.enum(['date', 'plan']),
+      kind: z.enum(['date', 'plan', 'loop']),
       /** set when kind = 'date' */
       dateId: Id.nullable(),
-      /** set when kind = 'plan' */
+      /** set for plans and other unfinished matters */
       loopId: Id.nullable(),
+      loopKind: LoopKind.optional(),
+      direction: LoopDirection.optional(),
+      status: z.enum(['proposed', 'confirmed']).optional(),
+      /** Original precision; a month-level date must not be presented as an exact deadline. */
+      dueAt: z.string().optional(),
       label: z.string(),
       solar: DayString,
       lunarLabel: z.string().nullable(),

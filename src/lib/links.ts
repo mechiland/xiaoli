@@ -23,6 +23,9 @@ export function importHref(importId: number): string {
 }
 
 export const homeHref = '/'
+export const peopleHref = '/people'
+export const tasksHref = '/tasks'
+export const tasksRangeHref = (days: 7 | 30) => `${tasksHref}?range=${days}`
 export const settingsHref = '/settings'
 export const signInHref = '/sign-in'
 export const signUpHref = '/sign-up'

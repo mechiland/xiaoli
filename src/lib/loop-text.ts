@@ -14,6 +14,7 @@ export const LOOP_KIND_LABEL: Record<LoopKind, string> = {
   promise: '承诺',
   question: '问题',
   plan: '约定',
+  request: '请求',
 }
 
 /** Handled loops say what happened to them instead of a bare 已确认. */
@@ -38,6 +39,11 @@ export function loopSentence(loop: Pick<LoopDTO, 'direction' | 'kind' | 'text'>,
   if (!text) return ''
   const other = personLabel.trim() || '对方'
   switch (loop.kind) {
+    case 'request': {
+      if (loop.direction === 'theirs') return `你请${other}${text}`
+      if (loop.direction === 'mutual') return `需要一起${text}`
+      return `${other}请你${text}`
+    }
     case 'plan': {
       if (startsWithAny(text, ['约', '说好', '说定', '计划', '打算'])) return text
       // A plan that is `theirs` is the other person's own plan ("我四月底搬去深圳") — nobody agreed to it with

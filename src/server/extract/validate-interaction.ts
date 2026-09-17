@@ -107,11 +107,8 @@ export function validateInteraction(json: unknown, input: WindowInput): Validate
     const { dueAt: rawDue, ...rest } = l
     const dueAt = rawDue?.trim()
     const dated = !!dueAt && PARTIAL_DATE.test(dueAt)
-    // Third threshold (SPEC §8.8): a loop has to be worth remembering the next time you see this person. Where that
-    // line runs is mostly the prompt's job, but its same-day end is mechanical, so it is enforced here too: a same-day
-    // or immediate time marker with no date on it is within-the-day coordination ("晚上过去拿西瓜", "明天放学在东门顺
-    // 路接果果", "回头细说面试安排的事"), which nobody is still owed a month later. A loop carrying a usable `dueAt`
-    // is a dated occasion and survives. Same word list and same drop reason as the claim rule (X26, X41).
+    // Undated immediate coordination still gets filtered. Explicitly dated requests (e.g. bring materials
+    // tomorrow) survive: action value, rather than month-long relationship value, governs interaction.v3.
     if (!dated && LOOP_MOMENTARY.test(normName(l.text))) {
       dropped.push({ path, reason: 'momentary' })
       return
@@ -130,7 +127,11 @@ export function validateInteraction(json: unknown, input: WindowInput): Validate
   // `closes[].loopId` may only name a loop this window's input actually carried, and only a message at or after the
   // loop opened can close it (so a re-import of older messages never closes a later commitment).
   const openedAt = new Map<number, string>()
-  for (const p of input.known) for (const l of p.openLoops ?? []) openedAt.set(l.id, l.openedAt)
+  const loopKinds = new Map<number, string>()
+  for (const p of input.known) for (const l of p.openLoops ?? []) {
+    openedAt.set(l.id, l.openedAt)
+    loopKinds.set(l.id, l.kind)
+  }
   const rawCloses = (json.closes as unknown[] | undefined | null) ?? []
   rawItemCount += rawCloses.length
   const closed = new Set<number>()
@@ -148,6 +149,12 @@ export function validateInteraction(json: unknown, input: WindowInput): Validate
     const at = input.messages[ev[0] - 1]?.sentAt
     if (opened === undefined || !at || opened > at) {
       dropped.push({ path, reason: 'unknown_close' })
+      return
+    }
+    // A read receipt is not evidence that an action was completed. Questions can legitimately be answered this way.
+    const receipt = /^(收到|好的|好|ok|知道了|明白了)([，,。.!！\s]*(谢谢老师|谢谢|老师辛苦了))?[\p{P}\s]*$/iu
+    if (loopKinds.get(c.loopId) !== 'question' && ev.every((seq) => receipt.test(input.messages[seq - 1].body.trim()))) {
+      dropped.push({ path, reason: 'invalid_item' })
       return
     }
     if (closed.has(c.loopId)) {

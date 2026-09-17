@@ -4,8 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import type { HomeResponse } from '@/contracts'
-import { PlanRow } from '@/components/interaction'
-import { BlockBoundary, BlockError, Skeleton } from '@/components/loam'
+import { BlockBoundary, BlockError, PageShell, Skeleton } from '@/components/loam'
 import { SearchTrigger } from '@/components/search-overlay'
 import { api, unwrap } from '@/lib/api-client'
 import { cn } from '@/lib/cn'
@@ -13,7 +12,8 @@ import { importHref, personHref } from '@/lib/links'
 import { queryKeys } from '@/lib/query'
 import type { HomeBlocks, HomeBlocksResult } from '@/server/home'
 import { EmptyHome } from './EmptyHome'
-import { daysLabel, formatDay, formatImportedAt, formatRange, formatTodayLine, weekday } from './format'
+import { formatImportedAt, formatRange, formatTodayLine } from './format'
+import { TasksPanel } from './TasksPanel'
 
 /** "全部人物" collapses to letter navigation only when there are MORE than this many people (SPEC §9.4). */
 export const INDEX_COLLAPSE_ABOVE = 200
@@ -27,48 +27,79 @@ export interface HomeViewProps {
   /** server first paint; blocks that failed on the server are null and listed in `failed` */
   initial: HomeBlocksResult
   tz: string
+  view?: 'home' | 'people' | 'tasks'
+  taskRange?: 7 | 30
 }
 
 /**
  * Home page (SPEC §9.4, §9.12). Blocks render from server data; a block whose server fetch failed falls back to
  * `GET /api/home` on the client (skeleton while loading, BlockError with retry on failure), without touching the others.
  */
-export function HomeView({ initial, tz }: HomeViewProps) {
+export function HomeView({ initial, tz, view = 'home', taskRange = 7 }: HomeViewProps) {
   const needsFallback = initial.failed.some((k) => k !== 'onboarding')
   const q = useQuery<HomeResponse>({
     queryKey: queryKeys.home(),
     queryFn: async () => unwrap(await api.home.$get()),
-    enabled: needsFallback,
+    initialData: !needsFallback && Object.values(initial.blocks).every((block) => block !== null)
+      ? { ...initial.blocks, isEmpty: initial.isEmpty, needsOnboarding: initial.needsOnboarding } as HomeResponse
+      : undefined,
+    staleTime: 30_000,
   })
 
   function slot<K extends keyof HomeBlocks>(key: K): Slot<HomeResponse[K]> {
+    if (q.data) return { state: 'ready', data: q.data[key] }
     const server = initial.blocks[key]
     if (server !== null) return { state: 'ready', data: server as HomeResponse[K] }
-    if (q.data) return { state: 'ready', data: q.data[key] }
     if (q.isError && !q.isFetching) return { state: 'error', retry: () => void q.refetch() }
     return { state: 'loading' }
   }
 
-  const isEmpty = initial.isEmpty || q.data?.isEmpty === true
-  const needsOnboarding = initial.needsOnboarding || q.data?.needsOnboarding === true
+  const isEmpty = q.data?.isEmpty ?? initial.isEmpty
+  const needsOnboarding = q.data?.needsOnboarding ?? initial.needsOnboarding
+  if (view === 'tasks') return (
+    <PageShell title="事项" subtitle="把重要的日子、约定和待办放在一起。" className="max-w-[880px]">
+      <SlotView slot={slot('upcoming')} skeleton={<RowsSkeleton rows={4} />}>
+        {(rows) => <TasksPanel key={taskRange} rows={rows} today={initial.today} initialDays={taskRange} />}
+      </SlotView>
+    </PageShell>
+  )
+  if (view === 'people') return (
+    <PageShell title="人物" className="max-w-[1000px]">
+      <div className="mb-10"><SearchTrigger variant="hero" /></div>
+      <div className="space-y-12">
+        <PinnedSection slot={slot('pinned')} />
+        <PeopleIndexSection slot={slot('index')} />
+      </div>
+    </PageShell>
+  )
   if (isEmpty) return <EmptyHome needsOnboarding={needsOnboarding} />
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-5 pb-20 sm:px-8">
+    <div className="mx-auto w-full max-w-[1180px] px-5 pb-20 sm:px-8">
+      <h1 className="sr-only">小丽主页</h1>
       <section
         aria-label="搜索"
-        className="flex flex-col items-center pb-14 pt-[clamp(56px,14dvh,150px)] sm:pb-[72px]"
+        className="flex flex-col items-center pb-12 pt-12 sm:pb-14 sm:pt-16"
       >
         <p className="mb-5 font-data text-[13px] tracking-[0.06em] text-ink-3">{formatTodayLine(initial.today)}</p>
-        <SearchTrigger variant="hero" />
+        <SearchTrigger variant="hero" className="max-w-[680px]" />
       </section>
 
-      <div className="space-y-14 sm:space-y-16">
-        <UpcomingSection slot={slot('upcoming')} today={initial.today} />
-        <RecentlyUpdatedSection slot={slot('recentlyUpdated')} />
-        <PinnedSection slot={slot('pinned')} />
-        <PeopleIndexSection slot={slot('index')} />
-        <RecentImportsSection slot={slot('recentImports')} today={initial.today} tz={tz} />
+      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+        <aside aria-label="事项" className="min-w-0 border border-line bg-paper p-5 lg:col-start-2 lg:row-start-1 lg:p-6">
+          <BlockBoundary fallback={(retry) => <><Heading>事项</Heading><BlockError className="mt-4" onRetry={retry} /></>}>
+            {slot('upcoming').state !== 'ready' && <Heading>事项</Heading>}
+            <SlotView slot={slot('upcoming')} skeleton={<RowsSkeleton rows={3} />}>
+              {(rows) => <TasksPanel rows={rows} today={initial.today} compact />}
+            </SlotView>
+          </BlockBoundary>
+        </aside>
+        <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
+          <RecentlyUpdatedSection slot={slot('recentlyUpdated')} />
+          <PinnedSection slot={slot('pinned')} />
+          <PeopleIndexSection slot={slot('index')} />
+          <RecentImportsSection slot={slot('recentImports')} today={initial.today} tz={tz} />
+        </div>
       </div>
     </div>
   )
@@ -116,62 +147,6 @@ function RowsSkeleton({ rows, widths = ['w-2/5', 'w-1/2', 'w-1/3'] }: { rows: nu
         </div>
       ))}
     </div>
-  )
-}
-
-/* ── 即将到来 ─────────────────────────────────────────────────────────── */
-
-function UpcomingSection({ slot, today }: { slot: Slot<HomeResponse['upcoming']>; today: string }) {
-  if (slot.state === 'ready' && slot.data.length === 0) return null
-  return (
-    <HomeSection title="即将到来">
-      <SlotView slot={slot} skeleton={<RowsSkeleton rows={3} />}>
-        {(rows) => (
-          <ul>
-            {rows.map((u) =>
-              u.kind === 'plan' && u.loopId !== null ? (
-                // SPEC §9.4: the 约定 row belongs to interaction (ARCHITECTURE §1.17); home only supplies its data.
-                <PlanRow key={`plan-${u.loopId}`} person={u.person} loopId={u.loopId} label={u.label} solar={u.solar} days={u.days} today={today} />
-              ) : (
-                <UpcomingRow key={`date-${u.dateId ?? u.solar}`} u={u} today={today} />
-              ),
-            )}
-          </ul>
-        )}
-      </SlotView>
-    </HomeSection>
-  )
-}
-
-function UpcomingRow({ u, today }: { u: HomeResponse['upcoming'][number]; today: string }) {
-  const solar = `${formatDay(u.solar, today)} ${weekday(u.solar)}`
-  return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 gap-y-0 border-b border-line py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_5.5rem]">
-      <div className="col-start-1 row-start-1 min-w-0 text-[15px] leading-7">
-        <Link href={u.dateId === null ? personHref(u.person.id) : personHref(u.person.id, { type: 'date', id: u.dateId })} className={nameLink}>
-          {u.person.label}
-        </Link>
-        <Sep className="px-1" />{' '}
-        <span className="text-ink-2">{u.label}</span>
-      </div>
-      <div className="col-span-2 col-start-1 row-start-2 text-[13px] leading-6 text-ink-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:text-right">
-        {u.lunarLabel && (
-          <>
-            <span className="whitespace-nowrap">{u.lunarLabel}</span>
-            <Sep />{' '}
-          </>
-        )}
-        <span className="whitespace-nowrap font-data tabular-nums">{solar}</span>
-      </div>
-      <div
-        className={cn(
-          'col-start-2 row-start-1 text-right font-data text-[13px] leading-7 tabular-nums sm:col-start-3',
-          u.days <= 2 ? 'text-ink' : 'text-ink-2',
-        )}
-      >
-        {daysLabel(u.days)}
-      </div>
-    </li>
   )
 }
 
